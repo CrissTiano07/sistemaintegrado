@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Integrada | Via Livre</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- BIBLIOTECAS PARA O CONSTRUTOR DE ESCALAS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js" defer></script>
+    <style>
+        /* ================================================== */
+        /* CSS PRINCIPAL (ESTILO FIFA) */
+        /* ================================================== */
+        :root {
+            --color-primary: #FF6A00; --color-primary-light: #FF8C33;
+            --color-dark: #1A1A1A; --color-light: #F5F5F5; --color-bg: #FFFFFF;
+            --color-card-bg: #FFFFFF; --color-card-border: #E8E8E8;
+            --color-text: #333333; --color-text-dim: #6c757d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif; background: var(--color-light); color: var(--color-text);
+            min-height: 100vh; overflow: hidden; font-size: 14px; -webkit-font-smoothing: antialiased;
+        }
+        .fifa-container {
+            width: 100%; max-width: 1800px; height: 100vh; margin: 0 auto;
+            display: grid; grid-template-rows: 70px 1fr; overflow: hidden;
+        }
+        .fifa-header {
+            display: flex; align-items: center; padding: 0 30px; background: var(--color-bg);
+            border-bottom: 1px solid var(--color-card-border); z-index: 10;
+        }
+        .logo-text { font-size: 22px; font-weight: 700; color: var(--color-dark); }
+        .logo-text span { color: var(--color-primary); }
+        .user-profile { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+            display: flex; justify-content: center; align-items: center; font-weight: bold; color: white;
+        }
+
+        .fifa-main { display: grid; grid-template-columns: 260px 1fr; height: 100%; overflow: hidden; }
+        .fifa-menu {
+            padding: 25px 15px; background: var(--color-bg);
+            border-right: 1px solid var(--color-card-border); display: flex; flex-direction: column;
+        }
+        .section-title {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-dim);
+            margin-bottom: 12px; padding-bottom: 4px; font-weight: 600;
+        }
+        .menu-item {
+            padding: 12px 16px; margin-bottom: 6px; border-radius: 6px; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; transition: all 0.2s ease;
+            font-size: 14px; color: var(--color-text); font-weight: 500;
+        }
+        .menu-item:hover { background: var(--color-light); }
+        .menu-item.active { background: rgba(255, 106, 0, 0.08); color: var(--color-primary); font-weight: 600; }
+        .menu-item i { font-size: 16px; width: 24px; text-align: center; color: var(--color-text-dim); }
+        .menu-item.active i { color: var(--color-primary); }
+
+        .fifa-content { padding: 25px; overflow-y: auto; }
+        .content-section { display: none; }
+        .content-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* ESTILOS GLOBAIS PARA COMPONENTES */
+        .painel {
+            background: var(--color-card-bg); border-radius: 8px; padding: 25px;
+            border: 1px solid var(--color-card-border); display: flex; flex-direction: column;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); margin-bottom: 20px;
+        }
+        .painel h2, .painel h3 {
+            font-size: 18px; font-weight: 600; margin-bottom: 20px; color: var(--color-dark);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .painel h2 i, .painel h3 i { color: var(--color-primary); }
+        .painel textarea, .painel input, .painel select {
+            width: 100%; padding: 12px; background: var(--color-light);
+            border: 1px solid var(--color-card-border); border-radius: 6px; color: var(--color-text);
+            font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.3s;
+        }
+        .painel textarea:focus, .painel input:focus, .painel select:focus {
+            outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.1);
+        }
+        .painel label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--color-text-dim); font-size: 13px; }
+        
+        .btn {
+            padding: 12px 15px; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 600; transition: all 0.3s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;
+        }
+        .btn-primario { background: var(--color-primary); color: white; }
+        .btn-primario:hover { background: var(--color-primary-light); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 106, 0, 0.2); }
+        .btn-secundario { background: #e9ecef; color: var(--color-text); }
+        .btn-secundario:hover { background: #dee2e6; }
+
+        /* ESTILOS DO ANALISADOR HARMONIZADO */
+        .analisador-container { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; height: calc(100vh - 120px); }
+        .analisador-container .painel { margin-bottom: 0; }
+        .analisador-container textarea { flex-grow: 1; resize: none; }
+        .analisador-container .grupo-botoes { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .lista-nomes { overflow-y: auto; padding-right: 5px; }
+        .nome-item { padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; font-size: 13.5px; display: flex; justify-content: space-between; align-items: center; background: var(--color-light); border: 1px solid transparent; transition: all 0.2s; }
+        .nome-item:hover { border-color: var(--color-primary); }
+        .reconhecido { border-left: 3px solid #28a745; }
+        .pendente { border-left: 3px solid #ffc107; }
+        .acoes-pendente button { background: none; border: none; font-size: 1.1em; cursor: pointer; padding: 5px; color: var(--color-text-dim); transition: all 0.2s; }
+        .acoes-pendente button:hover { color: var(--color-primary); transform: scale(1.2); }
+
+        /* ESTILOS DO GERADOR DE RELATÓRIO */
+        .gerador-container .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .gerador-container .form-group { margin-bottom: 15px; }
+        .gerador-container .item-dinamico { border: 1px solid var(--color-card-border); padding: 15px; margin-bottom: 10px; border-radius: 6px; background: #fafafa; position: relative; }
+        .gerador-container .item-dinamico label { font-size: 12px; }
+        .gerador-container .btn-remover { position: absolute; top: 10px; right: 10px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .gerador-container pre { background: var(--color-light); padding: 15px; white-space: pre-wrap; border-radius: 6px; border: 1px solid var(--color-card-border); margin-top: 20px; }
+        
+        /* ESTILOS DO CONSTRUTOR DE ESCALAS */
+        .construtor-container { display: flex; flex-direction: column; gap: 20px; }
+        .construtor-container .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .construtor-container .form-group { margin-bottom: 15px; }
+        
+        .tabela-escala {
+            width: 100%; border-collapse: collapse; margin-top: 15px;
+        }
+        .tabela-escala th, .tabela-escala td {
+            padding: 12px; text-align: left; border: 1px solid var(--color-card-border);
+        }
+        .tabela-escala th {
+            background: var(--color-light); font-weight: 600; color: var(--color-dark);
+        }
+        .tabela-escala td input, .tabela-escala td select {
+            width: 100%; padding: 8px; border: 1px solid var(--color-card-border);
+            border-radius: 4px; font-size: 13px;
+        }
+        .tabela-escala .btn-remover {
+            background: #dc3545; color: white; border: none; padding: 6px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
+        .tabela-escala .btn-remover:hover {
+            background: #c82333;
+        }
+        
+        /* TEMPLATES RÁPIDOS GLOBAIS */
+        .templates-section {
+            background: var(--color-card-bg); padding: 20px; margin-bottom: 20px; border-radius: 8px;
+            border: 1px solid var(--color-card-border); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+        .templates-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: var(--color-dark); display: flex; align-items: center; gap: 8px; }
+        .templates-section h3 i { color: var(--color-primary); }
+        .template-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .template-button {
+            background: var(--color-primary); color: white; padding: 8px 16px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s;
+        }
+        .template-button:hover { background: var(--color-primary-light); transform: translateY(-1px); }
+
+        /* HISTÓRICO RÁPIDO */
+        .historico-rapido {
+            background: var(--color-card-bg); padding: 15px; margin-bottom: 20px; border-radius: 8px;
+            border: 1px solid var(--color-card-border); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        }
+        .historico-rapido h4 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--color-dark); display: flex; align-items: center; gap: 8px; }
+        .historico-rapido h4 i { color: var(--color-primary); }
+        .historico-item {
+            padding: 8px 12px; margin-bottom: 5px; border-radius: 4px; background: var(--color-light);
+            cursor: pointer; font-size: 12px; transition: all 0.2s; border-left: 3px solid var(--color-primary);
+        }
+        .historico-item:hover { background: #e9ecef; }
+
+        /* SALVAMENTO AUTOMÁTICO */
+        .auto-save-indicator {
+            position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white;
+            padding: 8px 12px; border-radius: 6px; font-size: 12px; opacity: 0;
+            transition: all 0.3s ease; z-index: 1000;
+        }
+        .auto-save-indicator.show { opacity: 1; }
+
+        /* ATALHOS DE TECLADO */
+        .atalhos-info {
+            position: fixed; bottom: 20px; left: 20px; background: var(--color-dark); color: white;
+            padding: 8px 12px; border-radius: 6px; font-size: 11px; opacity: 0.7;
+            transition: all 0.3s ease; cursor: pointer;
+        }
+        .atalhos-info:hover { opacity: 1; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="fifa-container">
+        <header class="fifa-header">
+            <div class="logo-text">GESTÃO INTEGRADA <span>VIA LIVRE</span></div>
+            <div class="user-profile">
+                <div class="user-avatar">OP</div>
+                <div>Operador</div>
+            </div>
+        </header>
+        
+        <main class="fifa-main">
+            <aside class="fifa-menu">
+                <div class="menu-section">
+                    <div class="section-title">Ferramentas</div>
+                    <div class="menu-item active" data-target="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </div>
+                    <div class="menu-item" data-target="analisador">
+                        <i class="fas fa-search"></i>
+                        <span>Analisador de Nomes</span>
+                    </div>
+                    <div class="menu-item" data-target="gerador">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Gerador de Relatório</span>
+                    </div>
+                    <div class="menu-item" data-target="construtor">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Construtor de Escalas</span>
+                    </div>
+                </div>
+            </aside>
+            
+            <div class="fifa-content" id="fifaContent">
+                <div class="content-section active" id="dashboard">
+                    <h2>Dashboard</h2>
+                    <p>Módulo de Dashboard a ser implementado.</p>
+                </div>
+                <div class="content-section" id="analisador">
+                    <!-- Template do Analisador será injetado aqui -->
+                </div>
+                <div class="content-section" id="gerador">
+                    <!-- Template do Gerador será injetado aqui -->
+                </div>
+                <div class="content-section" id="construtor">
+                    <!-- O conteúdo do nosso novo construtor será injetado aqui -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Indicadores globais -->
+    <div class="auto-save-indicator" id="autoSaveIndicator">
+        <i class="fas fa-save"></i> Salvo automaticamente
+    </div>
+    
+    <div class="atalhos-info" onclick="mostrarAtalhos()">
+        <i class="fas fa-keyboard"></i> Atalhos: Ctrl+S, Ctrl+L, Ctrl+C
+    </div>
+
+<script>
+
+// ==================================================
+// BANCO DE DADOS LOCAL (CONFIGURAÇÃO)
+// ==================================================
+const DADOS_MESTRES = {
+    operadores: [
+        "JAIRO LEITE", "THIAGO NOGUEIRA", "NEIRTON FREITAS",
+"CARLOS ALEX", "PEDRO LESSA DA SILVA JUNIOR", "DELUCAS VIALLY SOUSA DE ALMEIDA", 
+"LEONARDO ACÁCIO A FILHO", "ITALO FERNANDES", "CARLOS EDUARDO", "JOSÉ AIRTON BASTOS NETO",
+"WESLEY BACELAR", "JOÃO PAULO ARRUDA", "THAYANE SOARES", "CRISTIANO MIRANDA", "BRUNO CALACIO RICCIARDI", 
+"SIDNEY LUIZ ROCHA DE OLIVEIRA", "FRANCISCO LEONI VIEIRA DE OLIVEIRA", "RAIMUNDO NONATO PEREIRA DA SILVA",
+"DAVID VIANA ROQUE", "ANTONIO EMERSON MARÇAL FERREIRA", "PAULO SÉRGIO ROCHA PEREIRA",
+"JOÃO LUCAS DE OLIVEIRA PAIVA", "DOUGLAS MAIA DA SILVA", "JOAN SCIPIÃO PINHO", "UIRAQUÊ PINHEIRO DE ARAÚJO",
+"JULIO CESAR RODRIGUES DE OLIVEIRA", "EDILBERTO LEITE DA SILVA", "THIAGO CÉSAR DE OLIVEIRA COELHO",
+"BRUNO DE OLIVEIRA CLAUDIO", "WESLEY SILVA AMORIM", "DENIS ALVES DE SOUSA", 
+"EMANUEL PINHEIRO ALVES", "LUCAS CAVALCANTE DA SILVA", "FRANCISCO DANRLEI DA SILVA CAETANO",
+"MARLON PINHEIRO GOMES", "MIZAEL DE OLIVEIRA MENDES FILHO", "CARLOS ALBERTO RODRIGUES LIMA",
+"ANTÔNIO SALES ARAÚJO", "MAICON YURI MESQUITA FÉLIX", "SAMUEL SANTANA GAMILEIRA",
+"ANTONIO ANCHIETA DA SILVA", "ERICK DE SOUSA GONZAGA PIMENTA", "GENILSON CARVALHO DOS SANTOS",
+ "FABRÍCIO DOS SANTOS SOUZA", "BRUNO VINICÍUS GOMES DE LIMA", "YURI VICTOR NOGUEIRA DE BRITO", 
+ "MIGUEL CLÁUDIO MAIA", "ELIZIÁRIO DE SOUSA ABREU", "FRANCISCO ONILDO A SANTOS FILHO", 
+"FRANCISCO KAIQUE ALVES SAMPAIO", "FCO MÁRCIO RODRIGUES DAMASCENO", "RONALDO SILVA DE SOUZA", 
+"JOSÉ MOREIRA DO NASCIMENTO", "WILL ZAMISK DE LIMA PAIVA", "MARCELO ARAÚJO DOS SANTOS", 
+"JORGE LUIS CARDOSO", "PEDRO MARQUES PINTO JUNIOR", "JOSÉ ARY SANTIAGO", 
+"JOSE RONALDO GOMES DE LIMA", "PAULO EDUARDO TELES", "BRUNO DE ALBUQUERQUE QUEIROZ", 
+"GABRIEL RIBEIRO GUIMARÃES", "ROBSON BACELAR GALVÃO", "FELIPE RIBEIRO DA SILVA", 
+"ADAMS FIRMINO CASTRO", "FRANCISCO THIAGO DE LIMA OLIVEIRA", "FRANCISCO DE ASSIS LIMA JUNIOR", 
+"HUDSON EMILIANO FAHD PEREIRA"
+
+    ],
+    supervisores: [
+        "FRANCISCO HELDER SOUTO OLIVEIRA", "MARCOS DANILO DE SOUSA LIMA"
+    ],
+    auxiliares: [
+        "JAIRO LEITE", "THIAGO NOGUEIRA", "NEIRTON", "CARLOS ALEX"
+    ],    
+    
+    monitores: [
+        "JOÃO PAULO GONÇALVES DE ARRUDA", "THAYANNY SOARES", "CRISTIANO MIRANDA"
+    ],
+    locais: [
+        "RUA CÔNEGO DE CASTRO X RUA EDUARDO PERDIGÃO",
+        "RUA DOM PEDRO II X RUA EDUARDO PERDIGÃO", "RUA 15 NOVEMBRO X RUA PERU",
+        "AV. DUQUE DE CAXIAS X AV. 24 DE MAIO", "AV. DUQUE DE CAXIAS X AV. TRISTÃO GONÇALVES"
+     ],
+    tarefas: [
+        "CONTROLE DE TRÁFEGO", "SEMÁFORO PISCANTE", "APOIO A EVENTO",
+        "APOIO A OUTROS ORGÃOS", "SEMAFORO APAGADO"
+    ],
+    configTurnos: {
+        'MANHÃ': {
+            supervisor: 'FRANCISCO HELDER SOUTO OLIVEIRA',
+            monitor: 'JOÃO PAULO GONÇALVES DE ARRUDA'
+        },
+        'TARDE': {
+            supervisor: 'MARCOS DANILO DE SOUSA LIMA',
+            monitor: 'JOÃO PAULO GONÇALVES DE ARRUDA'
+        },
+        'NOITE': {
+            supervisor: 'JAIRO LEITE',
+            monitor: 'THIAGO NOGUEIRA'
+        }
+    }
+};
+
+// ===================================================================================
+// JAVASCRIPT HARMONIZADO
+// ===================================================================================
+
+// Estado global da aplicação
+let appState = {
+    currentForm: null,
+    currentModule: 'dashboard',
+    autoSaveEnabled: true,
+    autoSaveInterval: 30000,
+    upperCaseEnabled: true,
+    templates: {
+        analisador: [
+            { name: 'Relatório de Ocorrência', text: 'RELATÓRIO DE OCORRÊNCIA\n\nDATA: \nTURNO: \nSUPERVISOR: \n\nOCORRÊNCIAS:\n\n' },
+            { name: 'Lista de Agentes', text: 'LISTA DE AGENTES - TURNO \n\nSUPERVISOR: \nMONITOR: \n\nAGENTES:\n\n' },
+            { name: 'Ata de Reunião', text: 'ATA DE REUNIÃO\n\nDATA: \nPARTICIPANTES:\n\nPAUTA:\n\n' }
+        ],
+        turno: [
+            { 
+                name: 'Turno Manhã', 
+                data: { 
+                    turno: 'MANHÃ', 
+                    totalAgentes: '5',
+                    supervisor: 'FRANCISCO HELDER SOUTO OLIVEIRA',
+                    monitor: 'THIAGO NOGUEIRA',
+                    vlvt: 'VLVT01'
+                } 
+            },
+            { 
+                name: 'Turno Tarde', 
+                data: { 
+                    turno: 'TARDE', 
+                    totalAgentes: '4',
+                    supervisor: 'MARCOS DANILO DE SOUSA LIMA',
+                    monitor: 'JOÃO PAULO GONÇALVES DE ARRUDA',
+                    vlvt: 'VLVT02'
+                } 
+            },
+            { 
+                name: 'Turno Noite', 
+                data: { 
+                    turno: 'NOITE', 
+                    totalAgentes: '3',
+                    supervisor: 'JAIRO LEITE',
+                    monitor: 'THIAGO NOGUEIRA',
+                    vlvt: 'VLVT03'
+                } 
+            }
+        ],
+        semaforo: [
+            { 
+                name: 'Relatório Básico', 
+                data: { 
+                    totalOcorrencias: '10', 
+                    pendentes: '2', 
+                    normalizados: '8' 
+                } 
+            }
+        ]
+    },
+    historico: {
+        analisador: [],
+        gerador: []
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- LÓGICA DE NAVEGAÇÃO PRINCIPAL ---
+    const menuItems = document.querySelectorAll('.menu-item');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    const templateAnalisador = `
+        <div class="analisador-container">
+            <div class="painel">
+                <h2><i class="fas fa-paste"></i> Entrada de Dados</h2>
+                
+                <!-- Seletor de Tipo de Documento -->
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label>Tipo de documento:</label>
+                    <select id="tipoDocumento" onchange="aplicarTemplateAnalisador()">
+                        <option value="">Selecione o tipo...</option>
+                        <option value="relatorio">Relatório de Ocorrência</option>
+                        <option value="lista">Lista de Agentes</option>
+                        <option value="ata">Ata de Reunião</option>
+                        <option value="livre">Texto Livre</option>
+                    </select>
+                </div>
+
+                <!-- Templates Rápidos para Analisador -->
+                <div id="templatesAnalisador" class="templates-section" style="display: none;">
+                    <h3><i class="fas fa-bolt"></i> Templates Rápidos</h3>
+                    <div class="template-buttons" id="templateButtonsAnalisador"></div>
+                </div>
+
+                <textarea id="entrada" placeholder="Cole o texto para análise aqui..."></textarea>
+                <div class="grupo-botoes">
+                    <button class="btn btn-primario" onclick="iniciarAnalise()"><i class="fas fa-cogs"></i> Analisar</button>
+                    <button class="btn btn-secundario" onclick="limparTudoAnalisador()"><i class="fas fa-eraser"></i> Limpar</button>
+                    <button class="btn btn-secundario" onclick="copiarResultado()"><i class="fas fa-copy"></i> Copiar Resultado</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Histórico Rápido -->
+                <div id="historicoAnalisador" class="historico-rapido" style="display: none;">
+                    <h4><i class="fas fa-history"></i> Últimas Análises</h4>
+                    <div id="historicoItensAnalisador"></div>
+                </div>
+
+                <div id="area-resultados" style="display: grid; gap: 25px; grid-template-columns: 1fr 1fr;">
+                    <div class="painel" style="justify-content: center; align-items: center; color: var(--color-text-dim); grid-column: 1 / 3;">
+                        <p>Aguardando análise...</p>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    const templateGerador = `
+        <div class="gerador-container">
+            <div class="painel">
+                <h3><i class="fas fa-file-signature"></i> Gerador de Relatórios</h3>
+                <div class="form-group">
+                    <label>Selecione o tipo de relatório:</label>
+                    <select id="tipoRelatorio" onchange="mostrarFormulario()">
+                        <option value="">Selecione...</option>
+                        <option value="turno">Relatório de Turno</option>
+                        <option value="semaforo">Relatório de Atendimento Semafórico</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Histórico Rápido do Gerador -->
+            <div id="historicoGerador" class="historico-rapido" style="display: none;">
+                <h4><i class="fas fa-history"></i> Últimos Relatórios</h4>
+                <div id="historicoItensGerador"></div>
+            </div>
+
+            <div id="templatesSection" class="templates-section" style="display: none;">
+                <h3><i class="fas fa-bolt"></i> Templates Rápidos</h3>
+                <div class="template-buttons" id="templateButtons"></div>
+            </div>
+
+            <div id="formTurno" style="display: none;">
+                <div class="painel">
+                    <h3>Informações do Turno</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Turno:</label><input id="turno" type="text"></div>
+                        <div class="form-group"><label>Data:</label><input id="data" type="date"></div>
+                        <div class="form-group"><label>Total de Agentes:</label><input id="totalAgentes" type="number"></div>
+                        <div class="form-group"><label>Central:</label><input id="monitor" type="text"></div>
+                        <div class="form-group"><label>Supervisão:</label><input id="supervisor" type="text"></div>
+                        <div class="form-group"><label>VLVT:</label><input id="vlvt" type="text"></div>
+                    </div>
+                </div>
+                <div class="painel">
+                    <h3>Ocorrências</h3>
+                    <div id="ocorrenciasContainer"></div>
+                    <button type="button" class="btn btn-secundario" onclick="adicionarOcorrencia()">Adicionar Ocorrência</button>
+                </div>
+                <button class="btn btn-primario" onclick="gerarRelatorioTurno()">Gerar Relatório de Turno</button>
+            </div>
+
+            <div id="formSemaforo" style="display: none;">
+                <div class="painel">
+                    <h3>Informações Gerais</h3>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Data:</label><input id="dataSemaforo" type="date"></div>
+                        <div class="form-group"><label>Total de Ocorrências:</label><input id="totalOcorrencias" type="number"></div>
+                        <div class="form-group"><label>Pendentes:</label><input id="pendentes" type="number"></div>
+                        <div class="form-group"><label>Normalizados:</label><input id="normalizados" type="number"></div>
+                    </div>
+                </div>
+                <div class="painel">
+                    <h3>Detalhes dos Atendimentos</h3>
+                    <div class="form-group"><label>Atendidos pelo Via Livre:</label><textarea id="atendidosViaLivre" rows="3"></textarea></div>
+                    <div class="form-group"><label>Atendidos pela AMC:</label><textarea id="atendidosAMC" rows="3"></textarea></div>
+                    <div class="form-group"><label>Pendentes / Outros Motivos:</label><textarea id="pendentesOutros" rows="3"></textarea></div>
+                </div>
+                <div class="painel">
+                    <h3>Aguardando Atendimento</h3>
+                    <div id="aguardandoContainer"></div>
+                    <button type="button" class="btn btn-secundario" onclick="adicionarAguardando()">Adicionar Item</button>
+                </div>
+                <div class="painel">
+                    <h3>Sem Necessidade de Operação</h3>
+                    <div class="form-group"><textarea id="semNecessidade" rows="3"></textarea></div>
+                </div>
+                <button class="btn btn-primario" onclick="gerarRelatorioSemaforo()">Gerar Relatório Semafórico</button>
+            </div>
+
+            <pre id="saida" style="display: none;"></pre>
+        </div>`;
+
+    const templateConstrutor = `
+        <div class="construtor-container">
+            <!-- PAINEL DE CONTROLES -->
+            <div class="painel">
+                <h2><i class="fas fa-cogs"></i> Controles da Escala</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Data da Escala:</label>
+                        <input type="date" id="escalaData">
+                    </div>
+                    <div class="form-group">
+                        <label>Turno:</label>
+                        <select id="escalaTurno" onchange="preencherPorTurno(this.value)">
+                            <option value="">Selecione o Turno...</option>
+                            <option value="MANHÃ">MANHÃ (5:30 ÀS 11:30)</option>
+                            <option value="TARDE">TARDE (10:30 ÀS 16:30)</option>
+                            <option value="NOITE">NOITE (15:30 ÀS 21:30)</option>
+                            <option value="EVENTO">EVENTO (Horário Customizado)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Auxiliar:</label>
+                        <select id="escalaSupervisor">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Monitor da Central:</label>
+                        <select id="escalaMonitor">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELA DA ESCALA (A PARTE INTERATIVA) -->
+            <div class="painel">
+                <h3><i class="fas fa-clipboard-list"></i> Montagem da Escala</h3>
+                <table class="tabela-escala">
+                    <thead>
+                        <tr>
+                            <th>Local (Ponto de Serviço)</th>
+                            <th>Orientador(es) / Equipe</th>
+                            <th>Observação / Tarefa</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabelaEscala">
+                        <!-- As linhas dos postos serão adicionadas aqui -->
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-secundario" onclick="adicionarPostoEscala()">
+                        <i class="fas fa-plus-circle"></i> Adicionar Posto
+                    </button>
+                </div>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO FINAL -->
+            <div class="painel" style="background: var(--color-dark);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="color: white;"><i class="fas fa-check-double"></i> Finalizar</h3>
+                    <div class="grupo-botoes">
+                        <button class="btn btn-secundario" onclick="salvarRascunhoEscala()">
+                            <i class="fas fa-save"></i> Salvar Rascunho
+                        </button>
+                        <button class="btn btn-primario" onclick="exportarEscalaVisual()">
+                            <i class="fas fa-file-export"></i> Exportar Visualização
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    function carregarModulo(targetId) {
+        menuItems.forEach(i => i.classList.remove('active'));
+        document.querySelector(`.menu-item[data-target="${targetId}"]`).classList.add('active');
+        
+        contentSections.forEach(section => section.classList.remove('active'));
+        const targetSection = document.getElementById(targetId);
+        targetSection.classList.add('active');
+        
+        appState.currentModule = targetId;
+
+        if (targetId === 'analisador' && !targetSection.innerHTML.includes('analisador-container')) {
+            targetSection.innerHTML = templateAnalisador;
+            carregarHistoricoAnalisador();
+            setupAutoSave();
+        } else if (targetId === 'gerador' && !targetSection.innerHTML.includes('gerador-container')) {
+            targetSection.innerHTML = templateGerador;
+            setDefaultDate();
+            carregarHistoricoGerador();
+            setupAutoSave();
+        } else if (targetId === 'construtor' && !targetSection.innerHTML.includes('construtor-container')) {
+            targetSection.innerHTML = templateConstrutor; 
+            inicializarConstrutor(); 
+        }
+    }
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', () => carregarModulo(item.dataset.target));
+    });
+
+    carregarModulo('dashboard');
+
+    // Configurar conversão automática para maiúsculo
+    document.addEventListener('input', function(e) {
+        if (appState.upperCaseEnabled && e.target.matches('input[type="text"]:not([data-no-uppercase])')) {
+            const cursorPos = e.target.selectionStart;
+            e.target.value = e.target.value.toUpperCase();
+            e.target.setSelectionRange(cursorPos, cursorPos);
+        }
+    });
+
+    // Configurar atalhos de teclado globais
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 's':
+                    e.preventDefault();
+                    salvarRascunhoSilencioso();
+                    break;
+                case 'l':
+                    e.preventDefault();
+                    if (appState.currentModule === 'analisador') {
+                        limparTudoAnalisador();
+                    }
+                    break;
+                case 'c':
+                    e.preventDefault();
+                    if (appState.currentModule === 'analisador') {
+                        copiarResultado();
+                    }
+                    break;
+            }
+        }
+    });
+});
+
+// =================================================================
+// FUNÇÕES DO CONSTRUTOR DE ESCALAS
+// =================================================================
+
+function inicializarConstrutor() {
+    // --- LÓGICA DE PREENCHIMENTO DOS MENUS <SELECT> ---
+    const supervisorSelect = document.getElementById('escalaSupervisor');
+    const monitorSelect = document.getElementById('escalaMonitor');
+
+    // Limpa opções antigas para evitar duplicação
+    supervisorSelect.innerHTML = '<option value="">Selecione...</option>';
+    monitorSelect.innerHTML = '<option value="">Selecione...</option>';
+
+    // Popula o select de Supervisores
+    DADOS_MESTRES.supervisores.forEach(nome => {
+        supervisorSelect.innerHTML += `<option value="${nome}">${nome}</option>`;
+    });
+
+    // Popula o select de Monitores
+    DADOS_MESTRES.monitores.forEach(nome => {
+        monitorSelect.innerHTML += `<option value="${nome}">${nome}</option>`;
+    });
+
+    // --- LÓGICA DA DATA ---
+    const dataInput = document.getElementById('escalaData');
+    const dataInicial = new Date().toISOString().split('T')[0];
+    dataInput.value = dataInicial;
+
+    // --- LÓGICA DOS DATALISTS ---
+    function criarOuAtualizarDatalist(id, dados) {
+        let datalist = document.getElementById(id);
+        if (!datalist) {
+            datalist = document.createElement('datalist');
+            datalist.id = id;
+            document.body.appendChild(datalist);
+        }
+        datalist.innerHTML = ''; 
+        dados.forEach(item => {
+            datalist.innerHTML += `<option value="${item}"></option>`;
+        });
+    }
+    criarOuAtualizarDatalist('locais-lista', DADOS_MESTRES.locais);
+    criarOuAtualizarDatalist('tarefas-lista', DADOS_MESTRES.tarefas);
+
+    // Adiciona a primeira linha da tabela, se ela estiver vazia
+    const corpoTabela = document.getElementById('corpoTabelaEscala');
+    if (corpoTabela && corpoTabela.rows.length === 0) {
+        adicionarPostoEscala(); 
+    }
+}
+
+function preencherPorTurno(turnoSelecionado) {
+    const config = DADOS_MESTRES.configTurnos[turnoSelecionado];
+    
+    const supervisorSelect = document.getElementById('escalaSupervisor');
+    const monitorSelect = document.getElementById('escalaMonitor');
+
+    if (config) {
+        // Se encontrou uma configuração para o turno, seleciona o supervisor e monitor
+        supervisorSelect.value = config.supervisor;
+        monitorSelect.value = config.monitor;
+    } else {
+        // Se for 'EVENTO' ou 'Selecione...', limpa os campos
+        supervisorSelect.value = '';
+        monitorSelect.value = '';
+    }
+}
+
+function adicionarPostoEscala() {
+    const corpoTabela = document.getElementById('corpoTabelaEscala');
+    const novaLinha = corpoTabela.insertRow();
+
+    // Célula 1: Local (com Datalist)
+    novaLinha.insertCell().innerHTML = `
+        <input type="text" list="locais-lista" placeholder="Digite ou selecione o local...">
+    `;
+
+    // Célula 2: Equipe (com Choices.js)
+    const celulaEquipe = novaLinha.insertCell();
+    const selectId = `equipe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    celulaEquipe.innerHTML = `<select id="${selectId}" multiple></select>`;
+    
+    // Verifica se Choices.js está disponível antes de usar
+    if (typeof Choices !== 'undefined') {
+        new Choices(`#${selectId}`, {
+            removeItemButton: true,
+            placeholder: true,
+            placeholderValue: 'Selecione os operadores...',
+            choices: DADOS_MESTRES.operadores.map(nome => ({ value: nome, label: nome }))
+        });
+    } else {
+        // Fallback caso Choices.js não esteja carregado
+        const select = document.getElementById(selectId);
+        DADOS_MESTRES.operadores.forEach(nome => {
+            const option = document.createElement('option');
+            option.value = nome;
+            option.textContent = nome;
+            select.appendChild(option);
+        });
+    }
+
+    // Célula 3: Tarefa (com Datalist)
+    novaLinha.insertCell().innerHTML = `
+        <input type="text" list="tarefas-lista" placeholder="Digite ou selecione a tarefa...">
+    `;
+
+    // Célula 4: Ações (botão de remover)
+    novaLinha.insertCell().innerHTML = `
+        <button class="btn-remover" onclick="this.closest('tr').remove()">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+}
+
+function salvarRascunhoEscala() {
+    const dadosEscala = coletarDadosEscala();
+    localStorage.setItem('rascunho_escala', JSON.stringify(dadosEscala));
+    showAutoSaveIndicator();
+}
+
+function coletarDadosEscala() {
+    const dados = {
+        data: document.getElementById('escalaData').value,
+        turno: document.getElementById('escalaTurno').value,
+        supervisor: document.getElementById('escalaSupervisor').value,
+        monitor: document.getElementById('escalaMonitor').value,
+        postos: []
+    };
+
+    const linhas = document.querySelectorAll('#corpoTabelaEscala tr');
+    linhas.forEach(linha => {
+        const local = linha.cells[0].querySelector('input').value;
+        const tarefa = linha.cells[2].querySelector('input').value;
+        
+        // Para a equipe, verifica se é um select múltiplo do Choices.js
+        const selectEquipe = linha.cells[1].querySelector('select');
+        let equipe = [];
+        if (selectEquipe) {
+            equipe = Array.from(selectEquipe.selectedOptions).map(option => option.value);
+        }
+
+        if (local || tarefa || equipe.length > 0) {
+            dados.postos.push({ local, equipe, tarefa });
+        }
+    });
+
+    return dados;
+}
+
+function exportarEscalaVisual() {
+    const dados = coletarDadosEscala();
+    
+    if (!dados.data || !dados.turno) {
+        alert('Por favor, preencha pelo menos a data e o turno da escala.');
+        return;
+    }
+
+    // Gerar HTML da visualização final
+    const htmlVisual = gerarHTMLEscala(dados);
+    
+    // Abrir em nova janela
+    const novaJanela = window.open('', '_blank');
+    novaJanela.document.write(htmlVisual);
+    novaJanela.document.close();
+}
+
+function gerarHTMLEscala(dados) {
+    const dataFormatada = new Date(dados.data + 'T00:00:00').toLocaleDateString('pt-BR');
+    
+    let html = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Escala de Trabalho - ${dataFormatada}</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .cabecalho { text-align: center; margin-bottom: 30px; }
+            .logo { color: #FF6A00; font-weight: bold; font-size: 24px; }
+            .info-escala { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+            .tabela-escala { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            .tabela-escala th, .tabela-escala td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+            .tabela-escala th { background: #f8f9fa; font-weight: bold; }
+            .secao-supervisao { background: #e8f5e8; }
+            .secao-viaturas { background: #fff3cd; }
+            .secao-locais { background: #f8d7da; }
+            @media print { body { margin: 0; } }
+        </style>
+    </head>
+    <body>
+        <div class="cabecalho">
+            <div class="logo">VIA LIVRE</div>
+            <h1>SUPERVISÃO E MONITORAMENTO</h1>
+            <h2>${dados.turno}</h2>
+            <h3>${dataFormatada}</h3>
+        </div>
+
+        <div class="info-escala">
+            <strong>Supervisor de Campo:</strong> ${dados.supervisor || 'Não informado'}<br>
+            <strong>Monitor da Central:</strong> ${dados.monitor || 'Não informado'}
+        </div>
+
+        <table class="tabela-escala">
+            <thead>
+                <tr>
+                    <th>LOCAL</th>
+                    <th>ORIENTADOR</th>
+                    <th>OBSERVAÇÕES</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    dados.postos.forEach(posto => {
+        const equipeTexto = posto.equipe.join(', ') || 'Não definido';
+        html += `
+                <tr>
+                    <td>${posto.local || 'Local não informado'}</td>
+                    <td>${equipeTexto}</td>
+                    <td>${posto.tarefa || 'Tarefa não informada'}</td>
+                </tr>`;
+    });
+
+    html += `
+            </tbody>
+        </table>
+    </body>
+    </html>`;
+
+    return html;
+}
+
+// --- FUNÇÕES UTILITÁRIAS GLOBAIS ---
+function setDefaultDate() {
+    const today = new Date().toISOString().split('T')[0];
+    const dataField = document.getElementById('data');
+    const dataSemaforoField = document.getElementById('dataSemaforo');
+    if (dataField) dataField.value = today;
+    if (dataSemaforoField) dataSemaforoField.value = today;
+}
+
+function setupAutoSave() {
+    if (!appState.autoSaveEnabled) return;
+    
+    setInterval(() => {
+        if (appState.currentForm || appState.currentModule === 'analisador') {
+            salvarRascunhoSilencioso();
+        }
+    }, appState.autoSaveInterval);
+}
+
+function showAutoSaveIndicator() {
+    const indicator = document.getElementById('autoSaveIndicator');
+    indicator.classList.add('show');
+    setTimeout(() => indicator.classList.remove('show'), 2000);
+}
+
+function mostrarAtalhos() {
+    alert(`Atalhos de Teclado Globais:
+
+Ctrl + S: Salvar automaticamente
+Ctrl + L: Limpar tudo (no analisador)
+Ctrl + C: Copiar resultado (no analisador)
+
+Dicas:
+• Todos os campos de texto são convertidos automaticamente para maiúsculo
+• O sistema salva automaticamente a cada 30 segundos
+• Use os templates rápidos para acelerar o preenchimento
+• O histórico mostra as últimas 3 operações realizadas`);
+}
+
+// --- FUNÇÕES DO ANALISADOR HARMONIZADO ---
+const nomesCadastrados = [ "FRANCISCO HELDER SOUTO OLIVEIRA", "MARCOS DANILO DE SOUSA LIMA", "JAIRO LEITE", "THIAGO NOGUEIRA", "JOÃO PAULO GONÇALVES DE ARRUDA", "JOÃO LUCAS DE OLIVEIRA PAIVA", "SIDNEY LUIZ ROCHA DE OLIVEIRA", "EDILBERTO LEITE DA SILVA", "JULIO CESAR RODRIGUES DE OLIVEIRA", "WESLEY SILVA AMORIM", "UIRAQUÊ PINHEIRO DE ARAÚJO", "THIAGO CÉSAR DE OLIVEIRA COELHO", "DENIS ALVES DE SOUSA", "DAVID VIANA ROQUE", "ANTONIO EMERSON MARÇAL FERREIRA", "PAULO SÉRGIO ROCHA PEREIRA", "BRUNO CALACIO RICCIARDI", "FRANCISCO LEONI VIEIRA DE OLIVEIRA", "DOUGLAS MAIA DA SILVA", "JOAN SCIPIÃO PINHO" ];
+let nomesAprendidos = JSON.parse(localStorage.getItem('nomesAprendidos_v7') || '{}');
+let ignorados = JSON.parse(localStorage.getItem('nomesIgnorados_v7') || '[]');
+
+function normalizar(texto) { return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
+function getTodosNomesConhecidos() { const s = new Set(nomesCadastrados); Object.values(nomesAprendidos).forEach(n => s.add(n)); return Array.from(s).sort((a, b) => b.length - a.length); }
+function buscarNomesConhecidos(texto) { const f = new Set(); let r = ` ${texto} `; const k = Object.keys(nomesAprendidos); const l = [...new Set([...getTodosNomesConhecidos(), ...k])]; l.sort((a, b) => b.length - a.length); l.forEach(i => { const x = new RegExp(`\\b${i.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi'); if (x.test(r)) { const o = nomesAprendidos[i.toLowerCase()] || i; f.add(o.toUpperCase()); r = r.replace(x, ' '); } }); return { reconhecidos: Array.from(f), textoRestante: r }; }
+function analisarCandidatos(texto) { const p = new Set(); const w = texto.trim().split(/\s+/); for (let t = 2; t <= 4; t++) { for (let i = 0; i <= w.length - t; i++) { const c = w.slice(i, i + t).join(" "); if (isNaN(c) && c.match(/[a-zA-Z]/) && !ignorados.includes(normalizar(c))) { p.add(c); } } } return Array.from(p); }
+
+function aplicarTemplateAnalisador() {
+    const tipo = document.getElementById('tipoDocumento').value;
+    const templatesSection = document.getElementById('templatesAnalisador');
+    const templateButtons = document.getElementById('templateButtonsAnalisador');
+    
+    if (tipo && tipo !== 'livre') {
+        templatesSection.style.display = 'block';
+        templateButtons.innerHTML = '';
+        
+        appState.templates.analisador.forEach(template => {
+            const button = document.createElement('button');
+            button.className = 'template-button';
+            button.textContent = template.name;
+            button.onclick = () => {
+                document.getElementById('entrada').value = template.text;
+                salvarRascunhoSilencioso();
+            };
+            templateButtons.appendChild(button);
+        });
+    } else {
+        templatesSection.style.display = 'none';
+    }
+}
+
+function iniciarAnalise() {
+    const textoOriginal = document.getElementById('entrada').value;
+    if (!textoOriginal.trim()) return;
+    
+    // Salvar no histórico
+    adicionarAoHistorico('analisador', textoOriginal.substring(0, 50) + '...');
+    
+    const areaResultados = document.getElementById('area-resultados');
+    areaResultados.innerHTML = '';
+    const { reconhecidos, textoRestante } = buscarNomesConhecidos(textoOriginal);
+    const pendentes = analisarCandidatos(textoRestante);
+    
+    if (reconhecidos.length === 0 && pendentes.length === 0) { 
+        areaResultados.innerHTML = `<div class="painel" style="justify-content: center; align-items: center; color: var(--color-text-dim); grid-column: 1 / 3;"><p>Nenhum nome relevante identificado.</p></div>`; 
+        return; 
+    }
+    
+    const colunaReconhecidosHTML = `<div class="painel"><h2><i class="fas fa-check-circle"></i> Reconhecidos (${reconhecidos.length})</h2><input type="text" id="campo-busca-reconhecidos" placeholder="Buscar..." onkeyup="filtrarNomesReconhecidos()"><div class="lista-nomes" id="lista-reconhecidos"></div></div>`;
+    areaResultados.innerHTML = colunaReconhecidosHTML;
+    
+    if (reconhecidos.length > 0) { 
+        reconhecidos.sort((a, b) => a.localeCompare(b)); 
+        const div = document.getElementById('lista-reconhecidos'); 
+        reconhecidos.forEach(n => { 
+            div.innerHTML += `<div class="nome-item reconhecido">${n}</div>`; 
+        }); 
+    }
+    
+    const colunaPendentes = document.createElement('div');
+    colunaPendentes.className = 'painel';
+    const cabecalhoPendentes = `<div style="display: flex; justify-content: space-between; align-items: center;"><h2><i class="fas fa-question-circle"></i> Para Validação (${pendentes.length})</h2>${pendentes.length > 0 ? '<button id="btn-ignorar-tudo" class="btn btn-secundario" style="padding:8px 12px; font-size:12px; flex-grow:0;"><i class="fas fa-ban"></i> Ignorar Tudo</button>' : ''}</div>`;
+    colunaPendentes.innerHTML = `${cabecalhoPendentes}<input type="text" id="campo-busca-pendentes" placeholder="Buscar..." onkeyup="filtrarNomesPendentes()"><div class="lista-nomes" id="lista-pendentes"></div>`;
+    areaResultados.appendChild(colunaPendentes);
+    
+    if (pendentes.length > 0) { 
+        document.getElementById('btn-ignorar-tudo').onclick = () => ignorarTodosPendentes(pendentes); 
+        pendentes.sort((a, b) => a.localeCompare(b)); 
+        const div = document.getElementById('lista-pendentes'); 
+        pendentes.forEach(p => { 
+            const id = `cand-${p.replace(/[^a-zA-Z0-9]/g, '_')}`; 
+            div.innerHTML += `<div class="nome-item pendente" id="${id}"><span>${p}</span><div class="acoes-pendente"><button title="Confirmar" onclick="confirmar('${p}')">✅</button><button title="Ignorar" onclick="ignorar('${p}', '${id}')">❌</button></div></div>`; 
+        }); 
+    }
+}
+
+function confirmar(candidato) { 
+    const nomeCorrigido = prompt(`Confirme ou corrija o nome para: "${candidato}"`, candidato); 
+    if (nomeCorrigido && nomeCorrigido.trim().length > 3) { 
+        nomesAprendidos[normalizar(candidato)] = nomeCorrigido.trim().toUpperCase(); 
+        localStorage.setItem('nomesAprendidos_v7', JSON.stringify(nomesAprendidos)); 
+        iniciarAnalise(); 
+    } 
+}
+
+function ignorar(candidato, elementoId) { 
+    const chave = normalizar(candidato); 
+    if (!ignorados.includes(chave)) { 
+        ignorados.push(chave); 
+        localStorage.setItem('nomesIgnorados_v7', JSON.stringify(ignorados)); 
+    } 
+    document.getElementById(elementoId)?.remove(); 
+}
+
+function ignorarTodosPendentes(pendentes) { 
+    if (!confirm('Tem certeza?')) return; 
+    pendentes.forEach(c => { 
+        const k = normalizar(c); 
+        if (!ignorados.includes(k)) ignorados.push(k); 
+    }); 
+    localStorage.setItem('nomesIgnorados_v7', JSON.stringify(ignorados)); 
+    iniciarAnalise(); 
+}
+
+function limparTudoAnalisador() { 
+    document.getElementById('entrada').value = ''; 
+    document.getElementById('tipoDocumento').value = '';
+    document.getElementById('templatesAnalisador').style.display = 'none';
+    document.getElementById('area-resultados').innerHTML = `<div class="painel" style="justify-content: center; align-items: center; color: var(--color-text-dim); grid-column: 1 / 3;"><p>Aguardando análise...</p></div>`; 
+}
+
+function copiarResultado() {
+    const reconhecidos = Array.from(document.querySelectorAll('#lista-reconhecidos .nome-item')).map(item => item.textContent);
+    if (reconhecidos.length > 0) {
+        const texto = reconhecidos.join('\n');
+        navigator.clipboard.writeText(texto).then(() => {
+            showAutoSaveIndicator();
+        });
+    }
+}
+
+function filtrarNomesReconhecidos() { 
+    const t = normalizar(document.getElementById('campo-busca-reconhecidos').value); 
+    document.querySelectorAll('#lista-reconhecidos .nome-item').forEach(i => { 
+        i.style.display = normalizar(i.textContent).includes(t) ? 'flex' : 'none'; 
+    }); 
+}
+
+function filtrarNomesPendentes() { 
+    const t = normalizar(document.getElementById('campo-busca-pendentes').value); 
+    document.querySelectorAll('#lista-pendentes .nome-item').forEach(i => { 
+        i.style.display = normalizar(i.querySelector('span').textContent).includes(t) ? 'flex' : 'none'; 
+    }); 
+}
+
+// --- FUNÇÕES DO GERADOR DE RELATÓRIO ---
+function mostrarFormulario() {
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const formTurno = document.getElementById('formTurno');
+    const formSemaforo = document.getElementById('formSemaforo');
+    const templatesSection = document.getElementById('templatesSection');
+    
+    // Esconder todos os formulários
+    formTurno.style.display = 'none';
+    formSemaforo.style.display = 'none';
+    templatesSection.style.display = 'none';
+    
+    if (tipo === 'turno') {
+        appState.currentForm = 'turno';
+        formTurno.style.display = 'block';
+        templatesSection.style.display = 'block';
+        loadTemplates('turno');
+        carregarRascunhoAutomatico();
+    } else if (tipo === 'semaforo') {
+        appState.currentForm = 'semaforo';
+        formSemaforo.style.display = 'block';
+        templatesSection.style.display = 'block';
+        loadTemplates('semaforo');
+        carregarRascunhoAutomatico();
+    } else {
+        appState.currentForm = null;
+    }
+}
+
+function loadTemplates(type) {
+    const templateButtons = document.getElementById('templateButtons');
+    templateButtons.innerHTML = '';
+    
+    appState.templates[type].forEach(template => {
+        const button = document.createElement('button');
+        button.className = 'template-button';
+        button.textContent = template.name;
+        button.onclick = () => applyTemplate(template.data);
+        templateButtons.appendChild(button);
+    });
+}
+
+function applyTemplate(templateData) {
+    Object.keys(templateData).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            element.value = templateData[key];
+        }
+    });
+}
+
+function adicionarOcorrencia() {
+    const container = document.getElementById('ocorrenciasContainer');
+    const novoItem = document.createElement('div');
+    novoItem.className = 'item-dinamico';
+    novoItem.innerHTML = `
+        <button type="button" class="btn-remover" onclick="this.parentNode.remove()"><i class="fas fa-times"></i></button>
+        <div class="form-grid">
+            <div class="form-group"><label>QRU:</label><input type="text" class="qru-ocorrencia"></div>
+            <div class="form-group"><label>QTH:</label><input type="text" class="qth-ocorrencia"></div>
+            <div class="form-group"><label>VT:</label><input type="text" class="vt-ocorrencia"></div>
+            <div class="form-group"><label>Equipe:</label><input type="text" class="equipe-ocorrencia"></div>
+        </div>`;
+    container.appendChild(novoItem);
+}
+
+function adicionarAguardando() {
+    const container = document.getElementById('aguardandoContainer');
+    const novoItem = document.createElement('div');
+    novoItem.className = 'item-dinamico';
+    novoItem.innerHTML = `
+        <button type="button" class="btn-remover" onclick="this.parentNode.remove()"><i class="fas fa-times"></i></button>
+        <div class="form-grid">
+            <div class="form-group"><label>Código:</label><input type="text" class="codigo-aguardando"></div>
+            <div class="form-group"><label>Endereço:</label><input type="text" class="endereco-aguardando"></div>
+            <div class="form-group"><label>Status:</label><input type="text" class="status-aguardando"></div>
+        </div>`;
+    container.appendChild(novoItem);
+}
+
+function gerarRelatorioTurno() {
+    const get = id => document.getElementById(id)?.value.trim().toUpperCase();
+    let texto = `TURNO: ${get("turno")}\nDATA: ${document.getElementById("data").value}\n`;
+    texto += `TOTAL AGENTES: ${get("totalAgentes")}\nCENTRAL: ${get("monitor")}\nSUPERVISÃO: ${get("supervisor")}\nVLVT: ${get("vlvt")}\n`;
+    document.querySelectorAll('.item-dinamico').forEach(item => {
+        if(item.querySelector('.qru-ocorrencia')) {
+            const qru = item.querySelector('.qru-ocorrencia')?.value.trim().toUpperCase();
+            texto += `\nQRU: ${qru}\nQTH: ${item.querySelector('.qth-ocorrencia')?.value.trim().toUpperCase()}\nVT: ${item.querySelector('.vt-ocorrencia')?.value.trim().toUpperCase()}\nEQUIPE: ${item.querySelector('.equipe-ocorrencia')?.value.trim().toUpperCase()}\n`;
+        }
+    });
+    mostrarRelatorio(texto);
+    adicionarAoHistorico('gerador', `Relatório de Turno - ${get("turno")}`);
+}
+
+function gerarRelatorioSemaforo() {
+    const get = id => document.getElementById(id)?.value.trim();
+    const getText = id => get(id)?.toUpperCase();
+    let texto = "";
+    const dataSemaforo = get("dataSemaforo");
+    if (dataSemaforo) { const dataObj = new Date(dataSemaforo); texto += `RELATÓRIO DE ATENDIMENTO SEMAFÓRICO – ${dataObj.toLocaleDateString('pt-BR', {timeZone: 'UTC'})}\n`; }
+    texto += `Ocorrências de Apagados/Piscantes (${get("totalOcorrencias") || 0})\n`;
+    texto += `Pendentes (${get("pendentes") || 0})\n`;
+    texto += `Normalizados (${get("normalizados") || 0})\n`;
+    texto += `\nATENDIDOS PELO VIA LIVRE:\n${getText("atendidosViaLivre")}\n`;
+    texto += `\nATENDIDOS PELA AMC:\n${getText("atendidosAMC")}\n`;
+    texto += `\nPENDENTES / OUTROS MOTIVOS:\n${getText("pendentesOutros")}\n`;
+    const aguardandoItems = document.querySelectorAll('#aguardandoContainer .item-dinamico');
+    if (aguardandoItems.length > 0) {
+        texto += `\n- - Aguardando atendimento:\n`;
+        aguardandoItems.forEach(item => {
+            const codigo = item.querySelector('.codigo-aguardando')?.value.trim().toUpperCase();
+            const endereco = item.querySelector('.endereco-aguardando')?.value.trim().toUpperCase();
+            const status = item.querySelector('.status-aguardando')?.value.trim().toUpperCase();
+            if (codigo || endereco || status) {
+                texto += `${codigo || "---"}\t${endereco || "---"} - ${status || "---"}\n`;
+            }
+        });
+    }
+    const semNecessidade = getText("semNecessidade");
+    if (semNecessidade) {
+        texto += `\n- - Sem necessidade de operação:\n${semNecessidade}\n`;
+    }
+    mostrarRelatorio(texto);
+    adicionarAoHistorico('gerador', 'Relatório Semafórico');
+}
+
+function mostrarRelatorio(texto) {
+    const saidaElement = document.getElementById("saida");
+    saidaElement.textContent = texto;
+    saidaElement.style.display = "block";
+    saidaElement.scrollIntoView({ behavior: 'smooth' });
+}
+
+// --- FUNÇÕES DE HISTÓRICO ---
+function adicionarAoHistorico(modulo, descricao) {
+    if (!appState.historico[modulo]) appState.historico[modulo] = [];
+    
+    appState.historico[modulo].unshift({
+        descricao: descricao,
+        timestamp: new Date().toLocaleString('pt-BR')
+    });
+    
+    // Manter apenas os últimos 3 itens
+    if (appState.historico[modulo].length > 3) {
+        appState.historico[modulo] = appState.historico[modulo].slice(0, 3);
+    }
+    
+    // Salvar no localStorage
+    localStorage.setItem('historico_sistema', JSON.stringify(appState.historico));
+    
+    // Atualizar exibição
+    if (modulo === 'analisador') {
+        carregarHistoricoAnalisador();
+    } else if (modulo === 'gerador') {
+        carregarHistoricoGerador();
+    }
+}
+
+function carregarHistoricoAnalisador() {
+    const historico = JSON.parse(localStorage.getItem('historico_sistema') || '{}');
+    if (historico.analisador) {
+        appState.historico.analisador = historico.analisador;
+    }
+    
+    const container = document.getElementById('historicoAnalisador');
+    const itens = document.getElementById('historicoItensAnalisador');
+    
+    if (appState.historico.analisador.length > 0) {
+        container.style.display = 'block';
+        itens.innerHTML = '';
+        appState.historico.analisador.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'historico-item';
+            div.innerHTML = `<strong>${item.descricao}</strong><br><small>${item.timestamp}</small>`;
+            itens.appendChild(div);
+        });
+    }
+}
+
+function carregarHistoricoGerador() {
+    const historico = JSON.parse(localStorage.getItem('historico_sistema') || '{}');
+    if (historico.gerador) {
+        appState.historico.gerador = historico.gerador;
+    }
+    
+    const container = document.getElementById('historicoGerador');
+    const itens = document.getElementById('historicoItensGerador');
+    
+    if (appState.historico.gerador.length > 0) {
+        container.style.display = 'block';
+        itens.innerHTML = '';
+        appState.historico.gerador.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'historico-item';
+            div.innerHTML = `<strong>${item.descricao}</strong><br><small>${item.timestamp}</small>`;
+            itens.appendChild(div);
+        });
+    }
+}
+
+// --- FUNÇÕES DE SALVAMENTO ---
+function salvarRascunhoSilencioso() {
+    if (appState.currentModule === 'analisador') {
+        const entrada = document.getElementById('entrada')?.value;
+        if (entrada) {
+            localStorage.setItem('rascunho_analisador', entrada);
+            showAutoSaveIndicator();
+        }
+    } else if (appState.currentForm) {
+        const formData = coletarDadosFormulario();
+        const key = `rascunho_${appState.currentForm}`;
+        localStorage.setItem(key, JSON.stringify(formData));
+        showAutoSaveIndicator();
+    }
+}
+
+function carregarRascunhoAutomatico() {
+    const key = `rascunho_${appState.currentForm}`;
+    const savedData = localStorage.getItem(key);
+    
+    if (savedData) {
+        const formData = JSON.parse(savedData);
+        preencherFormulario(formData);
+    }
+}
+
+function coletarDadosFormulario() {
+    const formData = {};
+    const form = document.getElementById(appState.currentForm === 'turno' ? 'formTurno' : 'formSemaforo');
+    const inputs = form.querySelectorAll('input, textarea, select');
+    
+    inputs.forEach(input => {
+        if (input.id) {
+            formData[input.id] = input.value;
+        }
+    });
+    
+    return formData;
+}
+
+function preencherFormulario(formData) {
+    Object.keys(formData).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+            element.value = formData[key];
+        }
+    });
+}
+
+</script>
+</body>
+</html>
+
