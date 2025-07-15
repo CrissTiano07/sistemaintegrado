@@ -412,8 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3><i class="fas fa-bolt"></i> Templates Rápidos</h3>
                     <div class="template-buttons" id="templateButtonsAnalisador"></div>
                 </div>
-
-                
+                                
                 <div class="grupo-botoes">
                     <button class="btn btn-primario" onclick="iniciarAnalise()"><i class="fas fa-cogs"></i> Analisar</button>
                     <button class="btn btn-secundario" onclick="limparTudoAnalisador()"><i class="fas fa-eraser"></i> Limpar</button>
@@ -1144,7 +1143,8 @@ function adicionarAguardando() {
 
 function gerarRelatorioTurno() {
     const get = id => document.getElementById(id)?.value.trim().toUpperCase();
-    let texto = `TURNO: ${get("turno")}\nDATA: ${document.getElementById("data").value}\n`;
+    const dataBr = new Date(document.getElementById("data").value + 'T00:00:00').toLocaleDateString('pt-BR');
+let texto = `TURNO: ${get("turno")}\nDATA: ${dataBr}\n`;
     texto += `TOTAL AGENTES: ${get("totalAgentes")}\nCENTRAL: ${get("monitor")}\nSUPERVISÃO: ${get("supervisor")}\nVLVT: ${get("vlvt")}\n`;
     document.querySelectorAll('.item-dinamico').forEach(item => {
         if(item.querySelector('.qru-ocorrencia')) {
