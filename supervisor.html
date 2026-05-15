@@ -124,7 +124,7 @@
 </div>
 
 <script>
-    // 1. Configuração Firebase com a Barra Final
+    // 1. Configuração Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0",
         authDomain: "nit-operacional.firebaseapp.com",
@@ -135,25 +135,22 @@
         appId: "1:823046484118:web:487159cabb28ae275bd2b7"
     };
 
-    // 2. Inicialização Segura
+    // 2. Inicialização
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
 
-    // 3. Renderização dos Cards
+    // 3. Renderização
     function renderCards(dados) {
         const container = document.getElementById('list-wrap');
         container.innerHTML = '';
-
-        // Converter objeto do Firebase em Array e ordenar por tempo (mais recentes primeiro)
         const lista = Object.keys(dados).map(key => ({ id: key, ...dados[key] }));
         
         lista.reverse().forEach(item => {
             const card = document.createElement('div');
             card.className = 'card';
             
-            // Lógica de Status para cor vermelha em "Aguardando"
             let statusClass = 'status-aguardando';
             let statusLabel = 'Aguardando';
 
@@ -177,7 +174,7 @@
         });
     }
 
-    // 4. Escuta em Tempo Real (Ouvinte Principal)
+    // 4. Monitoramento (Corrigido)
     function iniciarMonitoramento() {
         const dot = document.getElementById('sync-dot');
         const txt = document.getElementById('status-text');
@@ -186,22 +183,22 @@
             const data = snapshot.val();
             if (data) {
                 renderCards(data);
-                dot.style.background = "#3fb950"; // Verde se houver dados
+                dot.style.background = "#3fb950"; // Verde
                 txt.innerText = "NIT · Supervisor Online";
             } else {
                 document.getElementById('list-wrap').innerHTML = '<p style="text-align:center; color:var(--tx3); margin-top:40px;">Nenhuma ocorrência ativa.</p>';
-                dot.style.background = var(--blu);
+                dot.style.background = "#4A9EFF"; // Azul (Corrigido aqui)
                 txt.innerText = "NIT · Banco Vazio";
             }
         }, (error) => {
             console.error(error);
             txt.innerText = "NIT · Erro de Conexão";
-            dot.style.background = "#ff3333";
+            dot.style.background = "#ff3333"; // Vermelho
         });
     }
 
     document.addEventListener('DOMContentLoaded', iniciarMonitoramento);
 </script>
-
+    
 </body>
 </html>
