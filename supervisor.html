@@ -392,11 +392,44 @@ try {
   console.warn('[NIT] Firebase init falhou:', e.message);
 }
 
-/* PATCH: raiz explícita '/' — evita PERMISSION_DENIED com regras por nó */
-function fbUpdate(updates) {
-  if (!_db) return;
-  _db.ref('/').update(updates).catch(e => console.warn('[NIT] update error:', e.message));
+/* ══ NIT API CONFIG ══════════════════════════════════════════════════ *//* ══ NIT API CONFIG ══════════════════════════════════════════════════ */
+window.NIT_API_URL = 'https://nit-backend-production.up.railway.app';
+window.NIT_SECRET  = 'NIT_INTEGRADO_20052026_da822f90-45aa-42ca-ba07-3443d0ffd730';
+
+/**
+ * nitFetch — wrapper autenticado para a NIT API.
+ * Envia X-NIT-Key e retorna a Promise da resposta JSON.
+ * Em caso de falha de rede (API offline), chama onFallback se fornecido.
+ */
+function nitFetch(rota, body, onFallback) {
+  const url = (window.NIT_API_URL).replace(/\/$/, '') + rota;
+  return fetch(url, {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-NIT-Key':    window.NIT_SECRET,
+    },
+    body: JSON.stringify(body),
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    return res.json();
+  })
+  .catch(err => {
+    const isOffline = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
+    if (isOffline && onFallback) {
+      console.warn('[NIT] API offline — fallback local:', err.message);
+      onFallback();
+      return null;
+    }
+    throw err;
+  });
 }
+
+/* Firebase ainda é usado APENAS para leitura (.on('value')) */
 
 /* ══ ESTADO ═══════════════════════════════════════════════════════════ */
 let D            = [];
@@ -805,22 +838,29 @@ function confirmarDespacho(e, cod) {
   const sub = dispSub[cod] || 'vl';
   const ts  = Date.now();
 
+  // Snapshot para rollback
+  const snap = { pl: D[idx].pl, sub: D[idx].sub, eq: D[idx].eq, vt: D[idx].vt, ts: D[idx].ts };
+
+  // Atualização otimista local
   D[idx].eq = eq; D[idx].vt = vt; D[idx].ts = ts; D[idx].novo = false;
-  if (sub === 'sn') { D[idx].pl = 'sn'; D[idx].sub = null; }
-  else              { D[idx].pl = 'atend'; D[idx].sub = sub; }
+  if (sub === 'sn') { D[idx].pl = 'sn';    D[idx].sub = null; }
+  else              { D[idx].pl = 'atend';  D[idx].sub = sub;  }
 
   dispatching = null; expanded = cod;
   render();
 
-  fbUpdate({
-    [`ocorrencias/${cod}/eq`]:  eq   || null,
-    [`ocorrencias/${cod}/vt`]:  vt   || null,
-    [`ocorrencias/${cod}/pl`]:  D[idx].pl,
-    [`ocorrencias/${cod}/sub`]: D[idx].sub,
-    [`ocorrencias/${cod}/ts`]:  ts,
-    'meta/lastUpdate':           ts,
+  nitFetch('/despacho', { cod, eq, vt, sub },
+    // fallback: API offline — estado local mantido, sem rollback
+    () => showToast(`${cod} salvo localmente`)
+  )
+  .then(data => {
+    if (data) showToast(`${cod} → ${sub === 'sn' ? 'Sem necess.' : (eq || sub.toUpperCase())}`);
+  })
+  .catch(() => {
+    // Rollback em caso de erro real (403, 409, etc.)
+    if (idx >= 0) { Object.assign(D[idx], snap); render(); }
+    showToast(`Erro ao despachar ${cod}`);
   });
-  showToast(`${cod} → ${sub === 'sn' ? 'Sem necess.' : (eq || sub.toUpperCase())}`);
 }
 
 /* Normalizar */
@@ -830,17 +870,25 @@ function normalizar(e, cod) {
   if (idx < 0) return;
   const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   const ts    = Date.now();
-  D[idx].pl = 'norm'; D[idx].sub = null; D[idx].fim = agora; D[idx].ts = ts; D[idx].novo = false;
+
+  // Snapshot para rollback
+  const snap = { pl: D[idx].pl, sub: D[idx].sub, fim: D[idx].fim, ts: D[idx].ts };
+
+  // Atualização otimista — sub NÃO é alterado (preserva histórico)
+  D[idx].pl = 'norm'; D[idx].fim = agora; D[idx].ts = ts; D[idx].novo = false;
   expanded = null; dispatching = null;
   render();
-  fbUpdate({
-    [`ocorrencias/${cod}/pl`]:  'norm',
-    [`ocorrencias/${cod}/sub`]: null,
-    [`ocorrencias/${cod}/fim`]: agora,
-    [`ocorrencias/${cod}/ts`]:  ts,
-    'meta/lastUpdate':           ts,
+
+  nitFetch('/normalizar', { cod, fim: agora },
+    () => showToast(`${cod} normalizado (local)`)
+  )
+  .then(data => {
+    if (data) showToast(`${cod} normalizado às ${agora}`);
+  })
+  .catch(() => {
+    if (idx >= 0) { Object.assign(D[idx], snap); render(); }
+    showToast(`Erro ao normalizar ${cod}`);
   });
-  showToast(`${cod} normalizado às ${agora}`);
 }
 
 /* Reativar */
@@ -849,17 +897,25 @@ function reativar(e, cod) {
   const idx = D.findIndex(d => d.cod === cod);
   if (idx < 0) return;
   const ts = Date.now();
-  D[idx].pl = 'espera'; D[idx].sub = null; D[idx].fim = ''; D[idx].ts = ts; D[idx].novo = true;
+
+  // Snapshot para rollback
+  const snap = { pl: D[idx].pl, sub: D[idx].sub, fim: D[idx].fim, ts: D[idx].ts };
+
+  // Atualização otimista — sub preservado
+  D[idx].pl = 'espera'; D[idx].fim = ''; D[idx].ts = ts; D[idx].novo = true;
   expanded = null;
   render();
-  fbUpdate({
-    [`ocorrencias/${cod}/pl`]:  'espera',
-    [`ocorrencias/${cod}/sub`]: null,
-    [`ocorrencias/${cod}/fim`]: null,
-    [`ocorrencias/${cod}/ts`]:  ts,
-    'meta/lastUpdate':           ts,
+
+  nitFetch('/reativar', { cod },
+    () => showToast(`${cod} reativado (local)`)
+  )
+  .then(data => {
+    if (data) showToast(`${cod} reativado`);
+  })
+  .catch(() => {
+    if (idx >= 0) { Object.assign(D[idx], snap); render(); }
+    showToast(`Erro ao reativar ${cod}`);
   });
-  showToast(`${cod} reativado`);
 }
 
 /* WhatsApp com d.tel do Firebase */
