@@ -13,8 +13,8 @@
          Prod: troque pela URL do Railway após o primeiro deploy
     ──────────────────────────────────────────────────────────────────── -->
     <script>
-        window.NIT_API_URL = 'https://nit-backend-production.up.railway.app';
-        window.NIT_SECRET = 'NIT_INTEGRADO_20052026_da822f90-45aa-42ca-ba07-3443d0ffd730';
+        window.NIT_API_URL = 'http://127.0.0.1:8000';
+        // Prod: window.NIT_API_URL = 'https://nit-api-production.up.railway.app';
     </script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.min.js"></script>
@@ -2526,10 +2526,7 @@
 
                 fetch(`${NIT_API_URL}/despacho`, {
                     method:  'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-NIT-Key': window.NIT_SECRET // <--- chave Railway
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
                 })
                 .then(async res => {
@@ -2564,7 +2561,7 @@
 
                 mostrarUndoToast(
                     `${cod} normalizado — Desfazer`,
-                    // onCommit: confirma — grava Firebase + histórico local
+                    // onCommit: confirma — grava via API + histórico local
                     () => {
                         gravarHistoricoFirebase(
                             cod,
@@ -2575,19 +2572,32 @@
                             'desktop'
                         );
                         registrarAcao(`Card '${cod}' normalizado (confirmado).`);
-                        // Escreve no Firebase se disponível (falha silenciosa)
-                        window.NitFirebase.exec((db, ref, update) => {
-                            const upd = {
-                                [`ocorrencias/${cod}/pl`]:  'norm',
-                                [`ocorrencias/${cod}/sub`]: null,
-                                [`ocorrencias/${cod}/ts`]:  Date.now(),
-                                [`meta/lastUpdate`]:         Date.now(),
-                            };
-                            update(ref(db, '/'), upd).catch(err =>
-                                console.warn('[NIT] Firebase normalizar write error:', err)
-                            );
+
+                        // Migrado para NIT API — Firebase Admin no Railway
+                        const NIT_API_URL = (window.NIT_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+                        fetch(`${NIT_API_URL}/normalizar`, {
+                            method:  'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-NIT-Key':    window.NIT_SECRET || '',
+                            },
+                            body: JSON.stringify({ cod }),
+                        })
+                        .then(res => {
+                            if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
+                            return res.json();
+                        })
+                        .then(() => showToast(`${cod} normalizado!`, 'success'))
+                        .catch(err => {
+                            const isOffline = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
+                            if (isOffline) {
+                                console.warn('[NIT] API offline — normalizar salvo localmente');
+                                showToast(`${cod} normalizado (local).`, 'info');
+                            } else {
+                                console.warn('[NIT] API normalizar error:', err.message);
+                                showToast(`Erro ao normalizar ${cod}: ${err.message}`, 'error');
+                            }
                         });
-                        showToast(`${cod} normalizado!`, 'success');
                     },
                     // onUndo: reverte para coluna de origem
                     () => {
