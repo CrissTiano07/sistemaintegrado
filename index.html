@@ -14,7 +14,7 @@
     ──────────────────────────────────────────────────────────────────── -->
     <script>
         window.NIT_API_URL = 'https://nit-backend-production.up.railway.app';
-    </script>
+        window.NIT_SECRET = 'NIT_INTEGRADO_20052026_da822f90-45aa-42ca-ba07-3443d0ffd730';
     </script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.min.js"></script>
@@ -2526,7 +2526,10 @@
 
                 fetch(`${NIT_API_URL}/despacho`, {
                     method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-NIT-Key': window.NIT_SECRET // <--- chave Railway
+                    },
                     body: JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
                 })
                 .then(async res => {
