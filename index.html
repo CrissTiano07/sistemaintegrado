@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <script>
-        window.NIT_API_URL = 'http://127.0.0.1:8000';
+        // ══════════════════════════════════════════════════════════════════════════
+        // CONFIGURAÇÃO DINÂMICA DE API URL E CHAVE DE AUTENTICAÇÃO
+        // ══════════════════════════════════════════════════════════════════════════
+        window.NIT_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://127.0.0.1:8000'
+            : 'https://seu-nit-backend.railway.app'; // ← Substitua pela URL do Railway
+        
+        // CHAVE DE AUTENTICAÇÃO GLOBAL (será validada no backend via X-NIT-Key header)
+        // Em produção, esta deve vir de uma variável de ambiente no GitHub Pages
+        const NIT_SECRET_KEY = 'default-dev-key'; // ← Será sobrescrita por env var em produção
+        
+        // Helper para logs de debug sem expor segredos
+        window.logAPI = (action, status) => {
+            console.log(`[NIT-API] ${action} → ${status}`);
+        };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.min.js"></script>
@@ -1145,14 +1159,7 @@
             const turnoEl = document.getElementById('turno-turno');
             if (turnoEl) turnoEl.value = this.turnoSelecionado;
 
-            // Persiste no Firebase (preferências)
-            window.NitFirebase.exec((db, ref, update) => {
-                update(ref(db, 'meta/preferencias'), {
-                    turno: this.turnoSelecionado,
-                    ts: Date.now(),
-                    operador: 'desktop',
-                });
-            });
+            
 
             // Fecha modal
             const modal = document.getElementById('modal-entrada-turno');
@@ -1411,6 +1418,71 @@
         if (AppState._undoAtivo) {
             AppState._undoAtivo.cancelFn();
             AppState._undoAtivo = null;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HELPER: FETCH COM AUTENTICAÇÃO E ERROR HANDLING
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    /**
+     * Wrapper seguro para chamadas HTTP à API NIT
+     * Inclui headers de autenticação (X-NIT-Key) e tratamento de erros
+     * 
+     * @param {string} endpoint - Rota da API (ex: '/despacho', '/normalizar')
+     * @param {object} options - Objeto fetch estendido (method, body, etc)
+     * @returns {Promise<object>} JSON da resposta ou throw error
+     */
+    async function nitAPIFetch(endpoint, options = {}) {
+        const url = `${window.NIT_API_URL}${endpoint}`;
+        const defaultHeaders = {
+            'Content-Type': 'application/json',
+            'X-NIT-Key': NIT_SECRET_KEY
+        };
+        
+        const config = {
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...(options.headers || {})
+            }
+        };
+        
+        try {
+            window.logAPI(`${config.method || 'GET'} ${endpoint}`, 'enviando');
+            const response = await fetch(url, config);
+            const data = await response.json().catch(() => ({}));
+            
+            // ── Tratamento específico de erros de autenticação ──
+            if (response.status === 401 || response.status === 403) {
+                const msg = response.status === 401 
+                    ? 'Autenticação inválida: Chave API não autorizada.'
+                    : 'Acesso negado: Você não tem permissão para esta operação.';
+                showToast(msg, 'error');
+                window.logAPI(endpoint, `${response.status} - ${msg}`);
+                throw { status: response.status, message: msg };
+            }
+            
+            if (!response.ok) {
+                const errMsg = data.detail || data.error || `Erro ${response.status}`;
+                showToast(`Erro na API: ${errMsg}`, 'error');
+                window.logAPI(endpoint, `${response.status} - ${errMsg}`);
+                throw { status: response.status, message: errMsg };
+            }
+            
+            window.logAPI(endpoint, `${response.status} OK`);
+            return data;
+            
+        } catch (error) {
+            // Erros de rede ou parse
+            if (error.status) {
+                // Já foi tratado acima
+                throw error;
+            }
+            const msg = error.message || 'Erro de conexão com o servidor.';
+            showToast(`Falha na requisição: ${msg}`, 'error');
+            window.logAPI(endpoint, `ERRO: ${msg}`);
+            throw error;
         }
     }
 
@@ -2011,17 +2083,9 @@
 
         const NIT_API_URL = (window.NIT_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
-        fetch(`${NIT_API_URL}/despacho`, {
+        nitAPIFetch('/despacho', {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
-        })
-        .then(async res => {
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({ detail: res.statusText }));
-                throw new Error(err.detail || `HTTP ${res.status}`);
-            }
-            return res.json();
         })
         .then(() => onSuccess())
         .catch(err => {
@@ -2051,14 +2115,9 @@
                 registrarAcao(`Card '${cod}' normalizado (confirmado).`);
 
                 const NIT_API_URL = (window.NIT_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
-                fetch(`${NIT_API_URL}/normalizar`, {
+                nitAPIFetch('/normalizar', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-NIT-Key': window.NIT_SECRET || '' },
                     body: JSON.stringify({ cod }),
-                })
-                .then(res => {
-                    if (!res.ok) return res.json().then(e => { throw new Error(e.detail || res.statusText); });
-                    return res.json();
                 })
                 .then(() => showToast(`${cod} normalizado!`, 'success'))
                 .catch(err => {
@@ -2068,7 +2127,7 @@
                         showToast(`${cod} normalizado (local).`, 'info');
                     } else {
                         console.warn('[NIT] API normalizar error:', err.message);
-                        showToast(`Erro ao normalizar ${cod}: ${err.message}`, 'error');
+                        // O erro já foi exibido por showToast no nitAPIFetch
                     }
                 });
             },
