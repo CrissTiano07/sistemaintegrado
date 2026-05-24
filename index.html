@@ -1592,15 +1592,19 @@
                 kanbanRef.on('value', (snapshot) => {
                     const dados = snapshot.val() || {};
                     
-                    // ── Limpar todas as colunas ──
+                    // ── Limpar todas as colunas (incluindo gaveta de normalizados) ──
                     document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
+                    const gavetaContainer = document.getElementById('coluna-normalizados');
+                    if (gavetaContainer) gavetaContainer.innerHTML = '';
 
                     // ── Reconstruir Kanban com dados do Firebase ──
                     Object.keys(dados).forEach(cod => {
                         const cardData = dados[cod];
                         const coluna = cardData.coluna || 'coluna-espera';
+                        // coluna-normalizados é o próprio container (gaveta); demais têm filho .kanban-cards-container
                         const containerSelector = `#${coluna} .kanban-cards-container`;
-                        const container = document.querySelector(containerSelector);
+                        const container = document.querySelector(containerSelector)
+                                       || document.getElementById(coluna);
                         
                         if (container) {
                             const cardElement = Semaforo.criarElementoCard(`card-${cod}`, {
