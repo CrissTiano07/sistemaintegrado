@@ -2,6 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
     <script>
         // ══════════════════════════════════════════════════════════════════════════
         // CONFIGURAÇÃO DINÂMICA DE API URL E CHAVE DE AUTENTICAÇÃO
@@ -20,20 +24,18 @@
         // CONFIGURAÇÃO DO CONFIG OFICIAL DO FIREBASE (NIT OPERACIONAL)
         // ══════════════════════════════════════════════════════════════════════════
         const firebaseConfig = {
-            apiKey: "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0",
+            apiKey: "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0", 
             authDomain: "nit-operacional.firebaseapp.com",
             databaseURL: "https://nit-operacional-default-rtdb.firebaseio.com/",
             projectId: "nit-operacional",
-            storageBucket: "nit-operacional.appspot.com",
-            messagingSenderId: "823046484118", // Cole aqui o número que aparecer no seu painel (se tiver)
-            appId: "1:823046484118:web:487159cabb28ae275bd2b7" // Cole aqui o ID do App que aparecer no seu painel (se tiver)
+            storageBucket: "nit-operacional.appspot.com"
         };
 
-        // Inicialização clássica (Compat v10 que o NIT usa)
+        // Inicializa o Firebase usando a biblioteca que carregamos acima
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
-        window.db = firebase.database(); // Expõe o banco de dados globalmente para o sistema
+        window.db = firebase.database(); // Expõe o banco globalmente para os módulos
     </script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.min.js"></script>
