@@ -8,19 +8,37 @@
         // ══════════════════════════════════════════════════════════════════════════
         window.NIT_API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://127.0.0.1:8000'
-            : 'https://nit-backend-production.up.railway.app/'; // ← Substitua pela URL do Railway
+            : 'https://nit-backend-production.up.railway.app/'; 
         
-        // CHAVE DE AUTENTICAÇÃO GLOBAL (será validada no backend via X-NIT-Key header)
-        // Em produção, esta deve vir de uma variável de ambiente no GitHub Pages
-        const NIT_SECRET_KEY = 'default-dev-key'; // ← Será sobrescrita por env var em produção
+        const NIT_SECRET_KEY = 'default-dev-key'; 
         
-        // Helper para logs de debug sem expor segredos
         window.logAPI = (action, status) => {
             console.log(`[NIT-API] ${action} → ${status}`);
         };
+
+        // ══════════════════════════════════════════════════════════════════════════
+        // CONFIGURAÇÃO DO CONFIG OFICIAL DO FIREBASE (NIT OPERACIONAL)
+        // ══════════════════════════════════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0",
+            authDomain: "nit-operacional.firebaseapp.com",
+            databaseURL: "https://nit-operacional-default-rtdb.firebaseio.com/",
+            projectId: "nit-operacional",
+            storageBucket: "nit-operacional.appspot.com",
+            messagingSenderId: "823046484118", // Cole aqui o número que aparecer no seu painel (se tiver)
+            appId: "1:823046484118:web:487159cabb28ae275bd2b7" // Cole aqui o ID do App que aparecer no seu painel (se tiver)
+        };
+
+        // Inicialização clássica (Compat v10 que o NIT usa)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        window.db = firebase.database(); // Expõe o banco de dados globalmente para o sistema
     </script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NIT — Painel de Gestão Integrada v12.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
