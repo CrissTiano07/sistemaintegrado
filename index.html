@@ -1,3 +1,16 @@
+index.html
+//1. Link  
+//2. Código 
+//3. Console 
+//
+
+
+
+
+NIT: https://crisstiano07.github.io/sistemaintegrado/
+
+index: 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1670,6 +1683,7 @@
 
             if (!painelJaPreenchido) {
                 AppState.totalOcorrenciasCriadas = eventosValidos.length;
+                const batchFirebase = {};
                 eventosValidos.forEach(cardData => {
                     const statusFinal = this.avaliarStatus(cardData);
                     const cardElement = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, cardData);
@@ -1681,7 +1695,34 @@
                     } else {
                         document.querySelector('#coluna-espera .kanban-cards-container').appendChild(cardElement);
                     }
+                    // ── Acumula para gravação em batch no Firebase ──
+                    const colunaMap = { 'NORMALIZADO': 'coluna-normalizados', 'SEM_NECESSIDADE': 'coluna-sem-necessidade' };
+                    batchFirebase[cardData.codigo] = {
+                        coluna:      colunaMap[statusFinal] || 'coluna-espera',
+                        codigo:      cardData.codigo,
+                        endereco:    cardData.endereco    || '',
+                        problema:    cardData.problema    || '',
+                        observacoes: cardData.observacoes || '',
+                        tipo:        cardData.tipo        || '',
+                        status:      statusFinal,
+                        equipe:      cardData.equipe      || '',
+                        viatura:     cardData.viatura     || '',
+                        inicio:      cardData.inicio      || '',
+                        pl:          cardData.pl          || '',
+                        sub:         cardData.sub         || '',
+                        operador:    'desktop',
+                        turno:       ModalEntradaTurno.turnoSelecionado || '',
+                        ts:          Date.now(),
+                    };
                 });
+                // ── Grava todos de uma vez no Firebase (1 write = N cards) ──
+                try {
+                    window.NitFirebase.exec((db, ref, update) => {
+                        update(ref(db, 'kanban'), batchFirebase);
+                    });
+                } catch (err) {
+                    console.warn('[NIT] Erro ao gravar batch no Firebase:', err);
+                }
                 showToast(`${eventosValidos.length} ocorrência(s) processada(s).`, 'success');
             } else {
                 const mapaCardsAtuais = new Map();
@@ -1736,6 +1777,34 @@
                 case 'NORMALIZADO':     DOM.colunaNormalizados.appendChild(cardElement); break;
                 case 'SEM_NECESSIDADE': document.getElementById('coluna-sem-necessidade').querySelector('.kanban-cards-container').appendChild(cardElement); break;
                 default:                document.querySelector('#coluna-espera .kanban-cards-container').appendChild(cardElement); break;
+            }
+
+            // ── Grava no Firebase para sincronizar todos os clientes ──
+            const colunaMap = { 'NORMALIZADO': 'coluna-normalizados', 'SEM_NECESSIDADE': 'coluna-sem-necessidade' };
+            const coluna    = colunaMap[status] || 'coluna-espera';
+            const cod       = cardData.codigo;
+            try {
+                window.NitFirebase.exec((db, ref, update) => {
+                    update(ref(db, `kanban/${cod}`), {
+                        coluna,
+                        codigo:      cod,
+                        endereco:    cardData.endereco    || '',
+                        problema:    cardData.problema    || '',
+                        observacoes: cardData.observacoes || '',
+                        tipo:        cardData.tipo        || '',
+                        status:      status,
+                        equipe:      cardData.equipe      || '',
+                        viatura:     cardData.viatura     || '',
+                        inicio:      cardData.inicio      || '',
+                        pl:          cardData.pl          || '',
+                        sub:         cardData.sub         || '',
+                        operador:    'desktop',
+                        turno:       ModalEntradaTurno.turnoSelecionado || '',
+                        ts:          Date.now(),
+                    });
+                });
+            } catch (err) {
+                console.warn(`[NIT] Erro ao gravar card ${cod} no Firebase:`, err);
             }
         },
 
@@ -2124,51 +2193,38 @@
         _commitDespachoFirebase(card, equipe, vt, tipo, plAnterior, subAnterior, eqAnterior, vtAnterior) {
             const cod = card.dataset.codigo;
 
-            const onSuccess = () => {
-                showToast('Despacho salvo!', 'success');
-                registrarAcao(`Despacho '${cod}': ${equipe||'N/I'}, VT ${vt||'N/I'} → ${tipo.toUpperCase()}.`);
+            // ── Grava no Firebase primeiro — fonte única de verdade ──
+            // Todos os clientes conectados serão atualizados via .on('value')
+            try {
+                window.NitFirebase.exec((db, ref, update) => {
+                    update(ref(db, `kanban/${cod}`), {
+                        coluna:    tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`,
+                        pl:        tipo === 'sn' ? 'sn' : 'atend',
+                        sub:       tipo,
+                        equipe:    equipe || '',
+                        viatura:   vt || 'N/I',
+                        operador:  'desktop',
+                        turno:     ModalEntradaTurno.turnoSelecionado || '',
+                        ts:        Date.now(),
+                    });
+                });
                 gravarHistoricoFirebase(cod, plAnterior, 'atend', tipo, equipe, vt, 'desktop');
-            };
+                registrarAcao(`Despacho '${cod}': ${equipe||'N/I'}, VT ${vt||'N/I'} → ${tipo.toUpperCase()}.`);
+                showToast(`${cod} → ${tipo === 'sn' ? 'Sem necess.' : (equipe || tipo.toUpperCase())}`, 'success');
+            } catch (err) {
+                console.warn('[NIT] Erro ao gravar despacho no Firebase:', err);
+                showToast(`Erro ao despachar ${cod}. Tente novamente.`, 'error');
+                return;
+            }
 
-            const onFallback = () => {
-                showToast('Despacho salvo localmente.', 'info');
-                registrarAcao(`Despacho local '${cod}': ${equipe||'N/I'}, VT ${vt||'N/I'} → ${tipo.toUpperCase()}.`);
-            };
-
-            const onRollback = (err) => {
-                console.warn('[NIT] API despacho error:', err);
-                card.dataset.equipe  = eqAnterior;
-                card.dataset.viatura = vtAnterior;
-                card.dataset.pl      = plAnterior;
-                card.dataset.sub     = subAnterior || '';
-                const di = card.querySelector('.card-despacho-info');
-                if (eqAnterior || vtAnterior) {
-                    di.innerHTML = `<strong>Equipe:</strong> ${eqAnterior||'N/I'} | <strong>VT:</strong> ${vtAnterior||'N/I'}`;
-                    di.style.display = 'block';
-                } else {
-                    di.style.display = 'none';
-                }
-                const colunaOrig = plAnterior === 'espera'
-                    ? document.querySelector('#coluna-espera .kanban-cards-container')
-                    : document.querySelector(`#coluna-${subAnterior || 'espera'} .kanban-cards-container`);
-                if (colunaOrig) colunaOrig.appendChild(card);
-                this.atualizarPainel();
-                showToast(`Falha ao salvar despacho de ${cod}. Revertido.`, 'error');
-            };
-
+            // ── Notifica API Railway em paralelo (log/histórico backend) ──
             nitAPIFetch('/despacho', {
-                method:  'POST',
-                body: JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
-            })
-            .then(() => onSuccess())
-            .catch(err => {
+                method: 'POST',
+                body:   JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
+            }).catch(err => {
+                // API offline não reverte — Firebase já sincronizou todos os clientes
                 const isOffline = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
-                if (isOffline) {
-                    console.warn('[NIT] API offline — fallback local:', err.message);
-                    onFallback();
-                } else {
-                    onRollback(err);
-                }
+                if (!isOffline) console.warn('[NIT] API despacho error (não crítico):', err);
             });
         },
 
