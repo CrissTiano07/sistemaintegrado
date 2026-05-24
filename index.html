@@ -1,3 +1,16 @@
+index.html
+//1. Link  
+//2. Código 
+//3. Console 
+//
+
+
+
+
+NIT: https://crisstiano07.github.io/sistemaintegrado/
+
+index: 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -39,6 +52,7 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NIT — Painel de Gestão Integrada v12.0</title>
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -1928,8 +1942,11 @@
             };
             const totalNormalizados = contadores.normalizados;
             const totalPendentes = Object.values(contadores).reduce((a, b) => a + b, 0) - totalNormalizados;
+            // OCORRÊNCIAS = total de cards no DOM (independe de AppState — sincroniza em todos os browsers)
+            const totalOcorrencias = Object.values(contadores).reduce((a, b) => a + b, 0);
+            AppState.totalOcorrenciasCriadas = totalOcorrencias;
 
-            DOM.displayTotal.textContent = AppState.totalOcorrenciasCriadas;
+            DOM.displayTotal.textContent = totalOcorrencias;
             DOM.displayPendentes.textContent = totalPendentes;
             DOM.displayNormalizados.textContent = totalNormalizados;
             DOM.countNormalizadosGaveta.textContent = totalNormalizados;
