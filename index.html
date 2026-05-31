@@ -457,103 +457,43 @@
         .card-count.tem-novos { position: relative; }
         .card-count.tem-novos::after { content: ''; position: absolute; top: -4px; right: -6px; width: 8px; height: 8px; background-color: var(--color-primary); border-radius: 50%; }
 
-        /* ── MODAL DE ENTRADA DE TURNO ─────────────────────────────── */
-        .modal-entrada-turno {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(15, 23, 42, 0.95);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-            visibility: visible;
+        /* ── MODAL LOGIN ────────────────────────────────────────────── */
+        .nit-login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15,23,42,0.97); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 1; visibility: visible; transition: opacity .3s, visibility .3s;
         }
-
-        .modal-entrada-turno.hidden {
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-            pointer-events: none;
+        .nit-login-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .nit-login-box {
+            background: var(--color-surface); border-radius: var(--radius-lg);
+            padding: 36px 32px; max-width: 380px; width: 90%; text-align: center;
+            box-shadow: 0 24px 64px rgba(0,0,0,.5); border: 1px solid var(--color-border);
         }
-
-        .modal-entrada-container {
-            background-color: var(--color-surface);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            max-width: 420px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        .nit-login-logo { font-size: 32px; font-weight: 700; color: var(--color-primary); letter-spacing: -1px; margin-bottom: 4px; }
+        .nit-login-sub  { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 2px; }
+        .nit-login-field { margin-bottom: 16px; text-align: left; }
+        .nit-login-field label { display: block; font-size: 11px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .8px; }
+        .nit-login-field input, .nit-login-field select {
+            width: 100%; box-sizing: border-box; padding: 10px 14px;
+            background: var(--color-bg); border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm); color: var(--color-text-primary);
+            font-size: 14px; font-family: var(--font-family-sans);
+            transition: border-color .2s;
         }
-
-        .modal-entrada-titulo {
-            font-size: 24px;
-            font-weight: var(--font-weight-bold);
-            color: var(--color-text-primary);
-            margin-bottom: var(--space-3);
+        .nit-login-field input:focus, .nit-login-field select:focus {
+            outline: none; border-color: var(--color-primary);
         }
-
-        .modal-entrada-desc {
-            font-size: var(--font-size-base);
-            color: var(--color-text-secondary);
-            margin-bottom: var(--space-4);
-            line-height: 1.5;
+        .nit-login-btn {
+            width: 100%; padding: 12px; margin-top: 8px;
+            background: var(--color-primary); color: #fff;
+            border: none; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: background .2s; letter-spacing: .3px;
         }
-
-        .modal-entrada-opcoes {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--space-2);
-            margin-bottom: var(--space-3);
-        }
-
-        .modal-entrada-btn {
-            padding: var(--space-3);
-            border: 2px solid var(--color-border);
-            border-radius: var(--radius-md);
-            background-color: var(--color-bg);
-            color: var(--color-text-primary);
-            font-size: var(--font-size-md);
-            font-weight: var(--font-weight-semibold);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .modal-entrada-btn:hover {
-            border-color: var(--color-primary);
-            background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
-            color: var(--color-primary);
-        }
-
-        .modal-entrada-btn.selecionado {
-            border-color: var(--color-primary);
-            background-color: var(--color-primary);
-            color: white;
-        }
-
-        .modal-entrada-confirmar {
-            background-color: var(--color-primary);
-            color: white;
-            border: none;
-            padding: var(--space-3);
-            border-radius: var(--radius-md);
-            font-weight: var(--font-weight-semibold);
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s ease;
-        }
-
-        .modal-entrada-confirmar:hover:not(:disabled) {
-            background-color: var(--color-primary-hover);
-        }
-
-        .modal-entrada-confirmar:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .nit-login-btn:hover { background: var(--color-primary-hover); }
+        .nit-login-btn:disabled { opacity: .45; cursor: not-allowed; }
+        .nit-login-operador { font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px; }
 
         /* ── STATUS FIREBASE VISUAL ────────────────────────────────── */
         .nit-status-indicator {
@@ -583,95 +523,49 @@
 </head>
 <body data-theme="dark">
 
-    <!-- MODAL DE ENTRADA DE TURNO — Bloqueio de UI até seleção ─────── -->
-    <div id="modal-entrada-turno" class="modal-entrada-turno">
-        <div class="modal-entrada-container">
-            <div class="modal-entrada-titulo">🌍 Bem-vindo ao NIT</div>
-            <div class="modal-entrada-desc">
-                Selecione o turno em que você está trabalhando para iniciar a sessão:
+    <!-- LOGIN ────────────────────────────────────────────────────────── -->
+    <div id="nit-login-overlay" class="nit-login-overlay">
+        <div class="nit-login-box">
+            <div class="nit-login-logo">NIT</div>
+            <div class="nit-login-sub">Núcleo de Inteligência de Tráfego</div>
+            <div class="nit-login-field">
+                <label for="login-nome">Nome do Operador</label>
+                <input id="login-nome" type="text" placeholder="Ex: Carlos Silva" autocomplete="off" maxlength="40">
             </div>
-            <div class="modal-entrada-opcoes">
-                <button class="modal-entrada-btn" data-turno="MANHÃ">
-                    Manhã
-                </button>
-                <button class="modal-entrada-btn" data-turno="TARDE">
-                    Tarde
-                </button>
-                <button class="modal-entrada-btn" data-turno="NOITE">
-                    Noite
-                </button>
+            <div class="nit-login-field">
+                <label for="login-turno">Turno</label>
+                <select id="login-turno">
+                    <option value="">— Selecione —</option>
+                    <option value="MANHÃ">Manhã</option>
+                    <option value="TARDE">Tarde</option>
+                    <option value="NOITE">Noite</option>
+                </select>
             </div>
-            <button id="btn-confirmar-turno" class="modal-entrada-confirmar" disabled>
-                Confirmar e Entrar
-            </button>
+            <button id="btn-login-entrar" class="nit-login-btn" disabled>Entrar</button>
         </div>
     </div>
 
     <div class="main-container">
         <div class="tab-navigation">
-            <button class="tab-button active" data-tab="tab-turno"><i class="fas fa-user-clock"></i> Relatório de Turno</button>
-            <button class="tab-button" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Relatório Semafórico</button>
-            <button class="tab-button" data-tab="tab-reboques"><i class="fas fa-truck-pickup"></i> Reboques</button>
+            <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semafórico</button>
 
             <div class="tab-controls">
+                <!-- Seletor de data — filtra totais e relatório -->
+                <input type="date" id="filtro-data-input" title="Filtrar por data"
+                       style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);
+                              color:var(--color-text-primary);font-size:12px;padding:4px 8px;cursor:pointer;height:30px;">
+                <span id="nit-operador-badge" title="Operador logado"
+                      style="font-size:11px;color:var(--color-text-tertiary);white-space:nowrap;display:none;"></span>
                 <span id="nit-firebase-status" class="nit-status-indicator" title="Status Firebase">
                     <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
                     <span style="color:var(--color-info);">Conectando…</span>
                 </span>
                 <button id="btn-ver-historico" class="btn-icon" aria-label="Ver histórico de ações" title="Ver Histórico de Ações"><i class="fas fa-history" aria-hidden="true"></i></button>
-                <button id="btn-limpar-painel" class="btn-icon" aria-label="Limpar todo o painel" title="Limpar todo o painel"><i class="fas fa-trash-alt" style="color: var(--color-danger);" aria-hidden="true"></i></button>
-            </div>
-        </div>
-
-        <!-- TAB TURNO ──────────────────────────────────────────────────── -->
-        <div id="tab-turno" class="tab-content active">
-            <div class="grid-container">
-                <div class="grid-column">
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-edit"></i> Dados do Turno</h3></div>
-                        <div class="painel-body">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Turno:</label>
-                                    <select id="turno-turno" class="nit-select">
-                                        <option value="MANHÃ">MANHÃ</option>
-                                        <option value="TARDE">TARDE</option>
-                                        <option value="NOITE">NOITE</option>
-                                    </select>
-                                </div>
-                                <div class="form-group"><label>Data:</label><input type="date" id="turno-data"></div>
-                                <div class="form-group"><label>Total de Agentes:</label><input type="number" id="turno-totalAgentes" min="1"></div>
-                                <div class="form-group"><label>Monitor:</label><input type="text" id="turno-monitor" list="lista-monitores"></div>
-                                <div class="form-group"><label>Supervisor:</label><input type="text" id="turno-supervisor" list="lista-supervisores"></div>
-                                <div class="form-group"><label>VLVT:</label><input type="text" id="turno-vlvt"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="painel flex-grow">
-                        <div class="painel-header"><h3><i class="fas fa-plus-circle"></i> Ocorrências</h3></div>
-                        <div class="painel-body">
-                            <button id="btn-add-ocorrencia" class="btn btn-secundario" style="width: 100%; flex-shrink: 0;"><i class="fas fa-plus"></i> Adicionar Ocorrência</button>
-                            <div id="turno-ocorrencias-container" style="flex-grow: 1; overflow-y: auto; padding: 4px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid-column">
-                    <div class="painel flex-grow">
-                        <div class="painel-header"><h3><i class="fas fa-file-alt"></i> Relatório de Turno</h3></div>
-                        <div class="painel-body">
-                            <textarea id="saida-turno" readonly placeholder="O relatório de turno aparecerá aqui..."></textarea>
-                            <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                                <button id="btn-gerar-relatorio-turno" class="btn btn-primario" style="flex: 1;"><i class="fas fa-cogs" aria-hidden="true"></i> Gerar Relatório</button>
-                                <button id="btn-copiar-relatorio-turno" class="btn btn-secundario" aria-label="Copiar relatório de turno" style="flex: 1;"><i class="fas fa-copy" aria-hidden="true"></i> Copiar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
         <!-- TAB SEMÁFORO ──────────────────────────────────────────────── -->
-        <div id="tab-semaforo" class="tab-content">
+        <div id="tab-semaforo" class="tab-content active">
             <div class="grid-container" style="grid-template-columns: 360px 1fr;">
                 <div class="grid-column">
                     <div class="painel">
@@ -754,66 +648,6 @@
                         <button id="btn-abrir-gaveta" class="btn-icon" aria-label="Ver ocorrências normalizadas" style="position: absolute; top: 10px; right: 10px; z-index: 5; background-color: var(--color-primary); color: white;" title="Ver Normalizados">
                             <i class="fas fa-archive" aria-hidden="true"></i>
                         </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB REBOQUES ──────────────────────────────────────────────── -->
-        <div id="tab-reboques" class="tab-content">
-            <div class="grid-container reboques-main-grid">
-                <div class="grid-column">
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-paste"></i> Entrada de Plantão</h3></div>
-                        <div class="painel-body">
-                            <textarea id="reboque-bruto-input" class="mono-font" placeholder="Cole aqui a lista de reboquistas de plantão..." rows="8"></textarea>
-                            <button id="btn-processar-reboques" class="btn btn-primario" style="width:100%; margin-top:10px;"><i class="fas fa-cogs"></i> Processar Plantão</button>
-                        </div>
-                    </div>
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-tachometer-alt"></i> Status da Frota</h3></div>
-                        <div class="painel-body">
-                            <div class="balanco-compacto">
-                                <div class="balanco-item"><span>Disponíveis</span><strong id="reboques-count-disponiveis" style="color: var(--color-success);">0</strong></div>
-                                <div class="balanco-item"><span>Atuando</span><strong id="reboques-count-atuando" style="color: var(--color-warning);">0</strong></div>
-                                <div class="balanco-item"><span>Total</span><strong id="reboques-count-total">0</strong></div>
-                            </div>
-                            <button id="btn-gerar-relatorio-frota" class="btn btn-secundario" style="width:100%; margin-top:16px;">
-                                <i class="fas fa-file-alt"></i> Gerar Relatório da Frota
-                            </button>
-                        </div>
-                    </div>
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-plus-circle"></i> Gerenciamento</h3></div>
-                        <div class="painel-body">
-                            <button id="btn-add-reboquista" class="btn btn-secundario" style="width: 100%;"><i class="fas fa-user-plus"></i> Adicionar Reboquista</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid-column">
-                    <div class="painel flex-grow">
-                        <div class="painel-header"><h3><i class="fas fa-truck-pickup"></i> Reboquistas</h3></div>
-                        <div class="painel-body reboques-kanban-container">
-                            <div class="reboque-column">
-                                <h4 style="color: var(--color-success);">Disponíveis</h4>
-                                <div id="reboques-disponiveis" class="reboque-grid painel-body"></div>
-                            </div>
-                            <div class="reboque-column">
-                                <h4 style="color: var(--color-warning);">Em Atendimento</h4>
-                                <div id="reboques-atuando" class="reboque-grid painel-body"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid-column">
-                    <div class="painel flex-grow">
-                        <div class="painel-header"><h3><i class="fas fa-calendar-alt"></i> Eventos em Aberto</h3></div>
-                        <div class="painel-body eventos-kanban-container">
-                            <div class="eventos-column">
-                                <button id="btn-novo-evento" class="btn btn-primario" style="width: 100%; margin-bottom: 10px; flex-shrink: 0;"><i class="fas fa-plus-circle"></i> Novo Evento</button>
-                                <div id="eventos-abertos" class="eventos-grid painel-body"></div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -915,79 +749,6 @@
         </div>
     </div>
 
-    <div id="modal-acionamento-reboque" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">Acionamento de Reboque</div>
-            <div class="modal-body">
-                <input type="hidden" id="reboque-acionamento-card-id">
-                <div class="form-group"><label>Tipo de Evento:</label><input type="text" id="reboque-evento-tipo" placeholder="Ex: ACIDENTE, PANE, GUINCHO..."></div>
-                <div class="form-group"><label>Endereço:</label><input type="text" id="reboque-evento-endereco" placeholder="Local da ocorrência"></div>
-                <div class="form-group"><label>Horário (opcional):</label><input type="time" id="reboque-evento-horario"></div>
-                <div class="form-group"><label>Observações (opcional):</label><textarea id="reboque-evento-obs" rows="3" placeholder="Informações adicionais..."></textarea></div>
-                <div id="multi-acionamento-reboquistas" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--color-border);">
-                    <label style="display: block; font-weight: 500; margin-bottom: 8px;">Reboquistas Acionados:</label>
-                    <div id="multi-acionamento-tags"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="btn-reboque-acionamento-adicionar-outro" class="btn btn-secundario"><i class="fas fa-plus"></i> Acionar Outro</button>
-                <button id="btn-reboque-acionamento-confirmar" class="btn btn-primario"><i class="fas fa-paper-plane"></i> Finalizar e Copiar</button>
-                <button id="btn-reboque-acionamento-cancelar" class="btn btn-secundario">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-edicao-reboquista" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">Editar Reboquista</div>
-            <div class="modal-body">
-                <input type="hidden" id="reboque-edit-card-id">
-                <div class="form-group"><label>Nome:</label><input type="text" id="reboque-edit-nome" placeholder="Nome do reboquista"></div>
-                <div class="form-group"><label>VT:</label><input type="text" id="reboque-edit-vt" placeholder="Número da viatura"></div>
-                <div class="form-group"><label>Placa:</label><input type="text" id="reboque-edit-placa" placeholder="Placa do veículo"></div>
-                <div class="form-group"><label>Plantão até:</label><input type="text" id="reboque-edit-plantao" placeholder="Ex: 18:00hs"></div>
-                <div class="form-group"><label>Smart:</label><input type="text" id="reboque-edit-smart" placeholder="Ex: (85) 98765-4321"></div>
-            </div>
-            <div class="modal-footer">
-                <button id="btn-reboque-edit-salvar" class="btn btn-primario"><i class="fas fa-save"></i> Salvar</button>
-                <button id="btn-reboque-edit-cancelar" class="btn btn-secundario">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-novo-evento" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">Novo Evento</div>
-            <div class="modal-body">
-                <div class="form-group"><label>Tipo de Evento:</label><input type="text" id="evento-tipo" placeholder="Ex: COMANDO LEI SECA, APOIO AMC..." required></div>
-                <div class="form-group"><label>Endereço:</label><input type="text" id="evento-endereco" placeholder="Local da ocorrência" required></div>
-                <div class="form-group"><label>Horário (opcional):</label><input type="time" id="evento-horario"></div>
-                <div class="form-group"><label>Observações (opcional):</label><textarea id="evento-obs" rows="3" placeholder="Informações adicionais..."></textarea></div>
-            </div>
-            <div class="modal-footer">
-                <button id="btn-evento-criar" class="btn btn-primario"><i class="fas fa-plus-circle"></i> Criar Evento</button>
-                <button id="btn-evento-cancelar" class="btn btn-secundario">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-edicao-evento" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">Editar Evento</div>
-            <div class="modal-body">
-                <input type="hidden" id="evento-edit-id">
-                <div class="form-group"><label>Tipo de Evento:</label><input type="text" id="evento-edit-tipo" required></div>
-                <div class="form-group"><label>Endereço:</label><input type="text" id="evento-edit-endereco" required></div>
-                <div class="form-group"><label>Horário (opcional):</label><input type="time" id="evento-edit-horario"></div>
-                <div class="form-group"><label>Observações (opcional):</label><textarea id="evento-edit-obs" rows="3"></textarea></div>
-            </div>
-            <div class="modal-footer">
-                <button id="btn-evento-edit-salvar" class="btn btn-primario"><i class="fas fa-save"></i> Salvar Alterações</button>
-                <button id="btn-evento-edit-cancelar" class="btn btn-secundario">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <div id="modal-edicao" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">Editar Ocorrência</div>
@@ -1019,6 +780,28 @@
             <div class="modal-body" id="historico-body" style="max-height: 70vh; overflow-y: auto;"></div>
             <div class="modal-footer">
                 <button id="btn-historico-fechar" class="btn btn-secundario">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMAÇÃO GENÉRICO — substitui confirm() nativo (bloqueado em sandboxes/iframes) -->
+    <div id="modal-confirmar-generico" class="modal-overlay">
+        <div class="modal-container" style="max-width:420px;">
+            <div class="modal-header" id="modal-confirmar-titulo" style="color:var(--color-danger);">
+                Confirmar Ação
+            </div>
+            <div class="modal-body" style="text-align:center; padding:24px 16px;">
+                <p id="modal-confirmar-msg" style="font-size:15px; line-height:1.6;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content:center; gap:16px;">
+                <button id="btn-confirmar-generico-ok"
+                        class="btn"
+                        style="background:var(--color-danger);color:#fff;border-color:var(--color-danger);min-width:120px;">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+                <button id="btn-confirmar-generico-cancel" class="btn btn-secundario" style="min-width:100px;">
+                    Cancelar
+                </button>
             </div>
         </div>
     </div>
@@ -1149,40 +932,140 @@
     // MODAL ENTRADA DE TURNO — Bloqueio até seleção
     // ═══════════════════════════════════════════════════════════════════════════
 
-    const ModalEntradaTurno = {
-        turnoSelecionado: null,
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LOGIN — simples, escalável. Armazena operador+turno na sessão.
+    // Estrutura pronta para auth Firebase futura (trocar confirmar() por
+    // signInWithEmailAndPassword sem alterar o resto do sistema).
+    // ═══════════════════════════════════════════════════════════════════════════
+    const NitLogin = {
+        operador: null,
+        turno:    null,
 
-        inicializar: function() {
-            const modal = document.getElementById('modal-entrada-turno');
-            const botoes = modal.querySelectorAll('.modal-entrada-btn');
-            const btnConfirmar = document.getElementById('btn-confirmar-turno');
+        inicializar() {
+            const nomeInput  = document.getElementById('login-nome');
+            const turnoSel   = document.getElementById('login-turno');
+            const btnEntrar  = document.getElementById('btn-login-entrar');
 
-            botoes.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    botoes.forEach(b => b.classList.remove('selecionado'));
-                    btn.classList.add('selecionado');
-                    this.turnoSelecionado = btn.dataset.turno;
-                    btnConfirmar.disabled = false;
+            const validar = () => {
+                btnEntrar.disabled = !(nomeInput.value.trim().length >= 2 && turnoSel.value);
+            };
+            nomeInput.addEventListener('input', validar);
+            turnoSel.addEventListener('change', validar);
+
+            // Enter no campo nome avança para turno; Enter no turno confirma
+            nomeInput.addEventListener('keydown', e => { if (e.key === 'Enter') turnoSel.focus(); });
+            turnoSel.addEventListener('keydown',  e => { if (e.key === 'Enter' && !btnEntrar.disabled) this.confirmar(); });
+            btnEntrar.addEventListener('click', () => this.confirmar());
+
+            // Foco automático
+            setTimeout(() => nomeInput.focus(), 100);
+        },
+
+        confirmar() {
+            const nome  = document.getElementById('login-nome').value.trim();
+            const turno = document.getElementById('login-turno').value;
+            if (!nome || !turno) return;
+
+            this.operador = nome;
+            this.turno    = turno;
+
+            // Badge no topo
+            const badge = document.getElementById('nit-operador-badge');
+            if (badge) { badge.textContent = `👤 ${nome} · ${turno}`; badge.style.display = ''; }
+
+            // Persiste na sessão (sobrevive F5, não entre abas)
+            sessionStorage.setItem('nit-operador', nome);
+            sessionStorage.setItem('nit-turno',    turno);
+
+            // Grava no Firebase para auditoria multi-cliente
+            window.NitFirebase.exec((db, ref, update) => {
+                update(ref(db, 'meta/sessao'), {
+                    operador: nome, turno, entradaTs: Date.now()
                 });
             });
 
-            btnConfirmar.addEventListener('click', () => this.confirmar());
+            document.getElementById('nit-login-overlay').classList.add('hidden');
+            showToast(`Bem-vindo, ${nome}! Turno ${turno}.`, 'success');
+            registrarAcao(`Login: ${nome} — ${turno}.`);
+
+            // Inicializa seletor de data APÓS login (precisa do DOM liberado)
+            NitDateFilter.inicializar();
         },
 
-        confirmar: function() {
-            if (!this.turnoSelecionado) return;
+        // Restaura sessão se ainda válida (mesmo tab, F5)
+        tentarRestaurar() {
+            const nome  = sessionStorage.getItem('nit-operador');
+            const turno = sessionStorage.getItem('nit-turno');
+            if (nome && turno) {
+                document.getElementById('login-nome').value  = nome;
+                document.getElementById('login-turno').value = turno;
+                this.confirmar();
+                return true;
+            }
+            return false;
+        }
+    };
 
-            // Sincroniza com campo Turno
-            const turnoEl = document.getElementById('turno-turno');
-            if (turnoEl) turnoEl.value = this.turnoSelecionado;
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FILTRO DE DATA — controla o que é exibido nos totais e no relatório
+    // Padrão: data de hoje (00:00–23:59:59 local).
+    // dataReferencia nos cards está no formato "DD/MM/YYYY" (do cabeçalho CEMOB).
+    // ═══════════════════════════════════════════════════════════════════════════
+    const NitDateFilter = {
+        _input: null,
 
-            
+        hoje() {
+            // Formato "DD/MM/YYYY" — igual ao dataReferencia dos cards
+            const d = new Date();
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            const yyyy = d.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
+        },
 
-            // Fecha modal
-            const modal = document.getElementById('modal-entrada-turno');
-            modal.classList.add('hidden');
+        // Converte "DD/MM/YYYY" → "YYYY-MM-DD" para o input[type=date]
+        toInputValue(ddr) {
+            if (!ddr) return '';
+            const [dd,mm,yyyy] = ddr.split('/');
+            return `${yyyy}-${mm}-${dd}`;
+        },
 
-            showToast(`Turno '${this.turnoSelecionado}' confirmado!`, 'success');
+        // Converte "YYYY-MM-DD" → "DD/MM/YYYY" para comparar com dataReferencia
+        fromInputValue(val) {
+            if (!val) return null;
+            const [yyyy,mm,dd] = val.split('-');
+            return `${dd}/${mm}/${yyyy}`;
+        },
+
+        inicializar() {
+            this._input = document.getElementById('filtro-data-input');
+            if (!this._input) return;
+
+            // Define hoje como valor padrão
+            const hojeISO = this.toInputValue(this.hoje());
+            this._input.value = hojeISO;
+            this._input.max   = hojeISO; // não permite datas futuras
+
+            // Aplica filtro ao Semaforo imediatamente
+            Semaforo._filtroData = this.hoje();
+            Semaforo.atualizarPainel();
+
+            this._input.addEventListener('change', () => {
+                const val = this._input.value;
+                Semaforo._filtroData = val ? this.fromInputValue(val) : null;
+                Semaforo.atualizarPainel();
+            });
+        },
+
+        // Chamado por handleProcessarClick após processar — atualiza o input
+        // para a data do relatório recém-processado
+        sincronizarComRelatorio(dataReferencia) {
+            if (!this._input || !dataReferencia) return;
+            const iso = this.toInputValue(dataReferencia);
+            if (iso) {
+                this._input.value = iso;
+                Semaforo._filtroData = dataReferencia;
+            }
         }
     };
 
@@ -1192,112 +1075,53 @@
 
     window.AppState = {
         STORAGE_KEY_SEMAFORO: 'nit-v12-semaforo',
-        STORAGE_KEY_TURNO: 'nit-v12-turno',
-        STORAGE_KEY_REBOQUES: 'gerador-premium-v10.0-reboques',
-        STORAGE_KEY_EVENTOS: 'nit-v12-eventos',
-        STORAGE_KEY_DADOS: 'nit-v12-dadosMestres',
-        cardIdCounter: 0,
-        totalOcorrenciasCriadas: 0,
-        reboqueIdCounter: 0,
-        eventoIdCounter: 0,
-        draggedCard: null,
-        placeholder: null,
-        undoTimers: {},
-        despachoTipo: 'vl',
+        STORAGE_KEY_DADOS:    'nit-v12-dadosMestres',
+        cardIdCounter:            0,
+        totalOcorrenciasCriadas:  0,
+        draggedCard:   null,
+        placeholder:   null,
+        undoTimers:    {},
+        despachoTipo:  'vl',
         dadosMestres: { operadores: [], supervisores: [], monitores: [], locais: [], qrus: [] },
-        multiAcionamentoState: { reboquistas: [], eventoData: null, eventoCard: null }
     };
 
     const DOM = {};
 
     function queryDOM() {
         Object.assign(DOM, {
-            tabButtons: document.querySelectorAll('.tab-button'),
-            tabContents: document.querySelectorAll('.tab-content'),
-            btnLimparPainel: document.getElementById('btn-limpar-painel'),
-            toastContainer: document.getElementById('toast-container'),
-            relatorioBrutoInput: document.getElementById('relatorio-bruto-input'),
-            btnProcessar: document.getElementById('btn-processar'),
-            relatorioFinalPreview: document.getElementById('relatorio-final-preview'),
-            checkIncluirNormalizados: document.getElementById('check-incluir-normalizados'),
-            btnVisualizarRelatorio: document.getElementById('btn-visualizar-relatorio'),
-            displayTotal: document.getElementById('display-total'),
-            displayPendentes: document.getElementById('display-pendentes'),
-            displayNormalizados: document.getElementById('display-normalizados'),
-            btnToggleArquivados: document.getElementById('btn-toggle-arquivados'),
-            gavetaArquivados: document.getElementById('gaveta-arquivados'),
-            kanbanWrapper: document.getElementById('kanban-wrapper'),
-            colunaNormalizados: document.getElementById('coluna-normalizados'),
+            tabButtons:              document.querySelectorAll('.tab-button'),
+            tabContents:             document.querySelectorAll('.tab-content'),
+            toastContainer:          document.getElementById('toast-container'),
+            relatorioBrutoInput:     document.getElementById('relatorio-bruto-input'),
+            btnProcessar:            document.getElementById('btn-processar'),
+            relatorioFinalPreview:   document.getElementById('relatorio-final-preview'),
+            checkIncluirNormalizados:document.getElementById('check-incluir-normalizados'),
+            btnVisualizarRelatorio:  document.getElementById('btn-visualizar-relatorio'),
+            displayTotal:            document.getElementById('display-total'),
+            displayPendentes:        document.getElementById('display-pendentes'),
+            displayNormalizados:     document.getElementById('display-normalizados'),
+            btnToggleArquivados:     document.getElementById('btn-toggle-arquivados'),
+            gavetaArquivados:        document.getElementById('gaveta-arquivados'),
+            kanbanWrapper:           document.getElementById('kanban-wrapper'),
+            colunaNormalizados:      document.getElementById('coluna-normalizados'),
             countNormalizadosGaveta: document.getElementById('count-normalizados-gaveta'),
-            modalRelatorio: document.getElementById('modal-relatorio'),
-            modalRelatorioTexto: document.getElementById('modal-relatorio-texto'),
-            btnModalCopiar: document.getElementById('btn-modal-copiar'),
-            btnModalFechar: document.getElementById('btn-modal-fechar'),
-            turnoData: document.getElementById('turno-data'),
-            btnAddOcorrencia: document.getElementById('btn-add-ocorrencia'),
-            turnoOcorrenciasContainer: document.getElementById('turno-ocorrencias-container'),
-            btnGerarRelatorioTurno: document.getElementById('btn-gerar-relatorio-turno'),
-            btnCopiarRelatorioTurno: document.getElementById('btn-copiar-relatorio-turno'),
-            saidaTurno: document.getElementById('saida-turno'),
-            reboqueBrutoInput: document.getElementById('reboque-bruto-input'),
-            btnProcessarReboques: document.getElementById('btn-processar-reboques'),
-            reboquesDisponiveisContainer: document.getElementById('reboques-disponiveis'),
-            reboquesAtuandoContainer: document.getElementById('reboques-atuando'),
-            reboquesCountDisponiveis: document.getElementById('reboques-count-disponiveis'),
-            reboquesCountAtuando: document.getElementById('reboques-count-atuando'),
-            reboquesCountTotal: document.getElementById('reboques-count-total'),
-            btnAddReboquista: document.getElementById('btn-add-reboquista'),
-            btnGerarRelatorioFrota: document.getElementById('btn-gerar-relatorio-frota'),
-            btnNovoEvento: document.getElementById('btn-novo-evento'),
-            eventosAbertosContainer: document.getElementById('eventos-abertos'),
-            modalAcionamentoReboque: document.getElementById('modal-acionamento-reboque'),
-            reboqueAcionamentoCardId: document.getElementById('reboque-acionamento-card-id'),
-            reboqueEventoTipo: document.getElementById('reboque-evento-tipo'),
-            reboqueEventoEndereco: document.getElementById('reboque-evento-endereco'),
-            reboqueEventoHorario: document.getElementById('reboque-evento-horario'),
-            reboqueEventoObs: document.getElementById('reboque-evento-obs'),
-            btnReboqueAcionamentoCancelar: document.getElementById('btn-reboque-acionamento-cancelar'),
-            btnReboqueAcionamentoConfirmar: document.getElementById('btn-reboque-acionamento-confirmar'),
-            btnReboqueAcionamentoAdicionarOutro: document.getElementById('btn-reboque-acionamento-adicionar-outro'),
-            multiAcionamentoReboquistas: document.getElementById('multi-acionamento-reboquistas'),
-            multiAcionamentoTags: document.getElementById('multi-acionamento-tags'),
-            modalEdicaoReboquista: document.getElementById('modal-edicao-reboquista'),
-            reboqueEditCardId: document.getElementById('reboque-edit-card-id'),
-            reboqueEditNome: document.getElementById('reboque-edit-nome'),
-            reboqueEditVt: document.getElementById('reboque-edit-vt'),
-            reboqueEditPlaca: document.getElementById('reboque-edit-placa'),
-            reboqueEditPlantao: document.getElementById('reboque-edit-plantao'),
-            reboqueEditSmart: document.getElementById('reboque-edit-smart'),
-            btnReboqueEditCancelar: document.getElementById('btn-reboque-edit-cancelar'),
-            btnReboqueEditSalvar: document.getElementById('btn-reboque-edit-salvar'),
-            modalNovoEvento: document.getElementById('modal-novo-evento'),
-            eventoTipo: document.getElementById('evento-tipo'),
-            eventoEndereco: document.getElementById('evento-endereco'),
-            eventoHorario: document.getElementById('evento-horario'),
-            eventoObs: document.getElementById('evento-obs'),
-            btnEventoCriar: document.getElementById('btn-evento-criar'),
-            btnEventoCancelar: document.getElementById('btn-evento-cancelar'),
-            modalEdicao: document.getElementById('modal-edicao'),
-            edicaoCardId: document.getElementById('edicao-card-id'),
-            edicaoCodigo: document.getElementById('edicao-codigo'),
-            edicaoEndereco: document.getElementById('edicao-endereco'),
-            edicaoProblema: document.getElementById('edicao-problema'),
-            btnEdicaoCancelar: document.getElementById('btn-edicao-cancelar'),
-            btnEdicaoSalvar: document.getElementById('btn-edicao-salvar'),
-            modalDespachoSemaforo: document.getElementById('modal-despacho-semaforo'),
-            despachoSemaforoCardId: document.getElementById('despacho-semaforo-card-id'),
-            despachoSemaforoEquipe: document.getElementById('despacho-semaforo-equipe'),
-            despachoSemaforoVt: document.getElementById('despacho-semaforo-vt'),
+            modalRelatorio:          document.getElementById('modal-relatorio'),
+            modalRelatorioTexto:     document.getElementById('modal-relatorio-texto'),
+            btnModalCopiar:          document.getElementById('btn-modal-copiar'),
+            btnModalFechar:          document.getElementById('btn-modal-fechar'),
+            modalEdicao:             document.getElementById('modal-edicao'),
+            edicaoCardId:            document.getElementById('edicao-card-id'),
+            edicaoCodigo:            document.getElementById('edicao-codigo'),
+            edicaoEndereco:          document.getElementById('edicao-endereco'),
+            edicaoProblema:          document.getElementById('edicao-problema'),
+            btnEdicaoCancelar:       document.getElementById('btn-edicao-cancelar'),
+            btnEdicaoSalvar:         document.getElementById('btn-edicao-salvar'),
+            modalDespachoSemaforo:   document.getElementById('modal-despacho-semaforo'),
+            despachoSemaforoCardId:  document.getElementById('despacho-semaforo-card-id'),
+            despachoSemaforoEquipe:  document.getElementById('despacho-semaforo-equipe'),
+            despachoSemaforoVt:      document.getElementById('despacho-semaforo-vt'),
             btnDespachoSemaforoConfirmar: document.getElementById('btn-despacho-semaforo-confirmar'),
-            btnDespachoSemaforoCancelar: document.getElementById('btn-despacho-semaforo-cancelar'),
-            modalEdicaoEvento: document.getElementById('modal-edicao-evento'),
-            eventoEditId: document.getElementById('evento-edit-id'),
-            eventoEditTipo: document.getElementById('evento-edit-tipo'),
-            eventoEditEndereco: document.getElementById('evento-edit-endereco'),
-            eventoEditHorario: document.getElementById('evento-edit-horario'),
-            eventoEditObs: document.getElementById('evento-edit-obs'),
-            btnEventoEditSalvar: document.getElementById('btn-evento-edit-salvar'),
-            btnEventoEditCancelar: document.getElementById('btn-evento-edit-cancelar'),
+            btnDespachoSemaforoCancelar:  document.getElementById('btn-despacho-semaforo-cancelar'),
         });
     }
 
@@ -1503,8 +1327,52 @@
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // UTILITÁRIO: nitConfirm — substitui confirm() nativo (bloqueado em sandboxes)
+    // ═══════════════════════════════════════════════════════════════════════════
+    let _nitConfirmCallback = null;
+
+    function nitConfirm(titulo, mensagem, onConfirm) {
+        const modal  = document.getElementById('modal-confirmar-generico');
+        const tituloEl = document.getElementById('modal-confirmar-titulo');
+        const msgEl  = document.getElementById('modal-confirmar-msg');
+        if (!modal || !tituloEl || !msgEl) { if (confirm(mensagem)) onConfirm(); return; }
+        tituloEl.textContent = titulo;
+        msgEl.innerHTML  = mensagem;
+        _nitConfirmCallback = onConfirm;
+        abrirModal(modal);
+    }
+
     const Semaforo = {
         ultimoLoteNormalizado: [],
+        _filtroData: null,          // null = total acumulado; 'DD/MM/YYYY' = filtro ativo
+
+        // ── Solução 1: gera chave única por evento (codigo + timestamp início) ──
+        gerarEventoId(codigo, inicio) {
+            if (!inicio || typeof inicio !== 'string') return `${codigo}_${Date.now()}`;
+            const ts = inicio.replace(/[^0-9]/g, '').slice(0, 12); // "05022026 0414" → "050220260414"
+            return `${codigo}_${ts}`;
+        },
+
+        // ── Solução 1+3: extrai dataReferencia do cabeçalho CEMOB ──
+        extrairDataReferencia(linhas) {
+            for (const linha of linhas) {
+                const m = linha.match(/(\d{2}\/\d{2}\/\d{4})/);
+                if (m) return m[1]; // "06/02/2026"
+            }
+            return new Date().toLocaleDateString('pt-BR');
+        },
+
+        // ── Bug fix: status vem da seção, não de heurística ──
+        statusFromSecao(secao, cardData) {
+            if (secao === 'NORMALIZADO') return 'NORMALIZADO';
+            // Heurísticas de SEM_NECESSIDADE só se aplicam a pendentes
+            const endereco = (cardData.endereco || '').toLowerCase();
+            const observacoes = (cardData.observacoes || '').toLowerCase();
+            if (endereco.includes('pgv') || endereco.startsWith('entre')) return 'SEM_NECESSIDADE';
+            if (/cruzamento\s+(funcionando|normal|ok)/.test(observacoes)) return 'SEM_NECESSIDADE';
+            return 'PENDENTE';
+        },
 
         inicializar() {
             this.carregarEstado();
@@ -1522,7 +1390,6 @@
             DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
             DOM.btnVisualizarRelatorio.addEventListener('click', this.handleVisualizarRelatorioClick.bind(this));
             DOM.checkIncluirNormalizados.addEventListener('change', this.handleConfigChange.bind(this));
-            DOM.btnModalCopiar.addEventListener('click', this.handleCopiarModalClick.bind(this));
 
             const btnAbrirGaveta = document.getElementById('btn-abrir-gaveta');
             if (btnAbrirGaveta) {
@@ -1581,69 +1448,52 @@
         },
 
         inicializarListenerFirebase() {
-            // ── Listener para sincronização em tempo real ──
             window.NitFirebase.exec((db, ref) => {
                 const kanbanRef = ref(db, 'kanban');
-                
-                // ✅ Listener será acionado:
-                //    1. Imediatamente (estado atual)
-                //    2. Cada vez que dados mudam em /kanban
-                //    3. Em TODOS os clientes conectados simultaneamente
-                
+
                 kanbanRef.on('value', (snapshot) => {
                     const dados = snapshot.val() || {};
-                    
-                    // ── Limpar todas as colunas (incluindo gaveta de normalizados) ──
+
                     document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
                     const gavetaContainer = document.getElementById('coluna-normalizados');
                     if (gavetaContainer) gavetaContainer.innerHTML = '';
 
-                    // ── Reconstruir Kanban com dados do Firebase ──
-                    Object.keys(dados).forEach(cod => {
-                        const cardData = dados[cod];
+                    // ── Chave Firebase agora é eventoId (ex: "572_050220260414") ──
+                    Object.keys(dados).forEach(eventoId => {
+                        const cardData = dados[eventoId];
                         const coluna = cardData.coluna || 'coluna-espera';
-                        // coluna-normalizados é o próprio container (gaveta); demais têm filho .kanban-cards-container
                         const containerSelector = `#${coluna} .kanban-cards-container`;
                         const container = document.querySelector(containerSelector)
                                        || document.getElementById(coluna);
-                        
+
                         if (container) {
-                            const cardElement = Semaforo.criarElementoCard(`card-${cod}`, {
-                                codigo: cod,
-                                endereco: cardData.endereco || '',
-                                problema: cardData.problema || '',
-                                status: cardData.status || 'ESPERA',
-                                observacoes: cardData.observacoes || '',
-                                tipo: cardData.tipo || '',
-                                equipe: cardData.equipe || '',
-                                viatura: cardData.viatura || '',
-                                inicio: cardData.inicio || '',
-                                pl: cardData.pl || '',
-                                sub: cardData.sub || '',
+                            const cardElement = Semaforo.criarElementoCard(`card-${AppState.cardIdCounter++}`, {
+                                ...cardData,
+                                eventoId: eventoId,
+                                codigo: cardData.codigo || eventoId.split('_')[0],
                             });
-                            
-                            cardElement.dataset.codigo = cod;
-                            cardElement.dataset.endereco = cardData.endereco || '';
-                            cardElement.dataset.problema = cardData.problema || '';
-                            cardElement.dataset.status = cardData.status || 'ESPERA';
-                            cardElement.dataset.coluna = coluna;
-                            cardElement.dataset.equipe = cardData.equipe || '';
-                            cardElement.dataset.viatura = cardData.viatura || '';
-                            cardElement.dataset.pl = cardData.pl || '';
-                            cardElement.dataset.sub = cardData.sub || '';
-                            
+                            cardElement.dataset.eventoid      = eventoId;
+                            cardElement.dataset.coluna        = coluna;
+                            cardElement.dataset.dataReferencia = cardData.dataReferencia || '';
                             container.appendChild(cardElement);
                         }
                     });
 
-                    // ── Atualizar contadores ──
                     Semaforo.atualizarPainel();
-                    
-                    // ── Log para debug ──
                     console.log('[NIT] Kanban sincronizado via Firebase', Object.keys(dados).length, 'cards');
                 });
-                
-                // Retornar referência para possível limpeza futura
+
+                // Listener de reset remoto — outro operador limpou o painel
+                ref(db, 'meta/ultimoReset').on('value', (snap) => {
+                    const reset = snap.val();
+                    if (!reset) return;
+                    // Se o reset foi feito por outro cliente (< 5s atrás), limpa local
+                    if (Date.now() - reset.ts < 5000 && reset.operador !== 'desktop_local') {
+                        localStorage.removeItem(AppState.STORAGE_KEY_SEMAFORO);
+                        console.log('[NIT] Reset remoto detectado — painel limpo.');
+                    }
+                });
+
                 return kanbanRef;
             });
         },
@@ -1655,6 +1505,10 @@
 
             const painelJaPreenchido = document.querySelector('#tab-semaforo .kanban-card') !== null;
             const linhas = textoBruto.split('\n');
+
+            // ── Solução 1+3: extrai data do cabeçalho do relatório CEMOB ──
+            const dataReferencia = this.extrairDataReferencia(linhas);
+
             const todosOsEventos = [];
             let eventoAtual = null;
             let secaoAtual = 'PENDENTE';
@@ -1665,20 +1519,34 @@
                 const dadosDaLinha = this.extrairDadosDaLinha(linha);
                 if (dadosDaLinha) {
                     if (eventoAtual) todosOsEventos.push(eventoAtual);
-                    eventoAtual = { ...dadosDaLinha, secao: secaoAtual };
+                    eventoAtual = { ...dadosDaLinha, secao: secaoAtual, dataReferencia };
                 } else if (eventoAtual && linha.trim()) {
                     eventoAtual.observacoes = (eventoAtual.observacoes ? eventoAtual.observacoes + ' ' : '') + linha.trim().replace(/"/g, '');
                 }
             }
             if (eventoAtual) todosOsEventos.push(eventoAtual);
-            const eventosValidos = todosOsEventos.filter(ev => ev.codigo);
+
+            // ── Solução 1: gera eventoId único por ocorrência ──
+            todosOsEventos.forEach(ev => {
+                if (ev.codigo) ev.eventoId = this.gerarEventoId(ev.codigo, ev.inicio);
+            });
+            const eventosValidos = todosOsEventos.filter(ev => ev.codigo && ev.eventoId);
 
             if (!painelJaPreenchido) {
+                // ── CARGA INICIAL ──
                 AppState.totalOcorrenciasCriadas = eventosValidos.length;
+                const codigosVistosHoje = new Set();
                 const batchFirebase = {};
+
                 eventosValidos.forEach(cardData => {
-                    const statusFinal = this.avaliarStatus(cardData);
+                    // Solução 1: detecta reincidência na mesma carga
+                    cardData.reincidente = codigosVistosHoje.has(cardData.codigo);
+                    codigosVistosHoje.add(cardData.codigo);
+
+                    // Bug fix: status vem da seção, não de heurística
+                    const statusFinal = this.statusFromSecao(cardData.secao, cardData);
                     const cardElement = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, cardData);
+
                     if (statusFinal === 'NORMALIZADO') {
                         DOM.colunaNormalizados.prepend(cardElement);
                         this.ultimoLoteNormalizado.push(cardElement.id);
@@ -1687,54 +1555,75 @@
                     } else {
                         document.querySelector('#coluna-espera .kanban-cards-container').appendChild(cardElement);
                     }
-                    // ── Acumula para gravação em batch no Firebase ──
+
                     const colunaMap = { 'NORMALIZADO': 'coluna-normalizados', 'SEM_NECESSIDADE': 'coluna-sem-necessidade' };
-                    batchFirebase[cardData.codigo] = {
-                        coluna:      colunaMap[statusFinal] || 'coluna-espera',
-                        codigo:      cardData.codigo,
-                        endereco:    cardData.endereco    || '',
-                        problema:    cardData.problema    || '',
-                        observacoes: cardData.observacoes || '',
-                        tipo:        cardData.tipo        || '',
-                        status:      statusFinal,
-                        equipe:      cardData.equipe      || '',
-                        viatura:     cardData.viatura     || '',
-                        inicio:      cardData.inicio      || '',
-                        pl:          cardData.pl          || '',
-                        sub:         cardData.sub         || '',
-                        operador:    'desktop',
-                        turno:       ModalEntradaTurno.turnoSelecionado || '',
-                        ts:          Date.now(),
+                    // Solução 1: chave Firebase = eventoId
+                    batchFirebase[cardData.eventoId] = {
+                        coluna:          colunaMap[statusFinal] || 'coluna-espera',
+                        codigo:          cardData.codigo,
+                        eventoId:        cardData.eventoId,
+                        dataReferencia:  dataReferencia,
+                        endereco:        cardData.endereco    || '',
+                        problema:        cardData.problema    || '',
+                        observacoes:     cardData.observacoes || '',
+                        tipo:            cardData.tipo        || '',
+                        status:          statusFinal,
+                        equipe:          cardData.equipe      || '',
+                        viatura:         cardData.viatura     || '',
+                        inicio:          cardData.inicio      || '',
+                        pl:              cardData.pl          || '',
+                        sub:             cardData.sub         || '',
+                        reincidente:     cardData.reincidente || false,
+                        operador: NitLogin.operador || 'anon',
+                        turno:           NitLogin.turno || '',
+                        ts:              Date.now(),
                     };
                 });
-                // ── Grava todos de uma vez no Firebase (1 write = N cards) ──
+
                 try {
                     window.NitFirebase.exec((db, ref, update) => {
                         update(ref(db, 'kanban'), batchFirebase);
+                        // Solução 3: atualiza metadado com data de referência ativa
+                        update(ref(db, 'meta'), {
+                            dataReferencia,
+                            turnoAtivo: NitLogin.turno || '',
+                            ultimoProcessamento: Date.now(),
+                        });
                     });
                 } catch (err) {
                     console.warn('[NIT] Erro ao gravar batch no Firebase:', err);
                 }
                 showToast(`${eventosValidos.length} ocorrência(s) processada(s).`, 'success');
+
             } else {
+                // ── REPROCESSAMENTO (diff) ──
+                // Solução 1: mapa por eventoId + mapa por codigo (reincidência)
                 const mapaCardsAtuais = new Map();
+                const codigosNoKanban = new Map();
                 document.querySelectorAll('#tab-semaforo .kanban-card').forEach(card => {
-                    const codigo = card.dataset.codigo;
+                    const eid = card.dataset.eventoid || card.dataset.codigo;
+                    const cod = card.dataset.codigo;
                     const estaNormalizado = card.closest('#coluna-normalizados') !== null;
-                    mapaCardsAtuais.set(codigo, { element: card, status: estaNormalizado ? 'NORMALIZADO' : 'PENDENTE' });
+                    mapaCardsAtuais.set(eid, { element: card, status: estaNormalizado ? 'NORMALIZADO' : 'PENDENTE' });
+                    if (!codigosNoKanban.has(cod)) codigosNoKanban.set(cod, []);
+                    codigosNoKanban.get(cod).push(eid);
                 });
 
                 let novosCardsCriados = 0;
                 let cardsAtualizados = 0;
 
                 eventosValidos.forEach(eventoData => {
-                    const codigo = eventoData.codigo;
-                    const statusNovoEvento = this.avaliarStatus(eventoData);
-                    const cardExistente = mapaCardsAtuais.get(codigo);
+                    const eventoId = eventoData.eventoId;
+                    const statusNovoEvento = this.statusFromSecao(eventoData.secao, eventoData);
+                    const cardExistente = mapaCardsAtuais.get(eventoId);
+
                     if (!cardExistente) {
+                        // Novo evento — verificar reincidência pelo código
+                        eventoData.reincidente = codigosNoKanban.has(eventoData.codigo);
                         this.criarNovoCard(eventoData, statusNovoEvento);
                         novosCardsCriados++;
                     } else {
+                        // Evento já existe — só atualiza se normalizou
                         const statusAntigo = cardExistente.status;
                         if (statusAntigo !== 'NORMALIZADO' && statusNovoEvento === 'NORMALIZADO') {
                             DOM.colunaNormalizados.prepend(cardExistente.element);
@@ -1742,6 +1631,16 @@
                             this.ultimoLoteNormalizado.push(cardExistente.element.id);
                             cardExistente.element.classList.add('card-foi-normalizado');
                             setTimeout(() => cardExistente.element.classList.remove('card-foi-normalizado'), 2000);
+                            // Atualiza Firebase
+                            try {
+                                window.NitFirebase.exec((db, ref, update) => {
+                                    update(ref(db, `kanban/${eventoId}`), {
+                                        coluna: 'coluna-normalizados',
+                                        status: 'NORMALIZADO',
+                                        ts: Date.now(),
+                                    });
+                                });
+                            } catch(e) { console.warn('[NIT] Err auto-normalizar:', e); }
                         }
                     }
                 });
@@ -1749,7 +1648,7 @@
                 AppState.totalOcorrenciasCriadas += novosCardsCriados;
                 let mensagemToast = '';
                 if (novosCardsCriados > 0) mensagemToast += `${novosCardsCriados} nova(s) ocorrência(s) adicionada(s). `;
-                if (cardsAtualizados > 0) mensagemToast += `${cardsAtualizados} ocorrência(s) atualizada(s) para Normalizado.`;
+                if (cardsAtualizados > 0) mensagemToast += `${cardsAtualizados} normalizada(s) automaticamente.`;
                 if (mensagemToast) { showToast(mensagemToast, 'success'); } else { showToast('Nenhuma mudança detectada no relatório.', 'info'); }
             }
 
@@ -1758,6 +1657,8 @@
                 DOM.countNormalizadosGaveta.classList.add('tem-novos');
             }
 
+            // Sincroniza seletor de data com o relatório processado
+            NitDateFilter.sincronizarComRelatorio(dataReferencia);
             this.atualizarPainel();
             DOM.relatorioBrutoInput.value = '';
         },
@@ -1771,32 +1672,35 @@
                 default:                document.querySelector('#coluna-espera .kanban-cards-container').appendChild(cardElement); break;
             }
 
-            // ── Grava no Firebase para sincronizar todos os clientes ──
+            // Solução 1: chave Firebase = eventoId
+            const eventoId = cardData.eventoId || this.gerarEventoId(cardData.codigo, cardData.inicio);
             const colunaMap = { 'NORMALIZADO': 'coluna-normalizados', 'SEM_NECESSIDADE': 'coluna-sem-necessidade' };
             const coluna    = colunaMap[status] || 'coluna-espera';
-            const cod       = cardData.codigo;
             try {
                 window.NitFirebase.exec((db, ref, update) => {
-                    update(ref(db, `kanban/${cod}`), {
+                    update(ref(db, `kanban/${eventoId}`), {
                         coluna,
-                        codigo:      cod,
-                        endereco:    cardData.endereco    || '',
-                        problema:    cardData.problema    || '',
-                        observacoes: cardData.observacoes || '',
-                        tipo:        cardData.tipo        || '',
-                        status:      status,
-                        equipe:      cardData.equipe      || '',
-                        viatura:     cardData.viatura     || '',
-                        inicio:      cardData.inicio      || '',
-                        pl:          cardData.pl          || '',
-                        sub:         cardData.sub         || '',
-                        operador:    'desktop',
-                        turno:       ModalEntradaTurno.turnoSelecionado || '',
-                        ts:          Date.now(),
+                        codigo:         cardData.codigo,
+                        eventoId:       eventoId,
+                        dataReferencia: cardData.dataReferencia || '',
+                        endereco:       cardData.endereco    || '',
+                        problema:       cardData.problema    || '',
+                        observacoes:    cardData.observacoes || '',
+                        tipo:           cardData.tipo        || '',
+                        status:         status,
+                        equipe:         cardData.equipe      || '',
+                        viatura:        cardData.viatura     || '',
+                        inicio:         cardData.inicio      || '',
+                        pl:             cardData.pl          || '',
+                        sub:            cardData.sub         || '',
+                        reincidente:    cardData.reincidente || false,
+                        operador: NitLogin.operador || 'anon',
+                        turno:          NitLogin.turno || '',
+                        ts:             Date.now(),
                     });
                 });
             } catch (err) {
-                console.warn(`[NIT] Erro ao gravar card ${cod} no Firebase:`, err);
+                console.warn(`[NIT] Erro ao gravar card ${eventoId} no Firebase:`, err);
             }
         },
 
@@ -1821,6 +1725,7 @@
             return dados;
         },
 
+        // @deprecated — substituído por statusFromSecao(). Mantido como fallback.
         avaliarStatus(cardData) {
             if (cardData.fim && cardData.fim.trim() !== '') return 'NORMALIZADO';
             const endereco = (cardData.endereco || '').toLowerCase();
@@ -1896,7 +1801,11 @@
             }
 
             card.innerHTML = `
-                <div class="card-header"><strong>${cardData.codigo}</strong><span class="card-status-tag">${cardData.problema}</span></div>
+                <div class="card-header">
+                    <strong>${cardData.codigo}</strong>
+                    <span class="card-status-tag">${cardData.problema}</span>
+                    ${(cardData.reincidente === true || cardData.reincidente === 'true') ? '<span class="reincident-tag" title="Reincidência: mesmo cruzamento já registrado neste plantão">↺ REINC</span>' : ''}
+                </div>
                 <div class="card-body">
                     <div class="card-endereco">${cardData.endereco}</div>
                     ${fraseTecnica ? `<div class="card-frase-tecnica">${fraseTecnica}</div>` : ''}
@@ -1928,14 +1837,26 @@
                 normalizados: DOM.colunaNormalizados.querySelectorAll('.kanban-card').length,
             };
             const totalNormalizados = contadores.normalizados;
-            const totalPendentes = Object.values(contadores).reduce((a, b) => a + b, 0) - totalNormalizados;
-            // OCORRÊNCIAS = total de cards no DOM (independe de AppState — sincroniza em todos os browsers)
-            const totalOcorrencias = Object.values(contadores).reduce((a, b) => a + b, 0);
+            const totalPendentes    = Object.values(contadores).reduce((a, b) => a + b, 0) - totalNormalizados;
+            const totalOcorrencias  = Object.values(contadores).reduce((a, b) => a + b, 0);
             AppState.totalOcorrenciasCriadas = totalOcorrencias;
 
-            DOM.displayTotal.textContent = totalOcorrencias;
-            DOM.displayPendentes.textContent = totalPendentes;
-            DOM.displayNormalizados.textContent = totalNormalizados;
+            // ── Solução 3: calcula totais filtrados por dataReferencia ──
+            const filtro = this._filtroData;
+            let totalHoje = totalOcorrencias, normalizadosHoje = totalNormalizados, pendentesHoje = totalPendentes;
+            if (filtro) {
+                const todosCards = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
+                const cardsHoje  = todosCards.filter(c => c.dataset.datareferencia === filtro);
+                const normHoje   = cardsHoje.filter(c => c.closest('#coluna-normalizados') !== null).length;
+                totalHoje        = cardsHoje.length;
+                normalizadosHoje = normHoje;
+                pendentesHoje    = totalHoje - normHoje;
+            }
+
+            // ── Atualiza display ──
+            DOM.displayTotal.textContent        = filtro ? totalHoje        : totalOcorrencias;
+            DOM.displayPendentes.textContent    = filtro ? pendentesHoje    : totalPendentes;
+            DOM.displayNormalizados.textContent = filtro ? normalizadosHoje : totalNormalizados;
             DOM.countNormalizadosGaveta.textContent = totalNormalizados;
 
             Object.keys(contadores).forEach(key => {
@@ -1977,7 +1898,24 @@
                         `*Normalizados (${totalNormalizados})*\n`;
 
             const getCardText = (card) => {
-                let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● ${card.dataset.problema}`;
+                const tipo    = (card.dataset.tipo || '').trim().toUpperCase();
+                const inicio  = card.dataset.inicio || '';
+                // Abreviação do tipo: "FALHA DE EQUIPAMENTO" → "FALHA", "INVESTIGANDO" → "INVEST"
+                let tipoAbrev = 'N/I';
+                if (tipo.includes('FALHA'))         tipoAbrev = 'FALHA';
+                else if (tipo.includes('ENEL'))     tipoAbrev = 'ENEL';
+                else if (tipo.includes('INVEST'))   tipoAbrev = 'INVEST';
+                else if (tipo.includes('FURTO'))    tipoAbrev = 'FURTO';
+                else if (tipo.includes('IMPROC'))   tipoAbrev = 'IMPROC';
+                else if (tipo && tipo !== 'N/I')    tipoAbrev = tipo.slice(0, 8);
+
+                let desdeStr = '';
+                if (inicio) {
+                    const m = inicio.match(/(\d{2})\/(\d{2})(?:\/\d+)?\s+(\d{2}:\d{2})/);
+                    if (m) desdeStr = ` - Desde ${m[1]}/${m[2]} - ${m[3]}`;
+                }
+
+                let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${tipoAbrev}${desdeStr} • ${card.dataset.problema}*`;
                 if (card.dataset.equipe || card.dataset.viatura) {
                     t += ` (Equipe: ${card.dataset.equipe || 'N/I'}, VT: ${card.dataset.viatura || 'N/I'})`;
                 }
@@ -2060,7 +1998,6 @@
         },
 
         handleVisualizarRelatorioClick() { const t = this.gerarPreviewRelatorio(); DOM.modalRelatorioTexto.value = t; abrirModal(DOM.modalRelatorio); },
-        handleCopiarModalClick() { navigator.clipboard.writeText(DOM.modalRelatorioTexto.value).then(() => { fecharModal(DOM.modalRelatorio); showToast('Relatório copiado!', 'success'); }); },
         handleConfigChange() { this.gerarPreviewRelatorio(); this.salvarEstado(); },
 
         handleKanbanBoardClick(e) {
@@ -2074,7 +2011,31 @@
 
         copiarLocalizacao(card) {
             const textoCopiar = `*${card.dataset.codigo}🚦 ${card.dataset.endereco} ● ${card.dataset.problema}*`;
-            navigator.clipboard.writeText(textoCopiar).then(() => showToast('Localização copiada!', 'success'));
+            // navigator.clipboard requer HTTPS e contexto seguro.
+            // Fallback via textarea para HTTP/sandbox/iframe.
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textoCopiar)
+                    .then(() => showToast('Localização copiada!', 'success'))
+                    .catch(() => this._clipboardFallback(textoCopiar));
+            } else {
+                this._clipboardFallback(textoCopiar);
+            }
+        },
+
+        _clipboardFallback(texto) {
+            const ta = document.createElement('textarea');
+            ta.value = texto;
+            ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                const ok = document.execCommand('copy');
+                showToast(ok ? 'Localização copiada!' : 'Não foi possível copiar.', ok ? 'success' : 'error');
+            } catch (e) {
+                showToast('Não foi possível copiar.', 'error');
+            }
+            document.body.removeChild(ta);
         },
 
         abrirModalDespacho(cardId) {
@@ -2186,25 +2147,25 @@
         },
 
         _commitDespachoFirebase(card, equipe, vt, tipo, plAnterior, subAnterior, eqAnterior, vtAnterior) {
-            const cod = card.dataset.codigo;
+            const cod      = card.dataset.codigo;
+            // Solução 1: usa eventoId se disponível, fallback para codigo
+            const eventoId = card.dataset.eventoid || cod;
 
-            // ── Grava no Firebase primeiro — fonte única de verdade ──
-            // Todos os clientes conectados serão atualizados via .on('value')
             try {
                 window.NitFirebase.exec((db, ref, update) => {
-                    update(ref(db, `kanban/${cod}`), {
+                    update(ref(db, `kanban/${eventoId}`), {
                         coluna:    tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`,
                         pl:        tipo === 'sn' ? 'sn' : 'atend',
                         sub:       tipo,
                         equipe:    equipe || '',
                         viatura:   vt || 'N/I',
-                        operador:  'desktop',
-                        turno:     ModalEntradaTurno.turnoSelecionado || '',
+                        operador: NitLogin.operador || 'anon',
+                        turno:     NitLogin.turno || '',
                         ts:        Date.now(),
                     });
                 });
-                gravarHistoricoFirebase(cod, plAnterior, 'atend', tipo, equipe, vt, 'desktop');
-                registrarAcao(`Despacho '${cod}': ${equipe||'N/I'}, VT ${vt||'N/I'} → ${tipo.toUpperCase()}.`);
+                gravarHistoricoFirebase(eventoId, plAnterior, 'atend', tipo, equipe, vt, 'desktop');
+                registrarAcao(`Despacho '${cod}' [${eventoId}]: ${equipe||'N/I'}, VT ${vt||'N/I'} → ${tipo.toUpperCase()}.`);
                 showToast(`${cod} → ${tipo === 'sn' ? 'Sem necess.' : (equipe || tipo.toUpperCase())}`, 'success');
             } catch (err) {
                 console.warn('[NIT] Erro ao gravar despacho no Firebase:', err);
@@ -2212,40 +2173,37 @@
                 return;
             }
 
-            // ── Notifica API Railway em paralelo (log/histórico backend) ──
             nitAPIFetch('/api/v1/despacho', {
                 method: 'POST',
-                body:   JSON.stringify({ cod, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
+                body:   JSON.stringify({ cod, eventoId, eq: equipe || '', vt: vt || 'N/I', sub: tipo }),
             }).catch(err => {
-                // API offline não reverte — Firebase já sincronizou todos os clientes
                 const isOffline = err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError');
                 if (!isOffline) console.warn('[NIT] API despacho error (não crítico):', err);
             });
         },
 
         handleNormalizarClick(cardElement) {
-            const cod = cardElement.dataset.codigo;
+            const cod      = cardElement.dataset.codigo;
+            const eventoId = cardElement.dataset.eventoid || cod;
             const colunaOrigem = cardElement.closest('.kanban-cards-container')?.closest('.kanban-column, #gaveta-arquivados')?.id || 'desconhecido';
      
             mostrarUndoToast(
                 `${cod} normalizando...`,
                 () => {
-                    gravarHistoricoFirebase(cod, colunaOrigem, 'NORMALIZADO', null, cardElement.dataset.equipe || null, cardElement.dataset.viatura || null, 'desktop');
-                    registrarAcao(`Card '${cod}' normalizado (confirmado).`);
+                    gravarHistoricoFirebase(eventoId, colunaOrigem, 'NORMALIZADO', null, cardElement.dataset.equipe || null, cardElement.dataset.viatura || null, 'desktop');
+                    registrarAcao(`Card '${cod}' [${eventoId}] normalizado (confirmado).`);
      
                     try {
                         window.NitFirebase.exec((db, ref, update) => {
-                            update(ref(db, `kanban/${cod}`), {
+                            update(ref(db, `kanban/${eventoId}`), {
                                 coluna: 'coluna-normalizados',
                                 status: 'NORMALIZADO',
-                                operador: 'desktop',
-                                turno: ModalEntradaTurno.turnoSelecionado || '',
+                                operador: NitLogin.operador || 'anon',
+                                turno: NitLogin.turno || '',
                                 ts: Date.now(),
                             });
                         });
-     
                         showToast(`${cod} normalizado!`, 'success');
-                        
                     } catch (err) {
                         console.warn('[NIT] Erro ao normalizar:', err);
                         showToast('Erro ao normalizar card. Tente novamente.', 'error');
@@ -2253,20 +2211,17 @@
                 },
                 () => {
                     showToast(`${cod} desfazendo normalização...`, 'info');
-     
                     try {
                         window.NitFirebase.exec((db, ref, update) => {
-                            update(ref(db, `kanban/${cod}`), {
+                            update(ref(db, `kanban/${eventoId}`), {
                                 coluna: colunaOrigem,
                                 status: cardElement.dataset.status || 'ESPERA',
-                                operador: 'desktop',
-                                turno: ModalEntradaTurno.turnoSelecionado || '',
+                                operador: NitLogin.operador || 'anon',
+                                turno: NitLogin.turno || '',
                                 ts: Date.now(),
                             });
                         });
-     
                         showToast(`${cod} restaurado!`, 'info');
-                        
                     } catch (err) {
                         console.warn('[NIT] Erro ao desfazer normalização:', err);
                         showToast('Erro ao restaurar card.', 'error');
@@ -2298,7 +2253,8 @@
                 return;
             }
      
-            const cod = card.dataset.codigo;
+            const cod      = card.dataset.codigo;
+            const eventoId = card.dataset.eventoid || cod;
             const dadosAntigos = `Endereço: ${card.dataset.endereco}, Problema: ${card.dataset.problema}`;
      
             if (novoEndereco === card.dataset.endereco && novoProblema === card.dataset.problema) {
@@ -2309,19 +2265,18 @@
      
             try {
                 window.NitFirebase.exec((db, ref, update) => {
-                    update(ref(db, `kanban/${cod}`), {
+                    update(ref(db, `kanban/${eventoId}`), {
                         endereco: novoEndereco,
                         problema: novoProblema,
-                        operador: 'desktop',
-                        turno: ModalEntradaTurno.turnoSelecionado || '',
+                        operador: NitLogin.operador || 'anon',
+                        turno: NitLogin.turno || '',
                         ts: Date.now(),
                     });
                 });
      
                 fecharModal(DOM.modalEdicao);
                 showToast('Sincronizando alterações...', 'info');
-                registrarAcao(`Card '${cod}' editado. Dados antigos: ${dadosAntigos}.`);
-     
+                registrarAcao(`Card '${cod}' [${eventoId}] editado. Dados antigos: ${dadosAntigos}.`);
             } catch (err) {
                 console.warn('[NIT] Erro ao editar card:', err);
                 showToast('Erro ao salvar alterações. Tente novamente.', 'error');
@@ -2370,7 +2325,9 @@
                 const coluna = destinoContainer.closest('.kanban-column, #gaveta-arquivados');
                 const colunaId = coluna?.id || 'desconhecido';
                 const nomeColuna = coluna?.querySelector('.kanban-column-header .header-text')?.textContent?.trim() || 'desconhecido';
-                const cod = card.dataset.codigo;
+                const cod      = card.dataset.codigo;
+                const eventoId = card.dataset.eventoid || cod;
+                const colunaOrigem = card.dataset.coluna || 'desconhecido';
      
                 if (AppState.placeholder && AppState.placeholder.parentNode) {
                     AppState.placeholder.parentNode.removeChild(AppState.placeholder);
@@ -2379,17 +2336,17 @@
      
                 try {
                     window.NitFirebase.exec((db, ref, update) => {
-                        update(ref(db, `kanban/${cod}`), {
+                        update(ref(db, `kanban/${eventoId}`), {
                             coluna: colunaId,
-                            operador: 'desktop',
-                            turno: ModalEntradaTurno.turnoSelecionado || '',
+                            operador: NitLogin.operador || 'anon',
+                            turno: NitLogin.turno || '',
                             ts: Date.now(),
                         });
                     });
-     
-                    registrarAcao(`Card '${cod}' movido para '${nomeColuna}' (em sincronização).`);
+                    // Solução lacuna: drag/drop agora grava no historico Firebase
+                    gravarHistoricoFirebase(eventoId, colunaOrigem, colunaId, null, null, null, 'desktop');
+                    registrarAcao(`Card '${cod}' movido: ${colunaOrigem} → '${nomeColuna}'.`);
                     showToast('Sincronizando card...', 'info');
-                    
                 } catch (err) {
                     console.warn('[NIT] Erro ao gravar posição do card:', err);
                     showToast('Erro ao mover card. Tente novamente.', 'error');
@@ -2398,16 +2355,47 @@
         },
 
         limparPainel() {
-            if (confirm("Tem certeza que deseja limpar TODOS os dados da aba SEMAFÓRICO?")) {
-                localStorage.removeItem(AppState.STORAGE_KEY_SEMAFORO);
-                document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
-                if (DOM.relatorioFinalPreview) DOM.relatorioFinalPreview.value = '';
-                AppState.cardIdCounter = 0;
-                AppState.totalOcorrenciasCriadas = 0;
-                this.atualizarPainel();
-                showToast('Painel semafórico limpo!', 'success');
-                registrarAcao('Painel Semafórico foi limpo.');
+            nitConfirm(
+                '🗑️ Limpar Painel Semafórico',
+                '⚠️ Remove <strong>TODOS os dados</strong> para<br><strong>TODOS os operadores conectados.</strong><br><br><small style="color:var(--color-text-secondary)">Use para iniciar um novo turno do zero.</small>',
+                () => this._executarLimpeza()
+            );
+        },
+
+        _executarLimpeza() {
+            fecharModal(document.getElementById('modal-confirmar-generico'));
+
+            // 1. Limpa DOM
+            document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
+            if (DOM.relatorioFinalPreview) DOM.relatorioFinalPreview.value = '';
+            AppState.cardIdCounter = 0;
+            AppState.totalOcorrenciasCriadas = 0;
+            this._filtroData = null;
+
+            // 2. Limpa localStorage
+            localStorage.removeItem(AppState.STORAGE_KEY_SEMAFORO);
+
+            // 3. Propaga para Firebase — todos os clientes zeram
+            const propagado = window.NitFirebase.exec((db, ref, update) => {
+                ref(db, 'kanban').remove();
+                update(ref(db, 'meta'), {
+                    ultimoReset: {
+                        ts:       Date.now(),
+                        operador: 'desktop_local',
+                        turno:    NitLogin.turno || '',
+                    },
+                    dataReferencia: null,
+                });
+            });
+
+            this.atualizarPainel();
+
+            if (propagado !== undefined) {
+                showToast('Painel limpo para todos os operadores!', 'success');
+            } else {
+                showToast('Painel limpo localmente (Firebase offline).', 'warning');
             }
+            registrarAcao(`Painel Semafórico limpo. Turno: ${NitLogin.turno || 'N/I'}.`);
         },
 
         inicializarBuscaPorColuna() {
@@ -2438,710 +2426,6 @@
     };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MÓDULO TURNO — INTACTO
-// ═══════════════════════════════════════════════════════════════════════════
-
-const Turno = {
-    inicializar() {
-        DOM.turnoData.valueAsDate = new Date();
-        DOM.btnAddOcorrencia.addEventListener('click', () => this.adicionarOcorrencia());
-        DOM.btnGerarRelatorioTurno.addEventListener('click', this.gerarRelatorio.bind(this));
-        DOM.btnCopiarRelatorioTurno.addEventListener('click', this.copiarRelatorio.bind(this));
-        DOM.turnoOcorrenciasContainer.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-remover')) { e.target.closest('.item-dinamico').remove(); this.salvarRascunho(); }
-        });
-        document.querySelector('#tab-turno').addEventListener('input', () => this.salvarRascunho());
-        this.carregarRascunho();
-    },
-    adicionarOcorrencia(data = {}) {
-        const item = document.createElement('div');
-        item.className = 'item-dinamico';
-        item.innerHTML = `
-            <button type="button" class="btn-remover"><i class="fas fa-times"></i></button>
-            <div class="form-grid">
-                <div class="form-group"><label>QRU:</label><input type="text" class="turno-qru" list="lista-qrus-datalist" value="${data.qru || ''}"></div>
-                <div class="form-group"><label>QTH:</label><input type="text" class="turno-qth" list="lista-locais-datalist" value="${data.qth || ''}"></div>
-                <div class="form-group"><label>VT:</label><input type="text" class="turno-vt" value="${data.vt || ''}"></div>
-                <div class="form-group"><label>Equipe:</label><input type="text" class="turno-equipe" list="lista-operadores-datalist" value="${data.equipe || ''}"></div>
-            </div>`;
-        DOM.turnoOcorrenciasContainer.appendChild(item);
-    },
-    gerarRelatorio() {
-        const get = id => document.getElementById(id)?.value.trim().toUpperCase();
-        const dataInput = document.getElementById("turno-data").value;
-        const dataBr = dataInput ? new Date(dataInput + 'T00:00:00').toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
-        let texto = '';
-        const camposCabecalho = [
-            { id: 'turno-turno', label: 'TURNO' },
-            { id: 'turno-data', label: 'DATA', value: dataBr },
-            { id: 'turno-totalAgentes', label: 'TOTAL AGENTES' },
-            { id: 'turno-monitor', label: 'CENTRAL' },
-            { id: 'turno-supervisor', label: 'SUPERVISÃO' },
-            { id: 'turno-vlvt', label: 'VLVT' }
-        ];
-        camposCabecalho.forEach(campo => {
-            const valor = campo.value || get(campo.id);
-            if (valor) texto += `*${campo.label}:* ${valor}\n`;
-        });
-        document.querySelectorAll('#turno-ocorrencias-container .item-dinamico').forEach(item => {
-            const qru = item.querySelector('.turno-qru')?.value.trim().toUpperCase();
-            const qth = item.querySelector('.turno-qth')?.value.trim().toUpperCase();
-            const vt = item.querySelector('.turno-vt')?.value.trim().toUpperCase();
-            const equipe = item.querySelector('.turno-equipe')?.value.trim().toUpperCase();
-            if (qru || qth || vt || equipe) {
-                texto += `\n`;
-                if (qru) texto += `*QRU:* ${qru}\n`;
-                if (qth) texto += `*QTH:* ${qth}\n`;
-                if (vt) texto += `*VT:* ${vt}\n`;
-                if (equipe) texto += `*EQUIPE:* ${equipe}\n`;
-            }
-        });
-        DOM.saidaTurno.value = texto.trim();
-        showToast('Relatório de turno gerado!', 'success');
-        return texto;
-    },
-    copiarRelatorio() {
-        if (!DOM.saidaTurno.value) { showToast('Gere o relatório antes de copiar.', 'warning'); return; }
-        navigator.clipboard.writeText(DOM.saidaTurno.value).then(() => showToast('Relatório de turno copiado!', 'success'));
-    },
-    salvarRascunho() {
-        const rascunho = { cabecalho: {}, ocorrencias: [] };
-        document.querySelectorAll('#tab-turno .painel:first-child .form-grid input, #tab-turno .painel:first-child .form-grid select').forEach(input => {
-            if (input.id) rascunho.cabecalho[input.id] = input.value;
-        });
-        document.querySelectorAll('#turno-ocorrencias-container .item-dinamico').forEach(item => {
-            rascunho.ocorrencias.push({
-                qru: item.querySelector('.turno-qru')?.value || '',
-                qth: item.querySelector('.turno-qth')?.value || '',
-                vt: item.querySelector('.turno-vt')?.value || '',
-                equipe: item.querySelector('.turno-equipe')?.value || ''
-            });
-        });
-        localStorage.setItem(AppState.STORAGE_KEY_TURNO, JSON.stringify(rascunho));
-    },
-    carregarRascunho() {
-        const rascunhoSalvo = localStorage.getItem(AppState.STORAGE_KEY_TURNO);
-        if (!rascunhoSalvo) return;
-        const rascunho = JSON.parse(rascunhoSalvo);
-        if (rascunho.cabecalho) {
-            Object.keys(rascunho.cabecalho).forEach(id => {
-                const input = document.getElementById(id);
-                if (input) input.value = rascunho.cabecalho[id];
-            });
-        }
-        if (rascunho.ocorrencias) {
-            DOM.turnoOcorrenciasContainer.innerHTML = '';
-            rascunho.ocorrencias.forEach(ocorrencia => this.adicionarOcorrencia(ocorrencia));
-        }
-    },
-    limparPainel() {
-        if (confirm("Tem certeza que deseja limpar TODOS os dados da aba RELATÓRIO DE TURNO?")) {
-            localStorage.removeItem(AppState.STORAGE_KEY_TURNO);
-            if (DOM.turnoOcorrenciasContainer) DOM.turnoOcorrenciasContainer.innerHTML = '';
-            if (DOM.saidaTurno) DOM.saidaTurno.value = '';
-            document.querySelectorAll('#tab-turno .form-grid input, #tab-turno .form-grid select').forEach(input => {
-                if(input.type !== 'date') input.value = '';
-            });
-            DOM.turnoData.valueAsDate = new Date();
-            showToast('Dados de turno limpos!', 'success');
-        }
-    }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MÓDULO REBOQUES — INTACTO
-// ═══════════════════════════════════════════════════════════════════════════
-
-const Reboques = {
-    inicializar() {
-        this.carregarEstado();
-        DOM.btnProcessarReboques.addEventListener('click', this.handleProcessarClick.bind(this));
-        DOM.btnGerarRelatorioFrota.addEventListener('click', this.gerarRelatorioFrota.bind(this));
-        DOM.btnAddReboquista.addEventListener('click', () => this.abrirModalEdicao());
-        DOM.btnReboqueAcionamentoConfirmar.addEventListener('click', this.handleFinalizarAcionamentoMultiplo.bind(this));
-        DOM.btnReboqueAcionamentoAdicionarOutro.addEventListener('click', this.handleAdicionarOutroReboque.bind(this));
-        DOM.btnReboqueEditSalvar.addEventListener('click', this.handleSalvarEdicao.bind(this));
-        const reboquesArea = document.querySelector('#tab-reboques');
-        reboquesArea.addEventListener('click', this.handleCardClick.bind(this));
-        reboquesArea.addEventListener('dragstart', this.handleDragStart.bind(this));
-        reboquesArea.addEventListener('dragend', this.handleDragEnd.bind(this));
-        reboquesArea.addEventListener('dragover', this.handleDragOver.bind(this));
-        reboquesArea.addEventListener('drop', this.handleDrop.bind(this));
-    },
-    handleProcessarClick() {
-        const textoBruto = DOM.reboqueBrutoInput.value.trim();
-        if (!textoBruto) { showToast('Insira a lista de reboquistas para processar.', 'warning'); return; }
-        const blocos = textoBruto.split(/\n\s*\n/).filter(bloco => bloco.trim() !== '');
-        let novosReboquistasAdicionados = 0;
-        blocos.forEach(bloco => {
-            const cardData = this.extrairDadosDoBlocoReboque(bloco);
-            if (cardData && cardData.nome && !this.cardExiste(cardData.nome)) {
-                cardData.status = 'disponivel';
-                cardData.ocorrencia = '';
-                this.adicionarReboquista(cardData);
-                novosReboquistasAdicionados++;
-            }
-        });
-        if (novosReboquistasAdicionados > 0) showToast(`${novosReboquistasAdicionados} reboquista(s) processado(s)!`, 'success');
-        else showToast('Nenhum novo reboquista encontrado ou já existem no painel.', 'info');
-        DOM.reboqueBrutoInput.value = '';
-    },
-    extrairDadosDoBlocoReboque(bloco) {
-        const linhas = bloco.split('\n').map(linha => linha.trim()).filter(linha => linha !== '');
-        if (linhas.length === 0) return null;
-        const hasKeywords = /VT|Plantão|Smart/i.test(bloco);
-        if (!hasKeywords) return null;
-        const data = { nome: '', vt: 'N/I', placa: 'N/I', plantao: 'N/I', smart: 'N/I' };
-        const linhaNome = linhas.find(linha => {
-            const temVT = /VT\s+\d+/i.test(linha);
-            const temEmoji = /🚨/.test(linha);
-            const temPlantao = /Plantão/i.test(linha);
-            const temSmart = /Smart/i.test(linha);
-            const temVistoriador = /VISTORIADOR/i.test(linha);
-            const temAssumirHoras = /ASSUMIR.*HORAS/i.test(linha);
-            return !temVT && !temEmoji && !temPlantao && !temSmart && !temVistoriador && !temAssumirHoras && linha.length > 2;
-        });
-        if (!linhaNome) return null;
-        data.nome = linhaNome.trim().toUpperCase();
-        linhas.forEach(linha => {
-            const plantaoMatch = linha.match(/Plantão até\s+(?:às\s+)?([\d:]+\s*hs?r?s?)/i);
-            if (plantaoMatch) data.plantao = plantaoMatch[1].trim();
-            const smartMatch = linha.match(/Smart:\s*\(?(\d{2})\)?\s*([\d\s.-]+)/i);
-            if (smartMatch) data.smart = `(${smartMatch[1]}) ${smartMatch[2].trim()}`;
-            const vtPlacaMatch = linha.match(/VT\s+([\w\d]+)\s*🚨?\s*([A-Z0-9]+)?/i);
-            if (vtPlacaMatch) { data.vt = vtPlacaMatch[1] ? vtPlacaMatch[1].trim() : 'N/I'; data.placa = vtPlacaMatch[2] ? vtPlacaMatch[2].trim().replace(/\s/g, '') : 'N/I'; }
-        });
-        return data;
-    },
-    adicionarReboquista(cardData) {
-        const cardId = `reboque-${AppState.reboqueIdCounter++}`;
-        const cardElement = this.criarCardReboque(cardId, cardData);
-        DOM.reboquesDisponiveisContainer.appendChild(cardElement);
-        this.atualizarPainel();
-    },
-    criarCardReboque(cardId, cardData) {
-        const card = document.createElement('div');
-        card.id = cardId;
-        card.className = 'reboque-card';
-        card.draggable = true;
-        Object.keys(cardData).forEach(key => { if (cardData[key] !== undefined) card.dataset[key] = cardData[key]; });
-        const ocorrenciaInfoHTML = cardData.ocorrencia ? `<div class="reboque-ocorrencia-info" title="${cardData.ocorrencia}"><i class="fas fa-info-circle"></i> ${cardData.ocorrencia}</div>` : '';
-        let footerButtons = '';
-        if (cardData.status === 'disponivel') {
-            footerButtons = `<button class="btn-card-action acionamento" title="Acionar Reboque"><i class="fas fa-sign-out-alt"></i></button>`;
-        } else {
-            footerButtons = `<button class="btn-card-action finalizar-acionamento" title="Finalizar Atendimento"><i class="fas fa-check-circle" style="color: var(--color-success);"></i></button>`;
-        }
-        card.innerHTML = `
-            <div class="reboque-card-header">
-                <strong>${cardData.nome || 'N/I'}</strong>
-                <span class="status-tag ${cardData.status}">${cardData.status}</span>
-            </div>
-            <div>
-                <div class="info-line"><i class="fas fa-truck"></i> VT ${cardData.vt || 'N/I'} / ${cardData.placa || 'N/I'}</div>
-                <div class="info-line"><i class="far fa-clock"></i> Plantão até ${cardData.plantao || 'N/I'}</div>
-                <div class="info-line"><i class="fas fa-mobile-alt"></i> ${cardData.smart || 'N/I'}</div>
-            </div>
-            ${ocorrenciaInfoHTML}
-            <div class="reboque-card-footer">
-                <button class="btn-card-action edit-reboquista" title="Editar Reboquista"><i class="fas fa-user-edit"></i></button>
-                <button class="btn-card-action remover-reboquista" title="Remover Reboquista"><i class="fas fa-trash-alt" style="color: var(--color-danger);"></i></button>
-                <div style="flex-grow: 1;"></div>
-                ${footerButtons}
-            </div>`;
-        return card;
-    },
-    atualizarPainel() {
-        const disponiveis = DOM.reboquesDisponiveisContainer.querySelectorAll('.reboque-card').length;
-        const atuando = DOM.reboquesAtuandoContainer.querySelectorAll('.reboque-card').length;
-        DOM.reboquesCountDisponiveis.textContent = disponiveis;
-        DOM.reboquesCountAtuando.textContent = atuando;
-        DOM.reboquesCountTotal.textContent = disponiveis + atuando;
-        this.salvarEstado();
-    },
-    handleCardClick(e) {
-        const cardElement = e.target.closest('.reboque-card');
-        if (!cardElement) return;
-        if (e.target.closest('.acionamento'))          this.abrirModalAcionamento(cardElement);
-        else if (e.target.closest('.finalizar-acionamento')) this.finalizarAcionamento(cardElement);
-        else if (e.target.closest('.edit-reboquista')) this.abrirModalEdicao(cardElement.id);
-        else if (e.target.closest('.remover-reboquista')) this.removerReboquista(cardElement);
-    },
-    abrirModalAcionamento(reboquistaCard) {
-        if (reboquistaCard.dataset.status === 'atuando') { showToast(`${reboquistaCard.dataset.nome} já está em atendimento.`, 'error'); return; }
-        this.resetarModalAcionamento();
-        AppState.multiAcionamentoState.reboquistas.push(reboquistaCard);
-        this.atualizarTagsAcionamento();
-        DOM.multiAcionamentoReboquistas.style.display = 'block';
-        abrirModal(DOM.modalAcionamentoReboque);
-    },
-    resetarModalAcionamento() {
-        AppState.multiAcionamentoState.reboquistas.forEach(card => card.classList.remove('dragging'));
-        AppState.multiAcionamentoState = { reboquistas: [], eventoData: null, eventoCard: null };
-        DOM.reboqueEventoTipo.value = '';
-        DOM.reboqueEventoEndereco.value = '';
-        DOM.reboqueEventoHorario.value = '';
-        DOM.reboqueEventoObs.value = '';
-        DOM.multiAcionamentoTags.innerHTML = '';
-        DOM.multiAcionamentoReboquistas.style.display = 'none';
-        DOM.reboqueEventoTipo.disabled = false;
-        DOM.reboqueEventoEndereco.disabled = false;
-        DOM.reboqueEventoHorario.disabled = false;
-        DOM.reboqueEventoObs.disabled = false;
-    },
-    atualizarTagsAcionamento() {
-        DOM.multiAcionamentoTags.innerHTML = AppState.multiAcionamentoState.reboquistas
-            .map(card => `<span class="evento-reboquista-tag">${card.dataset.nome}</span>`).join('');
-    },
-    handleAdicionarOutroReboque() {
-        if (AppState.multiAcionamentoState.reboquistas.length === 0) { showToast('Acione o primeiro reboquista antes de adicionar outros.', 'warning'); return; }
-        const eventoData = {
-            tipo: DOM.reboqueEventoTipo.value.trim().toUpperCase(),
-            endereco: DOM.reboqueEventoEndereco.value.trim().toUpperCase(),
-            horario: DOM.reboqueEventoHorario.value,
-            obs: DOM.reboqueEventoObs.value.trim(),
-        };
-        if (!eventoData.tipo || !eventoData.endereco) { showToast('Tipo de Evento e Endereço são obrigatórios.', 'warning'); return; }
-        AppState.multiAcionamentoState.eventoData = eventoData;
-        DOM.reboqueEventoTipo.disabled = true;
-        DOM.reboqueEventoEndereco.disabled = true;
-        DOM.reboqueEventoHorario.disabled = true;
-        DOM.reboqueEventoObs.disabled = true;
-        showToast('Arraste outro reboquista para a área de tags ou finalize o acionamento.', 'info');
-    },
-    handleFinalizarAcionamentoMultiplo() {
-        const { reboquistas, eventoData } = AppState.multiAcionamentoState;
-        if (reboquistas.length === 0) { showToast('Nenhum reboquista foi acionado.', 'error'); return; }
-        const finalEventoData = eventoData || {
-            tipo: DOM.reboqueEventoTipo.value.trim().toUpperCase(),
-            endereco: DOM.reboqueEventoEndereco.value.trim().toUpperCase(),
-            horario: DOM.reboqueEventoHorario.value,
-            obs: DOM.reboqueEventoObs.value.trim(),
-        };
-        if (!finalEventoData.tipo || !finalEventoData.endereco) { showToast('Tipo de Evento e Endereço são obrigatórios.', 'warning'); return; }
-        finalEventoData.criado = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        finalEventoData.reboquistas = reboquistas.map(card => ({ nome: card.dataset.nome, vt: card.dataset.vt }));
-        const eventoCard = Eventos.adicionarEvento(finalEventoData);
-        reboquistas.forEach(reboquistaCard => {
-            reboquistaCard.dataset.status = 'atuando';
-            reboquistaCard.dataset.ocorrencia = `${finalEventoData.tipo} @ ${finalEventoData.endereco}`;
-            reboquistaCard.dataset.eventoId = eventoCard.id;
-            this.atualizarCard(reboquistaCard);
-            DOM.reboquesAtuandoContainer.appendChild(reboquistaCard);
-        });
-        const nomes = reboquistas.map(r => r.dataset.nome).join(', ');
-        let mensagem = `*${finalEventoData.tipo}* enviado para: *${nomes}*\n*Endereço:* ${finalEventoData.endereco}`;
-        if (finalEventoData.horario) mensagem += `\n*Horário:* ${finalEventoData.horario}`;
-        navigator.clipboard.writeText(mensagem).then(() => showToast('Mensagem de acionamento múltiplo copiada!', 'success'));
-        fecharModal(DOM.modalAcionamentoReboque);
-        this.resetarModalAcionamento();
-        this.atualizarPainel();
-    },
-    finalizarAcionamento(card) {
-        registrarAcao(`Reboquista '${card.dataset.nome}' foi liberado e está disponível.`);
-        const nomeReboquista = card.dataset.nome;
-        Eventos.desalocarReboquistaDeEvento(nomeReboquista);
-        card.dataset.status = 'disponivel';
-        card.dataset.ocorrencia = '';
-        card.dataset.eventoId = '';
-        this.atualizarCard(card);
-        DOM.reboquesDisponiveisContainer.appendChild(card);
-        this.atualizarPainel();
-        showToast(`${nomeReboquista} está disponível.`, 'info');
-    },
-    removerReboquista(card) {
-        if (confirm(`Tem certeza que deseja remover o reboquista ${card.dataset.nome}?`)) {
-            if(card.dataset.status === 'atuando') Eventos.desalocarReboquistaDeEvento(card.dataset.nome);
-            card.remove();
-            this.atualizarPainel();
-            showToast('Reboquista removido.', 'success');
-        }
-    },
-    abrirModalEdicao(cardId) {
-        if (!cardId) {
-            DOM.reboqueEditCardId.value = '';
-            DOM.reboqueEditNome.value = '';
-            DOM.reboqueEditVt.value = '';
-            DOM.reboqueEditPlaca.value = '';
-            DOM.reboqueEditPlantao.value = '';
-            DOM.reboqueEditSmart.value = '';
-        } else {
-            const card = document.getElementById(cardId);
-            DOM.reboqueEditCardId.value = cardId;
-            DOM.reboqueEditNome.value = card.dataset.nome;
-            DOM.reboqueEditVt.value = card.dataset.vt;
-            DOM.reboqueEditPlaca.value = card.dataset.placa;
-            DOM.reboqueEditPlantao.value = card.dataset.plantao;
-            DOM.reboqueEditSmart.value = card.dataset.smart;
-        }
-        abrirModal(DOM.modalEdicaoReboquista);
-    },
-    handleSalvarEdicao() {
-        const cardId = DOM.reboqueEditCardId.value;
-        const cardData = {
-            nome: DOM.reboqueEditNome.value.trim().toUpperCase(),
-            vt: DOM.reboqueEditVt.value.trim(),
-            placa: DOM.reboqueEditPlaca.value.trim().toUpperCase(),
-            plantao: DOM.reboqueEditPlantao.value.trim(),
-            smart: DOM.reboqueEditSmart.value.trim(),
-        };
-        if (!cardData.nome) { showToast('O nome do reboquista é obrigatório.', 'error'); return; }
-        if (cardId) {
-            const card = document.getElementById(cardId);
-            const nomeAntigo = card.dataset.nome;
-            if (nomeAntigo !== cardData.nome) Eventos.renomearReboquistaEmEventos(nomeAntigo, cardData.nome);
-            Object.assign(card.dataset, cardData);
-            this.atualizarCard(card);
-            showToast('Dados do reboquista atualizados!', 'success');
-        } else {
-            if (this.cardExiste(cardData.nome)) { showToast('Um reboquista com este nome já existe.', 'error'); return; }
-            cardData.status = 'disponivel';
-            cardData.ocorrencia = '';
-            this.adicionarReboquista(cardData);
-            showToast('Reboquista adicionado com sucesso!', 'success');
-        }
-        this.salvarEstado();
-        fecharModal(DOM.modalEdicaoReboquista);
-    },
-    atualizarCard(card) {
-        const cardData = { ...card.dataset };
-        const novoCardHTML = this.criarCardReboque(card.id, cardData).innerHTML;
-        card.innerHTML = novoCardHTML;
-    },
-    salvarEstado() {
-        const estado = { colunas: {}, cards: {}, config: { reboqueIdCounter: AppState.reboqueIdCounter } };
-        estado.colunas.disponiveis = Array.from(DOM.reboquesDisponiveisContainer.querySelectorAll('.reboque-card')).map(c => c.id);
-        estado.colunas.atuando = Array.from(DOM.reboquesAtuandoContainer.querySelectorAll('.reboque-card')).map(c => c.id);
-        document.querySelectorAll('#tab-reboques .reboque-card').forEach(card => { estado.cards[card.id] = { ...card.dataset }; });
-        localStorage.setItem(AppState.STORAGE_KEY_REBOQUES, JSON.stringify(estado));
-    },
-    carregarEstado() {
-        const estadoSalvo = localStorage.getItem(AppState.STORAGE_KEY_REBOQUES);
-        if (!estadoSalvo) { this.atualizarPainel(); return; }
-        const estado = JSON.parse(estadoSalvo);
-        DOM.reboquesDisponiveisContainer.innerHTML = '';
-        DOM.reboquesAtuandoContainer.innerHTML = '';
-        if (estado.cards && estado.colunas) {
-            (estado.colunas.disponiveis || []).forEach(cardId => { const cardData = estado.cards[cardId]; if (cardData) DOM.reboquesDisponiveisContainer.appendChild(this.criarCardReboque(cardId, cardData)); });
-            (estado.colunas.atuando || []).forEach(cardId => { const cardData = estado.cards[cardId]; if (cardData) DOM.reboquesAtuandoContainer.appendChild(this.criarCardReboque(cardId, cardData)); });
-        }
-        AppState.reboqueIdCounter = estado.config?.reboqueIdCounter || 0;
-        this.atualizarPainel();
-    },
-    cardExiste: (nome) => document.querySelector(`#tab-reboques .reboque-card[data-nome="${nome}"]`) !== null,
-    handleDragStart(e) { if (e.target.classList.contains('reboque-card')) { AppState.draggedCard = e.target; setTimeout(() => e.target.classList.add('dragging'), 0); } },
-    handleDragEnd(e)   { if (AppState.draggedCard) { AppState.draggedCard.classList.remove('dragging'); AppState.draggedCard = null; } },
-    handleDragOver(e)  { e.preventDefault(); },
-    handleDrop(e) {
-        e.preventDefault();
-        if (!AppState.draggedCard) return;
-        const dropTarget = e.target;
-        if (DOM.modalAcionamentoReboque.classList.contains('visible') && dropTarget.closest('#multi-acionamento-reboquistas')) {
-            const reboquistaCard = AppState.draggedCard;
-            if (reboquistaCard.dataset.status === 'atuando') { showToast(`${reboquistaCard.dataset.nome} já está em atendimento.`, 'error'); return; }
-            if (!AppState.multiAcionamentoState.reboquistas.find(r => r.id === reboquistaCard.id)) {
-                AppState.multiAcionamentoState.reboquistas.push(reboquistaCard);
-                this.atualizarTagsAcionamento();
-                showToast(`${reboquistaCard.dataset.nome} adicionado ao acionamento.`, 'info');
-            }
-        } else if (dropTarget.closest('.evento-card')) {
-            Eventos.alocarReboquistaAoEvento(AppState.draggedCard, dropTarget.closest('.evento-card'));
-        }
-    },
-    limparPainel() {
-        if (confirm("Tem certeza que deseja limpar TODOS os dados da aba REBOQUES e EVENTOS?")) {
-            localStorage.removeItem(AppState.STORAGE_KEY_REBOQUES);
-            localStorage.removeItem(AppState.STORAGE_KEY_EVENTOS);
-            if (DOM.reboquesDisponiveisContainer) DOM.reboquesDisponiveisContainer.innerHTML = '';
-            if (DOM.reboquesAtuandoContainer) DOM.reboquesAtuandoContainer.innerHTML = '';
-            if (DOM.eventosAbertosContainer) DOM.eventosAbertosContainer.innerHTML = '';
-            AppState.reboqueIdCounter = 0;
-            AppState.eventoIdCounter = 0;
-            this.atualizarPainel();
-            Eventos.salvarEstado();
-            showToast('Painel de reboques e eventos limpo!', 'success');
-        }
-    },
-    gerarRelatorioFrota() {
-        const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' }).replace(/\//g, '.');
-        const disponiveis = DOM.reboquesDisponiveisContainer.querySelectorAll('.reboque-card');
-        const atuando = DOM.reboquesAtuandoContainer.querySelectorAll('.reboque-card');
-        let texto = `*RELATÓRIO DE STATUS DA FROTA DE REBOQUES*\n*Data:* ${hoje}\n\n`;
-        texto += `*Resumo da Frota:*\n- 🟢 *Disponíveis:* ${disponiveis.length}\n- 🟡 *Em Atendimento:* ${atuando.length}\n- 🚛 *Total:* ${disponiveis.length + atuando.length}\n\n`;
-        if (atuando.length > 0) {
-            const eventosAgrupados = {};
-            atuando.forEach(card => {
-                let tituloEvento;
-                const eventoId = card.dataset.eventoId;
-                if (eventoId) {
-                    const eventoCard = document.getElementById(eventoId);
-                    tituloEvento = eventoCard ? eventoCard.dataset.tipo : 'EVENTO NÃO ENCONTRADO';
-                } else {
-                    tituloEvento = card.dataset.ocorrencia ? card.dataset.ocorrencia.split(' @ ')[0].toUpperCase() : 'EVENTO NÃO ESPECIFICADO';
-                }
-                if (!eventosAgrupados[tituloEvento]) eventosAgrupados[tituloEvento] = [];
-                eventosAgrupados[tituloEvento].push(card);
-            });
-            const numeroDeEventosUnicos = Object.keys(eventosAgrupados).length;
-            texto += `---\n\n🟡 *OCORRÊNCIAS EM ATENDIMENTO (${numeroDeEventosUnicos}):*\n\n`;
-            for (const evento in eventosAgrupados) {
-                texto += `*${evento}*\n`;
-                eventosAgrupados[evento].forEach(card => {
-                    texto += `- *Reboquista:* ${card.dataset.nome} (VT: ${card.dataset.vt || 'N/I'})\n- *Contato:* ${card.dataset.smart || 'N/I'}\n\n`;
-                });
-            }
-        } else {
-            texto += `---\n\n*Todos os reboquistas estão disponíveis.*`;
-        }
-        DOM.modalRelatorioTexto.value = texto.trim();
-        abrirModal(DOM.modalRelatorio);
-    },
-};
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MÓDULO EVENTOS — INTACTO
-// ═══════════════════════════════════════════════════════════════════════════
-
-const Eventos = {
-    inicializar() {
-        this.carregarEstado();
-        DOM.btnNovoEvento.addEventListener('click', () => abrirModal(DOM.modalNovoEvento));
-        DOM.btnEventoCriar.addEventListener('click', this.handleCriarEvento.bind(this));
-        DOM.btnEventoEditSalvar.addEventListener('click', this.handleSalvarEdicaoEvento.bind(this));
-        DOM.eventosAbertosContainer.addEventListener('click', this.handleEventoClick.bind(this));
-        DOM.eventosAbertosContainer.addEventListener('dragover', this.handleDragOver.bind(this));
-        DOM.eventosAbertosContainer.addEventListener('dragleave', this.handleDragLeave.bind(this));
-        DOM.eventosAbertosContainer.addEventListener('drop', this.handleDrop.bind(this));
-    },
-    handleCriarEvento() {
-        const eventoData = {
-            tipo: DOM.eventoTipo.value.trim().toUpperCase(),
-            endereco: DOM.eventoEndereco.value.trim().toUpperCase(),
-            horario: DOM.eventoHorario.value,
-            obs: DOM.eventoObs.value.trim(),
-            reboquistas: [],
-            criado: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        };
-        if (!eventoData.tipo || !eventoData.endereco) { showToast('Tipo de evento e endereço são obrigatórios.', 'warning'); return; }
-        registrarAcao(`Novo evento criado: '${eventoData.tipo}' no endereço '${eventoData.endereco}'.`);
-        this.adicionarEvento(eventoData);
-        DOM.eventoTipo.value = '';
-        DOM.eventoEndereco.value = '';
-        DOM.eventoHorario.value = '';
-        DOM.eventoObs.value = '';
-        fecharModal(DOM.modalNovoEvento);
-        showToast('Evento criado com sucesso!', 'success');
-    },
-    adicionarEvento(eventoData) {
-        const eventoId = `evento-${AppState.eventoIdCounter++}`;
-        const eventoElement = this.criarCardEvento(eventoId, eventoData);
-        DOM.eventosAbertosContainer.appendChild(eventoElement);
-        this.salvarEstado();
-        return eventoElement;
-    },
-    criarCardEvento(eventoId, eventoData) {
-        const card = document.createElement('div');
-        card.id = eventoId;
-        card.className = 'evento-card';
-        Object.keys(eventoData).forEach(key => { if (key !== 'reboquistas') card.dataset[key] = eventoData[key]; });
-        card.dataset.reboquistas = JSON.stringify(eventoData.reboquistas || []);
-        const reboquistas = eventoData.reboquistas || [];
-        const reboquistasHTML = reboquistas.length > 0
-            ? reboquistas.map(reboquista => `<span class="evento-reboquista-tag">${reboquista.nome} (VT: ${reboquista.vt || 'N/I'})</span>`).join('')
-            : '<span style="color: var(--color-text-tertiary); font-size: 11px;">Arraste reboquistas aqui</span>';
-        card.innerHTML = `
-            <div class="evento-card-header">
-                <strong>${eventoData.tipo}</strong>
-                <span style="font-size: 11px; color: var(--color-text-tertiary);">${eventoData.criado}</span>
-            </div>
-            <div class="evento-card-body">
-                <div style="font-size: 12px; margin-bottom: 4px;"><i class="fas fa-map-marker-alt"></i> ${eventoData.endereco}</div>
-                ${eventoData.horario ? `<div style="font-size: 11px; color: var(--color-text-secondary);"><i class="far fa-clock"></i> ${eventoData.horario}</div>` : ''}
-                ${eventoData.obs ? `<div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px;"><i class="fas fa-info-circle"></i> ${eventoData.obs}</div>` : ''}
-            </div>
-            <div class="evento-card-footer">
-                <div class="evento-reboquistas">${reboquistasHTML}</div>
-                <div class="evento-actions">
-                    <button class="btn-card-action edit-evento" title="Editar Evento"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn-card-action report-evento" title="Copiar Relatório do Evento"><i class="fab fa-whatsapp"></i></button>
-                    <button class="btn-card-action finalizar-evento" title="Finalizar Evento"><i class="fas fa-check-circle" style="color: var(--color-success);"></i></button>
-                    <button class="btn-card-action remover-evento" title="Cancelar Evento"><i class="fas fa-ban" style="color: var(--color-danger);"></i></button>
-                </div>
-            </div>`;
-        return card;
-    },
-    handleEventoClick(e) {
-        const eventoElement = e.target.closest('.evento-card');
-        if (!eventoElement) return;
-        if (e.target.closest('.finalizar-evento'))  this.finalizarEvento(eventoElement);
-        else if (e.target.closest('.remover-evento'))  this.removerEvento(eventoElement);
-        else if (e.target.closest('.edit-evento'))     this.abrirModalEdicao(eventoElement);
-        else if (e.target.closest('.report-evento'))   this.copiarRelatorio(eventoElement);
-    },
-    abrirModalEdicao(eventoCard) {
-        DOM.eventoEditId.value      = eventoCard.id;
-        DOM.eventoEditTipo.value    = eventoCard.dataset.tipo;
-        DOM.eventoEditEndereco.value = eventoCard.dataset.endereco;
-        DOM.eventoEditHorario.value = eventoCard.dataset.horario;
-        DOM.eventoEditObs.value     = eventoCard.dataset.obs;
-        abrirModal(DOM.modalEdicaoEvento);
-    },
-    handleSalvarEdicaoEvento() {
-        const eventoId = DOM.eventoEditId.value;
-        const eventoCard = document.getElementById(eventoId);
-        if (!eventoCard) return;
-        const novosDados = {
-            tipo: DOM.eventoEditTipo.value.trim().toUpperCase(),
-            endereco: DOM.eventoEditEndereco.value.trim().toUpperCase(),
-            horario: DOM.eventoEditHorario.value,
-            obs: DOM.eventoEditObs.value.trim()
-        };
-        if (!novosDados.tipo || !novosDados.endereco) { showToast('Tipo e Endereço não podem ser vazios.', 'error'); return; }
-        Object.assign(eventoCard.dataset, novosDados);
-        this.atualizarCard(eventoCard);
-        this.salvarEstado();
-        fecharModal(DOM.modalEdicaoEvento);
-        showToast('Evento atualizado com sucesso!', 'success');
-    },
-    atualizarCard(eventoCard) {
-        const cardData = { ...eventoCard.dataset, reboquistas: JSON.parse(eventoCard.dataset.reboquistas || '[]') };
-        const novoHTML = this.criarCardEvento(eventoCard.id, cardData).innerHTML;
-        eventoCard.innerHTML = novoHTML;
-    },
-    copiarRelatorio(eventoCard) {
-        const reboquistas = JSON.parse(eventoCard.dataset.reboquistas || '[]');
-        let textoFinal = '';
-        let toastMessage = '';
-        if (reboquistas.length > 0) {
-            const nomes = reboquistas.map(r => r.nome).join(', ');
-            textoFinal = `*${eventoCard.dataset.tipo}* enviado para: *${nomes}*\n\n*Endereço:* ${eventoCard.dataset.endereco}`;
-            if (eventoCard.dataset.horario) textoFinal += `\n*Horário:* ${eventoCard.dataset.horario}`;
-            if (eventoCard.dataset.obs) textoFinal += `\n*Obs:* ${eventoCard.dataset.obs}`;
-            toastMessage = 'Mensagem de acionamento copiada!';
-        } else {
-            textoFinal = `*Tem preferência de reboquista para este evento?*\n\n*Evento:* ${eventoCard.dataset.tipo}\n*Endereço:* ${eventoCard.dataset.endereco}`;
-            if (eventoCard.dataset.horario) textoFinal += `\n*Horário:* ${eventoCard.dataset.horario}`;
-            if (eventoCard.dataset.obs) textoFinal += `\n*Obs:* ${eventoCard.dataset.obs}`;
-            toastMessage = 'Solicitação de indicação copiada!';
-        }
-        navigator.clipboard.writeText(textoFinal.trim()).then(() => showToast(toastMessage, 'success'));
-    },
-    finalizarEvento(eventoElement) {
-        const reboquistasNoEvento = JSON.parse(eventoElement.dataset.reboquistas || '[]');
-        const nomesDosReboquistas = reboquistasNoEvento.map(r => r.nome);
-        if (nomesDosReboquistas.length > 0) {
-            const reboquistasAtuando = document.querySelectorAll('#reboques-atuando .reboque-card');
-            reboquistasAtuando.forEach(reboquistaCard => {
-                if (nomesDosReboquistas.includes(reboquistaCard.dataset.nome)) {
-                    reboquistaCard.dataset.status = 'disponivel';
-                    reboquistaCard.dataset.ocorrencia = '';
-                    Reboques.atualizarCard(reboquistaCard);
-                    DOM.reboquesDisponiveisContainer.appendChild(reboquistaCard);
-                }
-            });
-        }
-        eventoElement.remove();
-        Reboques.atualizarPainel();
-        this.salvarEstado();
-        showToast(`Evento finalizado! ${nomesDosReboquistas.length} reboquista(s) liberado(s).`, 'success');
-    },
-    removerEvento(eventoElement) {
-        if (confirm('Tem certeza que deseja CANCELAR este evento? Os reboquistas alocados serão liberados.')) {
-            const numReboquistas = JSON.parse(eventoElement.dataset.reboquistas || '[]').length;
-            registrarAcao(`Evento '${eventoElement.dataset.tipo}' foi cancelado. ${numReboquistas} reboquista(s) liberado(s).`);
-            const reboquistasNoEvento = JSON.parse(eventoElement.dataset.reboquistas || '[]');
-            const nomesDosReboquistas = reboquistasNoEvento.map(r => r.nome);
-            if (nomesDosReboquistas.length > 0) {
-                const reboquistasAtuando = document.querySelectorAll('#reboques-atuando .reboque-card');
-                reboquistasAtuando.forEach(reboquistaCard => {
-                    if (nomesDosReboquistas.includes(reboquistaCard.dataset.nome)) {
-                        reboquistaCard.dataset.status = 'disponivel';
-                        reboquistaCard.dataset.ocorrencia = '';
-                        reboquistaCard.dataset.eventoId = '';
-                        Reboques.atualizarCard(reboquistaCard);
-                        DOM.reboquesDisponiveisContainer.appendChild(reboquistaCard);
-                    }
-                });
-            }
-            eventoElement.remove();
-            Reboques.atualizarPainel();
-            this.salvarEstado();
-            showToast('Evento removido e reboquistas liberados!', 'success');
-        }
-    },
-    alocarReboquistaAoEvento(reboquistaCard, eventoCard, fromModal = false) {
-        if (reboquistaCard.dataset.status === 'atuando' && !fromModal) { showToast(`${reboquistaCard.dataset.nome} já está em atendimento.`, 'error'); return; }
-        const nomeReboquista = reboquistaCard.dataset.nome;
-        const vtReboquista = reboquistaCard.dataset.vt;
-        const reboquistas = JSON.parse(eventoCard.dataset.reboquistas || '[]');
-        if (reboquistas.some(r => r.nome === nomeReboquista)) { showToast('Reboquista já está alocado neste evento.', 'info'); return; }
-        registrarAcao(`Reboquista '${nomeReboquista}' alocado ao evento '${eventoCard.dataset.tipo}'.`);
-        reboquistas.push({ nome: nomeReboquista, vt: vtReboquista });
-        eventoCard.dataset.reboquistas = JSON.stringify(reboquistas);
-        this.atualizarCard(eventoCard);
-        const tipoEvento = eventoCard.dataset.tipo;
-        const endereco = eventoCard.dataset.endereco;
-        reboquistaCard.dataset.status = 'atuando';
-        reboquistaCard.dataset.ocorrencia = `${tipoEvento} @ ${endereco}`;
-        reboquistaCard.dataset.eventoId = eventoCard.id;
-        Reboques.atualizarCard(reboquistaCard);
-        DOM.reboquesAtuandoContainer.appendChild(reboquistaCard);
-        if (!fromModal) showToast(`${nomeReboquista} alocado ao evento!`, 'success');
-        Reboques.atualizarPainel();
-        this.salvarEstado();
-    },
-    desalocarReboquistaDeEvento(nomeReboquista) {
-        const eventos = document.querySelectorAll('.evento-card');
-        eventos.forEach(eventoCard => {
-            let reboquistas = JSON.parse(eventoCard.dataset.reboquistas || '[]');
-            if (reboquistas.some(r => r.nome === nomeReboquista)) {
-                reboquistas = reboquistas.filter(r => r.nome !== nomeReboquista);
-                eventoCard.dataset.reboquistas = JSON.stringify(reboquistas);
-                this.atualizarCard(eventoCard);
-            }
-        });
-        this.salvarEstado();
-    },
-    renomearReboquistaEmEventos(nomeAntigo, nomeNovo) {
-        const eventos = document.querySelectorAll('.evento-card');
-        eventos.forEach(eventoCard => {
-            let reboquistas = JSON.parse(eventoCard.dataset.reboquistas || '[]');
-            const reboquistaParaRenomear = reboquistas.find(r => r.nome === nomeAntigo);
-            if (reboquistaParaRenomear) {
-                reboquistaParaRenomear.nome = nomeNovo;
-                eventoCard.dataset.reboquistas = JSON.stringify(reboquistas);
-                this.atualizarCard(eventoCard);
-            }
-        });
-        this.salvarEstado();
-    },
-    handleDragOver(e)  { e.preventDefault(); const eventoCard = e.target.closest('.evento-card'); if (eventoCard && AppState.draggedCard && AppState.draggedCard.classList.contains('reboque-card')) eventoCard.classList.add('drop-zone'); },
-    handleDragLeave(e) { const eventoCard = e.target.closest('.evento-card'); if (eventoCard) eventoCard.classList.remove('drop-zone'); },
-    handleDrop(e)      { e.preventDefault(); document.querySelectorAll('.evento-card.drop-zone').forEach(card => card.classList.remove('drop-zone')); },
-    salvarEstado() {
-        const estado = { eventos: {}, config: { eventoIdCounter: AppState.eventoIdCounter } };
-        document.querySelectorAll('.evento-card').forEach(card => {
-            estado.eventos[card.id] = { ...card.dataset, reboquistas: JSON.parse(card.dataset.reboquistas || '[]') };
-        });
-        localStorage.setItem(AppState.STORAGE_KEY_EVENTOS, JSON.stringify(estado));
-    },
-    carregarEstado() {
-        const estadoSalvo = localStorage.getItem(AppState.STORAGE_KEY_EVENTOS);
-        if (!estadoSalvo) return;
-        const estado = JSON.parse(estadoSalvo);
-        DOM.eventosAbertosContainer.innerHTML = '';
-        if (estado.eventos) {
-            Object.keys(estado.eventos).forEach(eventoId => {
-                const eventoData = estado.eventos[eventoId];
-                DOM.eventosAbertosContainer.appendChild(this.criarCardEvento(eventoId, eventoData));
-            });
-        }
-        AppState.eventoIdCounter = estado.config?.eventoIdCounter || 0;
-    }
-};
-
-
-// ═══════════════════════════════════════════════════════════════════════════
 // INICIALIZAÇÃO — Aguarda Firebase antes de liberar UI
 // Fix para: "Uncaught (in promise) Error: A listener indicated an
 // asynchronous response" — causado por listeners registrados antes
@@ -3152,34 +2436,30 @@ async function inicializarApp() {
     queryDOM();
     carregarDadosMestres();
 
-    // ── 1. Aguarda Firebase (com timeout de 3s) — previne deadlock ──
+    // ── 1. Aguarda Firebase (com timeout de 3s) ──────────────────────
     await window.NitFirebase._init();
 
-    // ── 2. Carrega preferências do Firebase (/meta/preferencias) ──
+    // ── 2. Tema ──────────────────────────────────────────────────────
     document.body.setAttribute('data-theme', 'dark');
 
-    // ── 3. Inicializa módulos ────────────────────────────────────────
-    const modulos = [Semaforo, Turno, Reboques, Eventos];
-    modulos.forEach(modulo => {
-        try {
-            if (modulo && typeof modulo.inicializar === 'function') modulo.inicializar();
-        } catch (error) {
-            console.warn(`Erro ao inicializar módulo:`, error);
-        }
-    });
+    // ── 3. Inicializa Semafórico ──────────────────────────────────────
+    try { Semaforo.inicializar(); } catch (e) { console.warn('[NIT] Erro ao inicializar Semaforo:', e); }
 
-    // ── 4. Abre na aba Semáforo (padrão fixo conforme requisito) ──
-    // Nota: abas Config/Alagamentos foram removidas conforme solicitado.
+    // ── 4. Aba única ──────────────────────────────────────────────────
     switchTab('tab-semaforo');
 
-    // ── 5. Modal de entrada de turno ────────────────────────────────
-    ModalEntradaTurno.inicializar();
+    // ── 5. Login — tenta restaurar sessão, senão exibe tela de login ──
+    NitLogin.inicializar();
+    if (!NitLogin.tentarRestaurar()) {
+        // sessão não encontrada — login exibe o overlay e o NitDateFilter
+        // será inicializado pelo NitLogin.confirmar() após entrada
+    } else {
+        // sessão restaurada — inicializa filtro de data diretamente
+        NitDateFilter.inicializar();
+    }
 
-    // ── 6. Configura modais e eventos globais ───────────────────────
+    // ── 6. Modais ─────────────────────────────────────────────────────
     setupModal(DOM.modalRelatorio, DOM.btnModalFechar);
-    setupModal(DOM.modalAcionamentoReboque, DOM.btnReboqueAcionamentoCancelar, Reboques.resetarModalAcionamento);
-    setupModal(DOM.modalEdicaoReboquista, DOM.btnReboqueEditCancelar);
-    setupModal(DOM.modalNovoEvento, DOM.btnEventoCancelar);
     setupModal(DOM.modalEdicao, DOM.btnEdicaoCancelar);
     setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, () => {
         const preview = document.getElementById('despacho-preview');
@@ -3187,55 +2467,66 @@ async function inicializarApp() {
         const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
         if (btnConf) btnConf.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar Despacho';
     });
-    setupModal(DOM.modalEdicaoEvento, DOM.btnEventoEditCancelar);
-    DOM.btnLimparPainel.addEventListener('click', limparTudo);
     DOM.tabButtons.forEach(button => button.addEventListener('click', () => switchTab(button.dataset.tab)));
 
+    // ── 7. Modal Confirmação Genérico ─────────────────────────────────
+    const modalConfGenerico = document.getElementById('modal-confirmar-generico');
+    const btnConfOk     = document.getElementById('btn-confirmar-generico-ok');
+    const btnConfCancel = document.getElementById('btn-confirmar-generico-cancel');
+    if (btnConfOk)     btnConfOk.addEventListener('click',  () => { fecharModal(modalConfGenerico); if (_nitConfirmCallback) { _nitConfirmCallback(); _nitConfirmCallback = null; } });
+    if (btnConfCancel) btnConfCancel.addEventListener('click', () => { fecharModal(modalConfGenerico); _nitConfirmCallback = null; });
+    if (modalConfGenerico) modalConfGenerico.addEventListener('click', (e) => { if (e.target === modalConfGenerico) { fecharModal(modalConfGenerico); _nitConfirmCallback = null; } });
+
+    // ── 8. Histórico de ações ─────────────────────────────────────────
     const btnVerHistorico = document.getElementById('btn-ver-historico');
-    const modalHistorico = document.getElementById('modal-historico');
-    const historicoBody = document.getElementById('historico-body');
+    const modalHistorico  = document.getElementById('modal-historico');
+    const historicoBody   = document.getElementById('historico-body');
     if (btnVerHistorico && modalHistorico) {
         btnVerHistorico.addEventListener('click', () => {
             const logs = JSON.parse(localStorage.getItem('historicoDeAcoes_v1')) || [];
-            if (logs.length > 0) {
-                historicoBody.innerHTML = logs.map(log =>
-                    `<div style="display:flex;align-items:center;padding:10px;background-color:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">
+            historicoBody.innerHTML = logs.length
+                ? logs.map(log =>
+                    `<div style="display:flex;align-items:center;padding:10px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">
                         <span style="color:var(--color-text-tertiary);min-width:160px;flex-shrink:0;">${log.timestamp}</span>
                         <span style="margin-left:16px;">${log.mensagem}</span>
-                    </div>`
-                ).join('');
-            } else {
-                historicoBody.innerHTML = '<p>Nenhuma ação registrada ainda.</p>';
-            }
+                    </div>`).join('')
+                : '<p>Nenhuma ação registrada ainda.</p>';
             abrirModal(modalHistorico);
         });
         setupModal(modalHistorico, document.getElementById('btn-historico-fechar'));
+    }
+
+    // ── 9. Seletor de data — listener na barra superior ───────────────
+    // (NitDateFilter.inicializar() é chamado pelo login ou restauração de sessão)
+
+    // ── 10. Copiar relatório — mesmo fallback do copiarLocalizacao ────
+    if (DOM.btnModalCopiar) {
+        DOM.btnModalCopiar.addEventListener('click', () => {
+            const texto = DOM.modalRelatorioTexto?.value || '';
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(texto)
+                    .then(() => { fecharModal(DOM.modalRelatorio); showToast('Relatório copiado!', 'success'); })
+                    .catch(() => Semaforo._clipboardFallback(texto));
+            } else {
+                Semaforo._clipboardFallback(texto);
+                fecharModal(DOM.modalRelatorio);
+            }
+        });
     }
 }
 
 function switchTab(tabId) {
     if (!document.getElementById(tabId)) return;
     DOM.tabContents.forEach(content => content.classList.remove('active'));
-    DOM.tabButtons.forEach(button => button.classList.remove('active'));
+    DOM.tabButtons.forEach(button  => button.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     const btnTab = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
     if (btnTab) btnTab.classList.add('active');
 }
 
-// ── TOGGLE TEMA — Persiste no Firebase E no localStorage (fallback) ──
-
-function limparTudo() {
-    const abaAtiva = document.querySelector('.tab-content.active').id;
-    switch (abaAtiva) {
-        case 'tab-semaforo':  Semaforo.limparPainel(); break;
-        case 'tab-reboques':  Reboques.limparPainel(); break;
-        case 'tab-turno':     Turno.limparPainel(); break;
-        default: showToast('Esta aba não possui uma ação de limpeza.', 'info'); break;
-    }
-}
-
-// Expõe Semaforo globalmente para onclick inline no HTML do modal
-window.Semaforo = Semaforo;
+// Expõe globais para onclick inline
+window.Semaforo  = Semaforo;
+window.NitLogin  = NitLogin;
 
 document.addEventListener('DOMContentLoaded', () => {
     inicializarApp().catch(e => console.error('[NIT] Falha crítica na inicialização:', e));
