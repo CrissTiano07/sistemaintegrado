@@ -308,7 +308,15 @@
         #btn-abrir-gaveta.hidden { opacity: 0; pointer-events: none; }
 
         /* ── RELATÓRIO ── */
-        #relatorio-final-preview { flex-grow: 1; min-height: 120px; font-size: 12px; line-height: 1.5; }
+        #relatorio-final-preview {
+            flex-grow: 1; min-height: 120px; font-size: 12px; line-height: 1.5;
+            color: var(--color-text-primary) !important;
+            background-color: var(--color-bg) !important;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            resize: vertical;
+        }
         #relatorio-bruto-input { min-height: 140px; font-size: 12px; line-height: 1.5; }
     </style>
 </head>
@@ -453,7 +461,7 @@
     <div class="modal-container wide">
         <div class="modal-header">Relatório Semafórico</div>
         <div class="modal-body">
-            <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="18" style="width:100%;border:none;resize:none;background:var(--color-bg);box-sizing:border-box;font-size:12px;line-height:1.6;"></textarea>
+            <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="18" style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);box-sizing:border-box;font-size:12px;line-height:1.6;"></textarea>
         </div>
         <div class="modal-footer">
             <button id="btn-modal-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
@@ -1424,14 +1432,22 @@ const Semaforo = {
         });
         DOM.countNormalizadosGaveta.textContent = contadores.normalizados;
 
-        // Filtro de data
+        // Filtro de data — dataset keys são sempre lowercase (dataReferencia → datareferencia)
         const filtro = this._filtroData;
         const todos = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
-        const filtrados = filtro ? todos.filter(c => c.dataset.datareferencia === filtro) : todos;
-        const normFiltrados = filtrados.filter(c => c.closest('#coluna-normalizados')).length;
-        DOM.displayTotal.textContent        = filtrados.length;
+        // Sem filtro ativo: conta todos os cards visíveis no kanban
+        const filtrados = filtro
+            ? todos.filter(c => (c.dataset.datareferencia || c.dataset.dataReferencia || '') === filtro)
+            : todos;
+        // Normalizados = cards dentro da gaveta #coluna-normalizados
+        const normFiltrados = filtrados.filter(c => {
+            return c.closest('#coluna-normalizados') !== null ||
+                   c.closest('[data-coluna-id="coluna-normalizados"]') !== null;
+        }).length;
+        const totalFiltrado = filtrados.length;
+        DOM.displayTotal.textContent        = totalFiltrado;
         DOM.displayNormalizados.textContent = normFiltrados;
-        DOM.displayPendentes.textContent    = filtrados.length - normFiltrados;
+        DOM.displayPendentes.textContent    = Math.max(0, totalFiltrado - normFiltrados);
 
         this.gerarPreviewRelatorio();
     },
@@ -1443,10 +1459,11 @@ const Semaforo = {
         const agora = new Date();
         const hora  = agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
         const data  = agora.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' }).replace(/\//g,'.');
-        const total = parseInt(DOM.displayTotal.textContent)||0;
-        const norm  = parseInt(DOM.displayNormalizados.textContent)||0;
-        const pend  = parseInt(DOM.displayPendentes.textContent)||0;
+        // Calcula direto do DOM — não depende dos displays que podem estar desatualizados
         const ativos = document.querySelectorAll('#coluna-espera .kanban-card, #coluna-sem-necessidade .kanban-card, #coluna-vl .kanban-card, #coluna-amc .kanban-card').length;
+        const norm  = DOM.colunaNormalizados.querySelectorAll('.kanban-card').length;
+        const total = ativos + norm;
+        const pend  = ativos;
 
         const [emoji, suf] = ativos === 0 ? ['🟢🟢','✅'] : ativos <= 5 ? ['🟡🟡','⚠️'] : ['🔴🔴','🚨'];
 
