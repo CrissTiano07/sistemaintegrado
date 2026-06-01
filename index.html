@@ -1108,110 +1108,218 @@ const Semaforo = {
     },
 
     // ─── PROCESSAR ────────────────────────────────────────────────────
+    // ─── PROTEÇÃO RAILWAY FREE: debounce anti-duplo-clique ──────────────
+    _processarDebounceTimer: null,
+    _processarEmAndamento: false,
+
     handleProcessarClick() {
+        if (this._processarEmAndamento) { showToast('Processamento em andamento…', 'info'); return; }
+        clearTimeout(this._processarDebounceTimer);
+        this._processarDebounceTimer = setTimeout(() => this._executarProcessamento(), 300);
+    },
+
+    async _executarProcessamento() {
         this.ultimoLoteNormalizado = [];
         const textoBruto = DOM.relatorioBrutoInput.value;
         if (!textoBruto.trim()) { showToast('Insira o relatório bruto.', 'warning'); return; }
 
+        // ── Proteção Firebase: limite de tamanho antes de enviar ──
+        const MAX_BYTES = 64_000;
+        if (new TextEncoder().encode(textoBruto).length > MAX_BYTES) {
+            showToast(`Relatório muito grande (máx ${MAX_BYTES/1024} KB). Divida em partes.`, 'error');
+            return;
+        }
+
+        this._processarEmAndamento = true;
+        DOM.btnProcessar.disabled = true;
+        DOM.btnProcessar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando…';
+
+        try {
+            // ── Tenta usar a API backend (parser robusto + proteção de limites) ──
+            let eventosValidos, dataReferencia, truncado = false;
+            const apiOk = await this._processarViaAPI(textoBruto)
+                .then(resp => {
+                    eventosValidos  = resp.eventos;
+                    dataReferencia  = resp.dataReferencia;
+                    truncado        = resp.truncado || false;
+                    if (resp._aviso) showToast(resp._aviso, 'warning', 6000);
+                    return true;
+                })
+                .catch(err => {
+                    // Fallback local se API offline (resiliência)
+                    console.warn('[NIT] API offline, usando parser local:', err.message);
+                    const resultado = this._parsearLocal(textoBruto);
+                    eventosValidos = resultado.eventos;
+                    dataReferencia = resultado.dataReferencia;
+                    showToast('API offline — parser local ativado.', 'warning');
+                    return false;
+                });
+
+            if (!eventosValidos?.length) {
+                showToast('Nenhuma ocorrência encontrada no relatório.', 'warning');
+                return;
+            }
+
+            const painelVazio = !document.querySelector('#tab-semaforo .kanban-card');
+
+            if (painelVazio) {
+                await this._aplicarLoteInicial(eventosValidos, dataReferencia, apiOk);
+            } else {
+                await this._aplicarReprocessamento(eventosValidos);
+            }
+
+            if (this.ultimoLoteNormalizado.length > 0) DOM.countNormalizadosGaveta.classList.add('tem-novos');
+            NitDateFilter.sincronizarComRelatorio(dataReferencia);
+            this.atualizarContadores();
+            DOM.relatorioBrutoInput.value = '';
+            if (truncado) showToast('⚠️ Lote parcial — relatório muito longo.', 'warning');
+
+        } finally {
+            this._processarEmAndamento = false;
+            DOM.btnProcessar.disabled  = false;
+            DOM.btnProcessar.innerHTML = '<i class="fas fa-cogs"></i> Processar';
+        }
+    },
+
+    // ── Chama POST /api/v1/processar-relatorio ────────────────────────
+    async _processarViaAPI(texto) {
+        const chave = await window.getNITKey();
+        if (!chave) throw new Error('Chave API não disponível');
+
+        const resp = await fetch(`${window.NIT_API_URL}/api/v1/processar-relatorio`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-NIT-Key': chave },
+            body:    JSON.stringify({ texto }),
+            signal:  AbortSignal.timeout(15_000),   // 15s timeout — Railway pode estar dormindo
+        });
+
+        if (resp.status === 429) {
+            const msg = (await resp.json().catch(() => ({}))).detail || 'Rate limit atingido.';
+            throw new Error(msg);
+        }
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || `Erro ${resp.status}`);
+        }
+        return resp.json();
+    },
+
+    // ── Parser local (fallback) ───────────────────────────────────────
+    _parsearLocal(textoBruto) {
         const linhas = textoBruto.split('\n');
         const dataReferencia = this.extrairDataReferencia(linhas);
-        const todosEventos = [];
+        const todos = [], codVistos = new Set();
         let eventoAtual = null, secaoAtual = 'PENDENTE';
-
         for (const linha of linhas) {
             if (/NORMALIZADOS✅/.test(linha)) { secaoAtual = 'NORMALIZADO'; continue; }
             if (/PENDENTES❌/.test(linha))    { secaoAtual = 'PENDENTE';    continue; }
             const dados = this.extrairDadosDaLinha(linha);
             if (dados) {
-                if (eventoAtual) todosEventos.push(eventoAtual);
+                if (eventoAtual) todos.push(eventoAtual);
                 eventoAtual = { ...dados, secao: secaoAtual, dataReferencia };
             } else if (eventoAtual && linha.trim()) {
-                eventoAtual.observacoes = ((eventoAtual.observacoes || '') + ' ' + linha.trim().replace(/"/g,'')).trim();
+                eventoAtual.observacoes = ((eventoAtual.observacoes||'') + ' ' + linha.trim().replace(/"/g,'')).trim();
             }
         }
-        if (eventoAtual) todosEventos.push(eventoAtual);
-        todosEventos.forEach(ev => { if (ev.codigo) ev.eventoId = this.gerarEventoId(ev.codigo, ev.inicio); });
-        const eventosValidos = todosEventos.filter(ev => ev.codigo && ev.eventoId);
-
-        const painelVazio = !document.querySelector('#tab-semaforo .kanban-card');
-
-        if (painelVazio) {
-            const codVistos = new Set(), batchFB = {};
-            eventosValidos.forEach(d => {
-                d.reincidente = codVistos.has(d.codigo);
-                codVistos.add(d.codigo);
-                const status = this.statusFromSecao(d.secao, d);
-                const el = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, d);
-                const destino = status === 'NORMALIZADO' ? DOM.colunaNormalizados
-                              : status === 'SEM_NECESSIDADE' ? document.querySelector('#coluna-sem-necessidade .kanban-cards-container')
-                              : document.querySelector('#coluna-espera .kanban-cards-container');
-                destino?.appendChild(el);
-                if (status === 'NORMALIZADO') this.ultimoLoteNormalizado.push(el.id);
-                const colunaMap = { NORMALIZADO: 'coluna-normalizados', SEM_NECESSIDADE: 'coluna-sem-necessidade' };
-                batchFB[d.eventoId] = {
-                    coluna: colunaMap[status] || 'coluna-espera',
-                    codigo: d.codigo, eventoId: d.eventoId, dataReferencia,
-                    endereco: d.endereco||'', problema: d.problema||'',
-                    observacoes: d.observacoes||'', tipo: d.tipo||'', status,
-                    equipe:'', viatura:'', inicio: d.inicio||'', pl:'', sub:'',
-                    reincidente: d.reincidente||false,
-                    operador: NitLogin.operador||'anon', turno: NitLogin.turno||'', ts: Date.now()
-                };
+        if (eventoAtual) todos.push(eventoAtual);
+        const eventos = todos
+            .filter(ev => ev.codigo)
+            .map(ev => {
+                const eventoId = this.gerarEventoId(ev.codigo, ev.inicio);
+                const status   = this.statusFromSecao(ev.secao, ev);
+                const colunaMap = { NORMALIZADO:'coluna-normalizados', SEM_NECESSIDADE:'coluna-sem-necessidade' };
+                const reincidente = codVistos.has(ev.codigo);
+                codVistos.add(ev.codigo);
+                return { ...ev, eventoId, status, coluna: colunaMap[status]||'coluna-espera', reincidente };
             });
-            window.NitFirebase.exec((db, ref, update) => {
-                update(ref(db,'kanban'), batchFB);
-                update(ref(db,'meta'), { dataReferencia, turnoAtivo: NitLogin.turno||'', ultimoProcessamento: Date.now() });
-            });
-            showToast(`${eventosValidos.length} ocorrência(s) processada(s).`, 'success');
-        } else {
-            // ── REPROCESSAMENTO ──
-            const mapaAtual = new Map();
-            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(card => {
-                mapaAtual.set(card.dataset.eventoid || card.dataset.codigo, card);
-            });
-            let novos = 0, normalizados = 0;
-            eventosValidos.forEach(d => {
-                const novoStatus = this.statusFromSecao(d.secao, d);
-                if (!mapaAtual.has(d.eventoId)) {
-                    d.reincidente = mapaAtual.has(d.codigo);
-                    this._criarNovoCardFirebase(d, novoStatus); novos++;
-                } else if (novoStatus === 'NORMALIZADO') {
-                    const card = mapaAtual.get(d.eventoId);
-                    if (!card.closest('#coluna-normalizados')) {
-                        DOM.colunaNormalizados.prepend(card);
-                        card.classList.add('card-foi-normalizado');
-                        setTimeout(() => card.classList.remove('card-foi-normalizado'), 2000);
-                        this.ultimoLoteNormalizado.push(card.id);
-                        normalizados++;
-                        window.NitFirebase.exec((db, ref, update) => {
-                            update(ref(db, `kanban/${d.eventoId}`), { coluna:'coluna-normalizados', status:'NORMALIZADO', ts: Date.now() });
-                        });
-                    }
-                }
-            });
-            const msg = [novos > 0 && `${novos} nova(s) adicionada(s)`, normalizados > 0 && `${normalizados} normalizada(s)`].filter(Boolean).join(', ');
-            showToast(msg || 'Nenhuma mudança detectada.', msg ? 'success' : 'info');
-        }
-
-        if (this.ultimoLoteNormalizado.length > 0) DOM.countNormalizadosGaveta.classList.add('tem-novos');
-        NitDateFilter.sincronizarComRelatorio(dataReferencia);
-        this.atualizarContadores();
-        DOM.relatorioBrutoInput.value = '';
+        return { eventos, dataReferencia };
     },
 
-    _criarNovoCardFirebase(d, status) {
+    // ── Aplica lote inicial no DOM + batch único no Firebase ─────────
+    // Firebase free: 1 operação update() = 1 write, não N writes
+    async _aplicarLoteInicial(eventosValidos, dataReferencia, viAPI) {
+        const batchFB = {};
+        eventosValidos.forEach(d => {
+            const status = d.status || this.statusFromSecao(d.secao||'PENDENTE', d);
+            const coluna = d.coluna || (['NORMALIZADO','SEM_NECESSIDADE'].includes(status) ? `coluna-${status.toLowerCase().replace('_','-')}` : 'coluna-espera');
+            const el = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, d);
+            const container = document.querySelector(`[data-coluna-id="${coluna}"]`) || document.querySelector('#coluna-espera .kanban-cards-container');
+            container?.appendChild(el);
+            if (coluna === 'coluna-normalizados') this.ultimoLoteNormalizado.push(el.id);
+
+            // ── Proteção Firebase: limita campos salvos (menos storage) ──
+            batchFB[d.eventoId] = {
+                coluna, codigo: d.codigo, eventoId: d.eventoId, dataReferencia,
+                endereco:    (d.endereco||'').slice(0, 120),
+                problema:    (d.problema||'').slice(0, 40),
+                observacoes: (d.observacoes||'').slice(0, 300),
+                tipo:        (d.tipo||'').slice(0, 40),
+                status,
+                equipe: '', viatura: '', inicio: (d.inicio||'').slice(0,20), pl: '', sub: '',
+                reincidente: d.reincidente||false,
+                operador: NitLogin.operador||'anon', turno: NitLogin.turno||'',
+                ts: Date.now(),
+                // flag de origem — útil para debug
+                _src: viAPI ? 'api' : 'local',
+            };
+        });
+
+        // Um único update() = 1 operação Firebase (não N escritas)
+        window.NitFirebase.exec((db, ref, update) => {
+            update(ref(db,'kanban'), batchFB);
+            update(ref(db,'meta'), { dataReferencia, turnoAtivo: NitLogin.turno||'', ultimoProcessamento: Date.now() });
+        });
+        showToast(`${eventosValidos.length} ocorrência(s) processada(s).`, 'success');
+        registrarAcao(`Lote processado: ${eventosValidos.length} eventos (${dataReferencia})`);
+    },
+
+    // ── Reprocessamento incremental (diff) ───────────────────────────
+    async _aplicarReprocessamento(eventosValidos) {
+        const mapaAtual = new Map();
+        document.querySelectorAll('#tab-semaforo .kanban-card').forEach(card => {
+            mapaAtual.set(card.dataset.eventoid || card.dataset.codigo, card);
+        });
+        let novos = 0, normalizados = 0;
+
+        for (const d of eventosValidos) {
+            const status = d.status || this.statusFromSecao(d.secao||'PENDENTE', d);
+            if (!mapaAtual.has(d.eventoId)) {
+                d.reincidente = mapaAtual.has(d.codigo);
+                this._inserirCardFirebase(d, status); novos++;
+            } else if (status === 'NORMALIZADO') {
+                const card = mapaAtual.get(d.eventoId);
+                if (!card.closest('#coluna-normalizados')) {
+                    DOM.colunaNormalizados.prepend(card);
+                    card.classList.add('card-foi-normalizado');
+                    setTimeout(() => card.classList.remove('card-foi-normalizado'), 2000);
+                    this.ultimoLoteNormalizado.push(card.id);
+                    normalizados++;
+                    window.NitFirebase.exec((db, ref, update) => {
+                        update(ref(db, `kanban/${d.eventoId}`), { coluna:'coluna-normalizados', status:'NORMALIZADO', ts: Date.now() });
+                    });
+                }
+            }
+        }
+        const msg = [novos > 0 && `${novos} nova(s) adicionada(s)`, normalizados > 0 && `${normalizados} normalizada(s)`].filter(Boolean).join(', ');
+        showToast(msg || 'Nenhuma mudança detectada.', msg ? 'success' : 'info');
+    },
+
+    // ── Inserção individual (reprocessamento incremental) ────────────
+    _inserirCardFirebase(d, status) {
+        const colunaMap = { NORMALIZADO:'coluna-normalizados', SEM_NECESSIDADE:'coluna-sem-necessidade' };
+        const coluna    = d.coluna || colunaMap[status] || 'coluna-espera';
         const el = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, d);
-        const destino = status === 'NORMALIZADO' ? DOM.colunaNormalizados
-                      : status === 'SEM_NECESSIDADE' ? document.querySelector('#coluna-sem-necessidade .kanban-cards-container')
-                      : document.querySelector('#coluna-espera .kanban-cards-container');
-        destino?.appendChild(el);
-        const colunaMap = { NORMALIZADO: 'coluna-normalizados', SEM_NECESSIDADE: 'coluna-sem-necessidade' };
+        const container = document.querySelector(`[data-coluna-id="${coluna}"]`) || document.querySelector('#coluna-espera .kanban-cards-container');
+        container?.appendChild(el);
         window.NitFirebase.exec((db, ref, update) => {
             update(ref(db, `kanban/${d.eventoId}`), {
-                coluna: colunaMap[status] || 'coluna-espera',
-                codigo: d.codigo, eventoId: d.eventoId, dataReferencia: d.dataReferencia||'',
-                endereco: d.endereco||'', problema: d.problema||'', observacoes: d.observacoes||'',
-                tipo: d.tipo||'', status, equipe:'', viatura:'', inicio: d.inicio||'',
+                coluna, codigo: d.codigo, eventoId: d.eventoId,
+                dataReferencia: d.dataReferencia||'',
+                endereco:    (d.endereco||'').slice(0,120),
+                problema:    (d.problema||'').slice(0,40),
+                observacoes: (d.observacoes||'').slice(0,300),
+                tipo:        (d.tipo||'').slice(0,40),
+                status, equipe:'', viatura:'', inicio:(d.inicio||'').slice(0,20),
                 reincidente: d.reincidente||false,
                 operador: NitLogin.operador||'anon', turno: NitLogin.turno||'', ts: Date.now()
             });
