@@ -14,7 +14,7 @@
         window.getNITKey = async function() {
             if (window._NIT_KEY_CACHE) return window._NIT_KEY_CACHE;
             try {
-                const r = await fetch(`${window.NIT_API_URL}/api/config`, { credentials: 'same-origin' });
+                const r = await fetch(`${window.NIT_API_URL}/api/v1/config`, { credentials: 'same-origin' });
                 if (r.ok) { const d = await r.json(); window._NIT_KEY_CACHE = d.key; return d.key; }
             } catch(_) {}
             // Fallback MVP: chave em variável de sessão (não persiste entre abas, não aparece em JS global)
@@ -689,6 +689,8 @@ const NitLogin = {
         });
         showToast(`Bem-vindo, ${nome}! Turno ${turno}.`, 'success');
         registrarAcao(`Login: ${nome} — ${turno}`);
+        // Pré-carrega chave API em background — elimina latência na primeira chamada
+        window.getNITKey().catch(e => console.warn('[NIT] Chave API indisponível:', e));
     }
 };
 
@@ -1255,7 +1257,7 @@ const Semaforo = {
                 observacoes: (d.observacoes||'').slice(0, 300),
                 tipo:        (d.tipo||'').slice(0, 40),
                 status,
-                equipe: '', viatura: '', inicio: (d.inicio||'').slice(0,20), pl: '', sub: '',
+                equipe: '', viatura: '', inicio: (d.inicio||'').slice(0,20), fim: (d.fim||'').slice(0,20), pl: '', sub: '',
                 reincidente: d.reincidente||false,
                 operador: NitLogin.operador||'anon', turno: NitLogin.turno||'',
                 ts: Date.now(),
