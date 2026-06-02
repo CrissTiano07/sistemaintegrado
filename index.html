@@ -543,6 +543,7 @@
         /* overlay de busca global (dropdown) */
         #busca-global-overlay {
             display: none;
+            pointer-events: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 4000;
@@ -552,7 +553,7 @@
             justify-content: center;
             padding-top: 80px;
         }
-        #busca-global-overlay.aberto { display: flex; }
+        #busca-global-overlay.aberto { display: flex; pointer-events: all; }
         #busca-global-panel {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -2370,6 +2371,7 @@
         },
 
         fechar() {
+            if (!this._aberto) return;
             document.getElementById('busca-global-overlay')?.classList.remove('aberto');
             this._aberto = false;
             this._idx = -1;
@@ -2420,18 +2422,20 @@
                     <span class="busca-res-endereco">${this._hl(c.raw.dataset.endereco, termo)}</span>
                     <span class="busca-res-tag">${this._hl(c.raw.dataset.problema, termo)}</span>
                     <span class="busca-res-coluna-label">${colInfo.label}</span>`;
-                item.addEventListener('click', () => this._selecionar(c.raw));
+                item.addEventListener('click', e => { e.stopPropagation(); this._selecionar(c.raw); });
                 lista.appendChild(item);
             });
         },
 
         _selecionar(cardEl) {
             this.fechar();
-            // Scroll até o card e pulsar destaque
-            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            cardEl.style.outline = '2px solid var(--color-primary)';
-            cardEl.style.boxShadow = '0 0 0 4px var(--color-primary-faded, rgba(59,130,246,.25))';
-            setTimeout(() => { cardEl.style.outline = ''; cardEl.style.boxShadow = ''; }, 2200);
+            // Defer para garantir que o overlay fechou antes do scroll
+            requestAnimationFrame(() => {
+                cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                cardEl.style.outline = '2px solid var(--color-primary)';
+                cardEl.style.boxShadow = '0 0 0 4px rgba(59,130,246,.25)';
+                setTimeout(() => { cardEl.style.outline = ''; cardEl.style.boxShadow = ''; }, 2200);
+            });
         },
 
         _moverFoco(dir) {
@@ -2468,16 +2472,16 @@
 
             // Atalho Ctrl+K / Cmd+K
             document.addEventListener('keydown', e => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.abrir(); }
-                if (e.key === 'Escape' && this._aberto) this.fechar();
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.abrir(); return; }
+                if (e.key === 'Escape' && this._aberto) { e.stopPropagation(); this.fechar(); }
             });
 
             // Navegação por teclado no overlay
             input.addEventListener('keydown', e => {
                 if (e.key === 'ArrowDown') { e.preventDefault(); this._moverFoco(+1); }
-                else if (e.key === 'ArrowUp')   { e.preventDefault(); this._moverFoco(-1); }
-                else if (e.key === 'Enter')      { e.preventDefault(); this._confirmarFoco(); }
-                else if (e.key === 'Escape')     { this.fechar(); }
+                else if (e.key === 'ArrowUp')  { e.preventDefault(); this._moverFoco(-1); }
+                else if (e.key === 'Enter')     { e.preventDefault(); this._confirmarFoco(); }
+                else if (e.key === 'Escape')    { e.stopPropagation(); this.fechar(); }
             });
 
             input.addEventListener('input', () => this._renderizar(input.value));
