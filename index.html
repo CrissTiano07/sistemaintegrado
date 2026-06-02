@@ -200,10 +200,8 @@
         .btn-icon:hover { color: var(--color-text-primary); background-color: var(--color-border); }
 
         #tab-semaforo .grid-container { grid-template-columns: 360px 1fr; }
-        .painel-operacional-wrapper { position: relative; height: 100%; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-        #kanban-wrapper { height: auto; flex-shrink: 0; }
-        #kanban-normalizados-board { display: grid; grid-template-columns: 1fr; flex-shrink: 0; gap: var(--space-2); }
-        .kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); height: 100%; }
+        .painel-operacional-wrapper { position: relative; height: 100%; flex-grow: 1; min-height: 0; }
+        .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); height: 100%; }
         .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 100%; overflow: hidden; min-height: 0; }
         .kanban-column-header { padding: 10px 12px; font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); }
         .kanban-column-header .header-text { flex-grow: 1; }
@@ -680,6 +678,9 @@
         }
 
         /* ── RESPONSIVIDADE TABLET ──────────────────────────────────── */
+        @media (max-width: 1400px) {
+            .kanban-board { grid-template-columns: repeat(3, 1fr) !important; }
+        }
         @media (max-width: 1024px) {
             body { padding: 10px; }
             #tab-semaforo .grid-container {
@@ -831,18 +832,16 @@
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                            </div>
-                        </div>
-                        <div class="kanban-board" id="kanban-normalizados-board">
-                            <div class="kanban-column" id="coluna-normalizados" role="region" aria-label="Normalizados">
-                                <div class="kanban-column-header">
-                                    <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> Normalizados</span>
-                                    <span class="card-count" id="count-normalizados-gaveta">0</span>
+                                <div class="kanban-column" id="coluna-normalizados" role="region" aria-label="Normalizados">
+                                    <div class="kanban-column-header">
+                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> Normalizados</span>
+                                        <span class="card-count" id="count-normalizados">0</span>
+                                    </div>
+                                    <div class="kanban-column-filter">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Normalizados">
+                                    </div>
+                                    <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column-filter">
-                                    <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Normalizados">
-                                </div>
-                                <div class="kanban-cards-container"></div>
                             </div>
                         </div>
                     </div>
@@ -1293,7 +1292,7 @@
             displayPendentes:         document.getElementById('display-pendentes'),
             displayNormalizados:      document.getElementById('display-normalizados'),
             colunaNormalizados:       document.getElementById('coluna-normalizados'),
-            countNormalizadosGaveta:  document.getElementById('count-normalizados-gaveta'),
+            countNormalizados:  document.getElementById('count-normalizados'),
             modalRelatorio:           document.getElementById('modal-relatorio'),
             modalRelatorioTexto:      document.getElementById('modal-relatorio-texto'),
             btnModalCopiar:           document.getElementById('btn-modal-copiar'),
@@ -1829,7 +1828,7 @@
             DOM.displayTotal.textContent        = exibTotal;
             DOM.displayNormalizados.textContent = exibNorm;
             DOM.displayPendentes.textContent    = exibPend;
-            DOM.countNormalizadosGaveta.textContent = totalNorm;
+            DOM.countNormalizados.textContent = totalNorm;
 
             // Contadores por coluna
             document.getElementById('count-espera')?.setAttribute('data-count', total.espera);
