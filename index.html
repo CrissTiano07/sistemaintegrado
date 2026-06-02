@@ -1787,6 +1787,7 @@
                 </div>
                 <div class="card-footer">
                     <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
+                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
                     <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
                     <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
                     <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
@@ -1942,10 +1943,11 @@
         handleKanbanBoardClick(e) {
             const card = e.target.closest('.kanban-card');
             if (!card) return;
-            if (e.target.closest('.btn-card-action.dispatch'))      this.abrirModalDespacho(card.id);
-            else if (e.target.closest('.btn-card-action.edit'))     this.abrirModalEdicao(card.id);
-            else if (e.target.closest('.btn-card-action.complete')) this.handleNormalizarClick(card);
+            if (e.target.closest('.btn-card-action.dispatch'))           this.abrirModalDespacho(card.id);
+            else if (e.target.closest('.btn-card-action.edit'))          this.abrirModalEdicao(card.id);
+            else if (e.target.closest('.btn-card-action.complete'))      this.handleNormalizarClick(card);
             else if (e.target.closest('.btn-card-action.copy-location')) this.copiarLocalizacao(card);
+            else if (e.target.closest('.btn-card-action.details'))       NitCardDetails.abrir(card);
         },
 
         copiarLocalizacao(card) {
@@ -2340,6 +2342,12 @@
             });
             setupModal(modH, document.getElementById('btn-historico-fechar'));
         }
+
+        // Módulos novos v13
+        NitCardDetails.inicializar();
+        NitBuscaGlobal.inicializar();
+        NitLogout.inicializar();
+        inicializarBuscasPorColuna();
     }
 
     function switchTab(tabId) {
@@ -2352,6 +2360,276 @@
 
     window.Semaforo  = Semaforo;
     window.NitLogin  = NitLogin;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MODAL DETALHES DO CARD (item 6.6)
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitCardDetails = {
+        _COLUNAS: {
+            'coluna-espera':          { label: 'Aguardando',   cor: '#F59E0B' },
+            'coluna-sem-necessidade': { label: 'Sem Nec.',     cor: '#6B7280' },
+            'coluna-vl':              { label: 'Via Livre',    cor: '#F97316' },
+            'coluna-amc':             { label: 'AMC',          cor: '#3B82F6' },
+            'coluna-normalizados':    { label: 'Normalizado',  cor: '#22C55E' },
+        },
+
+        abrir(card) {
+            const ds = card.dataset;
+            const colId  = card.closest('.kanban-column, #gaveta-arquivados')?.id || ds.coluna || '';
+            const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
+
+            const set = (id, val) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (val && val.trim()) { el.textContent = val; el.classList.remove('vazio'); }
+                else { el.textContent = '—'; el.classList.add('vazio'); }
+            };
+
+            set('det-codigo',   ds.codigo);
+            set('det-problema', ds.problema);
+            set('det-endereco', ds.endereco);
+            set('det-inicio',   ds.inicio);
+            set('det-tipo',     ds.tipo);
+            set('det-equipe',   ds.equipe);
+            set('det-viatura',  ds.viatura);
+            set('det-obs',      ds.observacoes);
+            set('det-data',     ds.datareferencia);
+            set('det-operador', ds.operador);
+
+            const badge = document.getElementById('detalhe-coluna-badge');
+            if (badge) {
+                badge.textContent = colInfo.label;
+                badge.style.background = colInfo.cor + '22';
+                badge.style.color      = colInfo.cor;
+                badge.style.border     = `1px solid ${colInfo.cor}44`;
+            }
+
+            abrirModal(document.getElementById('modal-detalhes'));
+        },
+
+        inicializar() {
+            const modal = document.getElementById('modal-detalhes');
+            const btnF  = document.getElementById('btn-detalhes-fechar');
+            if (!modal || !btnF) return;
+            btnF.addEventListener('click', () => fecharModal(modal));
+            modal.addEventListener('click', e => { if (e.target === modal) fecharModal(modal); });
+        },
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // BUSCA GLOBAL — barra estilo Trello (items 3.1 + busca por coluna 3.2)
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitBuscaGlobal = {
+        _aberto: false,
+        _idx:    -1,
+
+        _COLUNAS_LABEL: {
+            'coluna-espera':          { label: 'Aguardando', cor: '#F59E0B' },
+            'coluna-sem-necessidade': { label: 'Sem Nec.',   cor: '#6B7280' },
+            'coluna-vl':              { label: 'Via Livre',  cor: '#F97316' },
+            'coluna-amc':             { label: 'AMC',        cor: '#3B82F6' },
+            'coluna-normalizados':    { label: 'Normalizado',cor: '#22C55E' },
+        },
+
+        abrir() {
+            const ov = document.getElementById('busca-global-overlay');
+            const in_ = document.getElementById('busca-global-input');
+            if (!ov) return;
+            ov.classList.add('aberto');
+            this._aberto = true;
+            in_?.focus();
+            in_ && (in_.value = '');
+            this._renderizar('');
+        },
+
+        fechar() {
+            document.getElementById('busca-global-overlay')?.classList.remove('aberto');
+            this._aberto = false;
+            this._idx = -1;
+        },
+
+        _coletarCards() {
+            return Array.from(document.querySelectorAll('#tab-semaforo .kanban-card')).map(c => ({
+                el:       c,
+                codigo:   (c.dataset.codigo   || '').toLowerCase(),
+                endereco: (c.dataset.endereco || '').toLowerCase(),
+                problema: (c.dataset.problema || '').toLowerCase(),
+                colId:    c.closest('.kanban-column, #gaveta-arquivados')?.id || c.dataset.coluna || '',
+                raw:      c,
+            }));
+        },
+
+        _match(card, q) {
+            return card.codigo.includes(q) || card.endereco.includes(q) || card.problema.includes(q);
+        },
+
+        _hl(texto, q) {
+            if (!q || !texto) return texto || '';
+            const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+            return texto.replace(re, '<span class="busca-highlight">$1</span>');
+        },
+
+        _renderizar(q) {
+            const lista  = document.getElementById('busca-global-resultados');
+            const vazio  = document.getElementById('busca-global-vazio');
+            if (!lista || !vazio) return;
+
+            const termo = q.toLowerCase().trim();
+            const todos = this._coletarCards();
+            const hits  = termo ? todos.filter(c => this._match(c, termo)) : todos.slice(0, 20);
+
+            lista.innerHTML = '';
+            vazio.style.display = hits.length ? 'none' : 'block';
+            this._idx = -1;
+
+            hits.forEach((c, i) => {
+                const colInfo = this._COLUNAS_LABEL[c.colId] || { label: c.colId, cor: '#94A3B8' };
+                const item = document.createElement('div');
+                item.className = 'busca-resultado-item';
+                item.dataset.i = i;
+                item.innerHTML = `
+                    <span class="busca-res-coluna-dot" style="background:${colInfo.cor};"></span>
+                    <span class="busca-res-codigo">${this._hl(c.raw.dataset.codigo, termo)}</span>
+                    <span class="busca-res-endereco">${this._hl(c.raw.dataset.endereco, termo)}</span>
+                    <span class="busca-res-tag">${this._hl(c.raw.dataset.problema, termo)}</span>
+                    <span class="busca-res-coluna-label">${colInfo.label}</span>`;
+                item.addEventListener('click', () => this._selecionar(c.raw));
+                lista.appendChild(item);
+            });
+        },
+
+        _selecionar(cardEl) {
+            this.fechar();
+            // Scroll até o card e pulsar destaque
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            cardEl.style.outline = '2px solid var(--color-primary)';
+            cardEl.style.boxShadow = '0 0 0 4px var(--color-primary-faded, rgba(59,130,246,.25))';
+            setTimeout(() => { cardEl.style.outline = ''; cardEl.style.boxShadow = ''; }, 2200);
+        },
+
+        _moverFoco(dir) {
+            const items = document.querySelectorAll('#busca-global-resultados .busca-resultado-item');
+            if (!items.length) return;
+            items[this._idx]?.classList.remove('ativo');
+            this._idx = Math.max(0, Math.min(this._idx + dir, items.length - 1));
+            items[this._idx]?.classList.add('ativo');
+            items[this._idx]?.scrollIntoView({ block: 'nearest' });
+        },
+
+        _confirmarFoco() {
+            const ativo = document.querySelector('#busca-global-resultados .busca-resultado-item.ativo');
+            if (!ativo) return;
+            const i = parseInt(ativo.dataset.i, 10);
+            const hits = Array.from(document.querySelectorAll('#busca-global-resultados .busca-resultado-item'));
+            ativo.click();
+        },
+
+        inicializar() {
+            const btnAbrir = document.getElementById('btn-busca-global');
+            const overlay  = document.getElementById('busca-global-overlay');
+            const input    = document.getElementById('busca-global-input');
+            const btnEsc   = document.getElementById('busca-global-esc');
+            const panel    = document.getElementById('busca-global-panel');
+
+            if (!overlay || !input) return;
+
+            btnAbrir?.addEventListener('click', () => this.abrir());
+            btnEsc?.addEventListener('click',  () => this.fechar());
+
+            // Fechar ao clicar fora do painel
+            overlay.addEventListener('click', e => { if (e.target === overlay) this.fechar(); });
+
+            // Atalho Ctrl+K / Cmd+K
+            document.addEventListener('keydown', e => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.abrir(); }
+                if (e.key === 'Escape' && this._aberto) this.fechar();
+            });
+
+            // Navegação por teclado no overlay
+            input.addEventListener('keydown', e => {
+                if (e.key === 'ArrowDown') { e.preventDefault(); this._moverFoco(+1); }
+                else if (e.key === 'ArrowUp')   { e.preventDefault(); this._moverFoco(-1); }
+                else if (e.key === 'Enter')      { e.preventDefault(); this._confirmarFoco(); }
+                else if (e.key === 'Escape')     { this.fechar(); }
+            });
+
+            input.addEventListener('input', () => this._renderizar(input.value));
+        },
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LOGOUT (item 1.4 / 6.2)
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitLogout = {
+        inicializar() {
+            const btn = document.getElementById('btn-logout');
+            if (!btn) return;
+            btn.addEventListener('click', () => this._executar());
+
+            // Mostrar botão após login bem-sucedido — monkey-patch no confirmar do NitLogin
+            const _orig = NitLogin.confirmar.bind(NitLogin);
+            NitLogin.confirmar = function() {
+                _orig();
+                btn.style.display = 'flex';
+            };
+            // Se já estava logado (restaurou sessão), mostrar imediatamente
+            if (sessionStorage.getItem('nit-operador')) btn.style.display = 'flex';
+        },
+
+        _executar() {
+            nitConfirm(
+                '🚪 Sair do Sistema',
+                `Tem certeza que deseja encerrar a sessão de <strong>${NitLogin.operador || 'operador'}</strong>?`,
+                () => {
+                    const nome = NitLogin.operador;
+                    registrarAcao(`Logout: ${nome} — ${NitLogin.turno || ''}.`);
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, 'meta/sessao'), { operador: null, turno: null, saidaTs: Date.now() })
+                    );
+                    sessionStorage.removeItem('nit-operador');
+                    sessionStorage.removeItem('nit-turno');
+                    NitLogin.operador = null;
+                    NitLogin.turno    = null;
+
+                    const badge = document.getElementById('nit-operador-badge');
+                    if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
+
+                    const btn = document.getElementById('btn-logout');
+                    if (btn) btn.style.display = 'none';
+
+                    // Resetar campos de login e mostrar overlay
+                    const nomeI  = document.getElementById('login-nome');
+                    const turnoI = document.getElementById('login-turno');
+                    if (nomeI)  nomeI.value  = '';
+                    if (turnoI) turnoI.value = '';
+                    document.getElementById('nit-login-overlay')?.classList.remove('hidden');
+                    setTimeout(() => nomeI?.focus(), 120);
+                    showToast(`Sessão encerrada. Até logo, ${nome}!`, 'info');
+                }
+            );
+        },
+    };
+
+    // ── Também inicializar busca por coluna em VL e AMC (item 3.2 já wired)
+    // As colunas VL e AMC agora têm .kanban-search no HTML; o listener
+    // global abaixo captura todos de uma vez, sem precisar de código extra.
+    function inicializarBuscasPorColuna() {
+        document.querySelectorAll('.kanban-search').forEach(input => {
+            const colunaId = input.dataset.coluna;
+            if (!colunaId) return;
+            input.addEventListener('input', () => {
+                const q = input.value.toLowerCase();
+                const container = document.querySelector(`#${colunaId} .kanban-cards-container`);
+                if (!container) return;
+                container.querySelectorAll('.kanban-card').forEach(c => {
+                    const match = (c.dataset.codigo   || '').toLowerCase().includes(q)
+                               || (c.dataset.endereco || '').toLowerCase().includes(q)
+                               || (c.dataset.problema || '').toLowerCase().includes(q);
+                    c.style.display = match ? '' : 'none';
+                });
+            });
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
