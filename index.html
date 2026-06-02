@@ -1163,18 +1163,28 @@
         turno:    null,
 
         inicializar() {
-            const nome   = document.getElementById('login-nome');
-            const turno  = document.getElementById('login-turno');
-            const btn    = document.getElementById('btn-login-entrar');
-            const checar = () => { btn.disabled = !(nome.value.trim().length >= 2 && turno.value); };
+    const nome   = document.getElementById('login-nome');
+    const turno  = document.getElementById('login-turno');
+    const btn    = document.getElementById('btn-login-entrar');
 
-            nome.addEventListener('input', checar);
-            turno.addEventListener('change', checar);
-            nome.addEventListener('keydown',  e => { if (e.key === 'Enter') turno.focus(); });
-            turno.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) this.confirmar(); });
-            btn.addEventListener('click', () => this.confirmar());
-            setTimeout(() => nome.focus(), 100);
-        },
+    const checar = () => {
+        const nomeValido = nome.value.trim().length >= 2;
+        const turnoValido = turno.value !== '';
+        btn.disabled = !(nomeValido && turnoValido);
+    };
+
+    // Adiciona eventos
+    nome.addEventListener('input', checar);
+    turno.addEventListener('change', checar);
+    nome.addEventListener('keydown', e => { if (e.key === 'Enter') turno.focus(); });
+    turno.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) this.confirmar(); });
+    btn.addEventListener('click', () => this.confirmar());
+
+    // Chamada inicial para definir estado correto do botão (caso os campos já tenham valor)
+    checar();
+
+    setTimeout(() => nome.focus(), 100);
+},
 
         confirmar() {
             const nome  = document.getElementById('login-nome').value.trim();
