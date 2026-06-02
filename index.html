@@ -514,6 +514,199 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.6; }
         }
+
+        /* ── BUSCA GLOBAL ───────────────────────────────────────────── */
+        .nit-search-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        #btn-busca-global {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-tertiary);
+            font-size: var(--font-size-sm);
+            padding: 0 12px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        #btn-busca-global:hover { border-color: var(--color-primary); color: var(--color-text-primary); }
+        #btn-busca-global kbd {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 3px;
+            font-size: 9px;
+            padding: 1px 4px;
+            color: var(--color-text-tertiary);
+            font-family: var(--font-family-mono);
+        }
+
+        /* overlay de busca global (dropdown) */
+        #busca-global-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 4000;
+            background: rgba(15,23,42,0.6);
+            backdrop-filter: blur(3px);
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 80px;
+        }
+        #busca-global-overlay.aberto { display: flex; }
+        #busca-global-panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 620px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.5);
+            overflow: hidden;
+            animation: slideDown 0.18s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        #busca-global-input-wrap {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid var(--color-border);
+            gap: 10px;
+        }
+        #busca-global-input-wrap i { color: var(--color-text-tertiary); font-size: 15px; flex-shrink: 0; }
+        #busca-global-input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            font-family: var(--font-family-sans);
+            font-size: 16px;
+            color: var(--color-text-primary);
+            padding: 18px 0;
+        }
+        #busca-global-input::placeholder { color: var(--color-text-tertiary); }
+        #busca-global-esc {
+            background: none;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            color: var(--color-text-tertiary);
+            font-size: 10px;
+            padding: 2px 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: var(--font-family-mono);
+        }
+        #busca-global-resultados {
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .busca-resultado-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--color-border);
+            transition: background 0.15s;
+        }
+        .busca-resultado-item:last-child { border-bottom: none; }
+        .busca-resultado-item:hover, .busca-resultado-item.ativo { background: var(--color-bg); }
+        .busca-res-coluna-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .busca-res-codigo {
+            font-size: 13px; font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary); min-width: 70px; flex-shrink: 0;
+        }
+        .busca-res-endereco {
+            font-size: 12px; color: var(--color-text-secondary);
+            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .busca-res-tag {
+            font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px;
+            background: var(--color-border); color: var(--color-text-secondary);
+            flex-shrink: 0; text-transform: uppercase;
+        }
+        .busca-res-coluna-label {
+            font-size: 10px; color: var(--color-text-tertiary); flex-shrink: 0;
+        }
+        #busca-global-vazio {
+            padding: 28px 16px; text-align: center;
+            color: var(--color-text-tertiary); font-size: 13px; display: none;
+        }
+        .busca-highlight { color: var(--color-primary); font-weight: 700; }
+
+        /* ── BOTÃO LOGOUT ───────────────────────────────────────────── */
+        #btn-logout {
+            background: none;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            color: var(--color-text-tertiary);
+            font-size: var(--font-size-sm);
+            padding: 0 8px;
+            height: 30px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        #btn-logout:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+        /* ── MODAL DETALHES DO CARD ─────────────────────────────────── */
+        #modal-detalhes .modal-container { max-width: 540px; }
+        .detalhe-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        .detalhe-item { display: flex; flex-direction: column; gap: 3px; }
+        .detalhe-label {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .6px; color: var(--color-text-tertiary);
+        }
+        .detalhe-valor {
+            font-size: 13px; color: var(--color-text-primary);
+            background: var(--color-bg); border-radius: 6px; padding: 7px 10px;
+            border: 1px solid var(--color-border); word-break: break-word;
+            min-height: 34px;
+        }
+        .detalhe-valor.vazio { color: var(--color-text-tertiary); font-style: italic; }
+        .detalhe-full { grid-column: 1 / -1; }
+        .detalhe-coluna-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+        }
+
+        /* ── RESPONSIVIDADE TABLET ──────────────────────────────────── */
+        @media (max-width: 1024px) {
+            body { padding: 10px; }
+            #tab-semaforo .grid-container {
+                grid-template-columns: 300px 1fr !important;
+            }
+            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 6px; }
+            #tab-semaforo .grid-container {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto 1fr;
+            }
+            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
+            .tab-navigation { flex-wrap: wrap; gap: 4px; }
+            .tab-controls { width: 100%; justify-content: flex-end; padding-right: 0; }
+            #btn-busca-global kbd { display: none; }
+        }
+        @media (max-width: 480px) {
+            .kanban-board { grid-template-columns: 1fr !important; }
+            #busca-global-panel { width: 98%; border-radius: var(--radius-md); }
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -545,6 +738,14 @@
             <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semafórico</button>
 
             <div class="tab-controls">
+                <!-- Busca global — estilo Trello -->
+                <div class="nit-search-wrap">
+                    <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
+                        <i class="fas fa-search"></i>
+                        <span>Pesquisar cards…</span>
+                        <kbd>Ctrl K</kbd>
+                    </button>
+                </div>
                 <!-- Seletor de data — filtra totais e relatório -->
                 <input type="date" id="filtro-data-input" title="Filtrar por data"
                        style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);
@@ -556,6 +757,11 @@
                     <span style="color:var(--color-info);">Conectando…</span>
                 </span>
                 <button id="btn-ver-historico" class="btn-icon" aria-label="Ver histórico de ações" title="Ver Histórico de Ações"><i class="fas fa-history" aria-hidden="true"></i></button>
+                <!-- Logout -->
+                <button id="btn-logout" title="Sair / Trocar operador" aria-label="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </button>
             </div>
         </div>
 
@@ -615,12 +821,18 @@
                                         <span class="header-text cor-via-livre"><i class="fas fa-clock" aria-hidden="true"></i> Via Livre</span>
                                         <span class="card-count" id="count-vl">0</span>
                                     </div>
+                                    <div class="kanban-column-filter">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-vl" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Via Livre">
+                                    </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
                                 <div class="kanban-column" id="coluna-amc" role="region" aria-label="AMC">
                                     <div class="kanban-column-header">
                                         <span class="header-text cor-amc"><i class="fas fa-clock" aria-hidden="true"></i> AMC</span>
                                         <span class="card-count" id="count-amc">0</span>
+                                    </div>
+                                    <div class="kanban-column-filter">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-amc" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna AMC">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
@@ -798,6 +1010,76 @@
                     Cancelar
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETALHES DO CARD ──────────────────────────────────────────── -->
+    <div id="modal-detalhes" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-detalhes-titulo">
+        <div class="modal-container">
+            <div class="modal-header" id="modal-detalhes-titulo" style="display:flex;align-items:center;justify-content:space-between;">
+                <span>Detalhes da Ocorrência</span>
+                <span id="detalhe-coluna-badge" class="detalhe-coluna-badge"></span>
+            </div>
+            <div class="modal-body">
+                <div class="detalhe-grid">
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Código</span>
+                        <span class="detalhe-valor" id="det-codigo">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Problema</span>
+                        <span class="detalhe-valor" id="det-problema">—</span>
+                    </div>
+                    <div class="detalhe-item detalhe-full">
+                        <span class="detalhe-label">Endereço / Cruzamento</span>
+                        <span class="detalhe-valor" id="det-endereco">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Início</span>
+                        <span class="detalhe-valor" id="det-inicio">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Tipo</span>
+                        <span class="detalhe-valor" id="det-tipo">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Equipe despachada</span>
+                        <span class="detalhe-valor" id="det-equipe">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Viatura (VT)</span>
+                        <span class="detalhe-valor" id="det-viatura">—</span>
+                    </div>
+                    <div class="detalhe-item detalhe-full">
+                        <span class="detalhe-label">Observações</span>
+                        <span class="detalhe-valor" id="det-obs" style="white-space:pre-wrap;min-height:50px;">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Data referência</span>
+                        <span class="detalhe-valor" id="det-data">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                        <span class="detalhe-label">Operador</span>
+                        <span class="detalhe-valor" id="det-operador">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-detalhes-fechar" class="btn btn-secundario"><i class="fas fa-times"></i> Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BUSCA GLOBAL OVERLAY ────────────────────────────────────────────── -->
+    <div id="busca-global-overlay" role="dialog" aria-modal="true" aria-label="Busca global">
+        <div id="busca-global-panel">
+            <div id="busca-global-input-wrap">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" id="busca-global-input" placeholder="Buscar por código, endereço ou problema…" autocomplete="off" spellcheck="false">
+                <button id="busca-global-esc" title="Fechar (Esc)">ESC</button>
+            </div>
+            <div id="busca-global-resultados"></div>
+            <div id="busca-global-vazio"><i class="fas fa-inbox" style="margin-right:8px;"></i>Nenhum card encontrado</div>
         </div>
     </div>
 
@@ -1343,16 +1625,16 @@
             let secao      = 'PENDENTE';
 
             for (const linha of linhas) {
-                // ── Finaliza card pendente antes de mudar seção ──
-                if (/NORMALIZADOS✅/.test(linha) || /PENDENTES❌/.test(linha)) {
-                    if (atual) {
-                        eventos.push(atual);
-                        atual = null;
-                    }
-                    if (/NORMALIZADOS✅/.test(linha)) secao = 'NORMALIZADO';
-                    if (/PENDENTES❌/.test(linha))   secao = 'PENDENTE';
-                    continue;
+                if (/NORMALIZADOS✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
+                if (/PENDENTES❌/.test(linha))   { secao = 'PENDENTE';    continue; }
+                const dados = this.extrairDadosDaLinha(linha);
+                if (dados) {
+                    if (atual) eventos.push(atual);
+                    atual = { ...dados, secao, dataReferencia: dataRef };
+                } else if (atual && linha.trim()) {
+                    atual.observacoes += (atual.observacoes ? ' ' : '') + linha.trim().replace(/"/g, '');
                 }
+            }
             if (atual) eventos.push(atual);
 
             return eventos
