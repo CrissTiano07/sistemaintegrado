@@ -33,7 +33,7 @@
             window.db = firebase.database();
         });
     </script>
-    <title>NIT — Painel de Gestão Integrada v12.0</title>
+    <title>NIT — Painel de Gestão Integrada v13.0</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -200,11 +200,9 @@
         .btn-icon:hover { color: var(--color-text-primary); background-color: var(--color-border); }
 
         #tab-semaforo .grid-container { grid-template-columns: 360px 1fr; }
-        .painel-operacional-wrapper { position: relative; overflow: hidden; height: 100%; flex-grow: 1; min-height: 0; }
-        #gaveta-arquivados { position: absolute; top: 0; right: 0; width: 300px; height: 100%; background-color: var(--color-surface); border-left: 1px solid var(--color-border); z-index: 10; transform: translateX(100%); transition: transform 0.3s ease-in-out; display: flex; flex-direction: column; }
-        #gaveta-arquivados.open { transform: translateX(0); }
-        #kanban-wrapper.gaveta-open { margin-right: 300px; }
-        #kanban-wrapper { height: 100%; }
+        .painel-operacional-wrapper { position: relative; height: 100%; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+        #kanban-wrapper { height: auto; flex-shrink: 0; }
+        #kanban-normalizados-board { display: grid; grid-template-columns: 1fr; flex-shrink: 0; gap: var(--space-2); }
         .kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-2); height: 100%; }
         .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 100%; overflow: hidden; min-height: 0; }
         .kanban-column-header { padding: 10px 12px; font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); }
@@ -281,10 +279,12 @@
         .toast.warning { background-color: var(--color-warning); }
         .toast.info    { background-color: var(--color-info);    }
 
-        .kanban-column-header .cor-atendimento { color: var(--color-danger);  }
-        .kanban-column-header .cor-via-livre   { color: var(--color-warning); }
-        .kanban-column-header .cor-amc         { color: var(--color-success); }
-        .kanban-column-header .header-text i   { margin-right: var(--space-1); }
+        .kanban-column-header .cor-atendimento    { color: var(--color-danger);      }
+        .kanban-column-header .cor-via-livre       { color: var(--color-vl);           }
+        .kanban-column-header .cor-amc             { color: var(--color-amc);          }
+        .kanban-column-header .cor-sem-necessidade { color: var(--color-text-tertiary);}
+        .kanban-column-header .cor-normalizado     { color: var(--color-normalizado);  }
+        .kanban-column-header .header-text i       { margin-right: var(--space-1); }
 
         .reincident-tag { background-color: var(--color-info); color: white; font-size: 9px; font-weight: var(--font-weight-bold); padding: 2px 6px; border-radius: 8px; margin-left: var(--space-1); }
 
@@ -304,8 +304,7 @@
             100% { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 0%, transparent); }
         }
 
-        #btn-abrir-gaveta { transition: opacity 0.3s; }
-        #btn-abrir-gaveta.hidden { opacity: 0; pointer-events: none; }
+        
 
         .kanban-card .card-footer .btn-card-action.complete {
             color: var(--color-success);
@@ -323,11 +322,7 @@
         .kanban-card .card-footer .btn-card-action:not(.complete)       { opacity: 0.65; transition: opacity 0.2s ease; }
         .kanban-card .card-footer:hover .btn-card-action:not(.complete) { opacity: 1; }
 
-        #gaveta-header { display: flex; align-items: center; gap: var(--space-1); }
-        #gaveta-header .header-content { flex-grow: 1; display: flex; align-items: center; gap: var(--space-1); transition: all 0.3s ease; }
-        #gaveta-header .search-container { flex-grow: 1; transition: all 0.3s ease; }
-        #gaveta-header .search-container input { width: 100%; padding: 6px 12px; border-radius: 12px; font-size: var(--font-size-sm); }
-        #gaveta-header.search-active .header-content { opacity: 0; transform: scale(0.9); width: 0; pointer-events: none; }
+        
 
         .kanban-column { box-sizing: border-box; overflow: hidden; }
         .kanban-column-filter { padding: 6px 8px; background: transparent; }
@@ -796,6 +791,16 @@
                     <div class="painel-operacional-wrapper">
                         <div id="kanban-wrapper">
                             <div class="kanban-board">
+                                <div class="kanban-column" id="coluna-sem-necessidade" role="region" aria-label="Sem Necessidade">
+                                    <div class="kanban-column-header">
+                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle" aria-hidden="true"></i> Sem Necessidade</span>
+                                        <span class="card-count" id="count-sem-necessidade">0</span>
+                                    </div>
+                                    <div class="kanban-column-filter">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Sem Necessidade">
+                                    </div>
+                                    <div class="kanban-cards-container"></div>
+                                </div>
                                 <div class="kanban-column" id="coluna-espera" role="region" aria-label="Aguardando atendimento">
                                     <div class="kanban-column-header">
                                         <span class="header-text cor-atendimento"><i class="fas fa-clock" aria-hidden="true"></i> Aguardando Atendimento</span>
@@ -806,19 +811,9 @@
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-sem-necessidade" role="region" aria-label="Sem Necessidade">
-                                    <div class="kanban-column-header">
-                                        <span class="header-text">Sem Necessidade</span>
-                                        <span class="card-count" id="count-sem-necessidade">0</span>
-                                    </div>
-                                    <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Sem Necessidade">
-                                    </div>
-                                    <div class="kanban-cards-container"></div>
-                                </div>
                                 <div class="kanban-column" id="coluna-vl" role="region" aria-label="Via Livre">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-via-livre"><i class="fas fa-clock" aria-hidden="true"></i> Via Livre</span>
+                                        <span class="header-text cor-via-livre"><i class="fas fa-check-circle" aria-hidden="true"></i> Via Livre</span>
                                         <span class="card-count" id="count-vl">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -828,7 +823,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-amc" role="region" aria-label="AMC">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-amc"><i class="fas fa-clock" aria-hidden="true"></i> AMC</span>
+                                        <span class="header-text cor-amc"><i class="fas fa-shield-alt" aria-hidden="true"></i> AMC</span>
                                         <span class="card-count" id="count-amc">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -838,23 +833,18 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="gaveta-arquivados">
-                            <div class="kanban-column-header" id="gaveta-header">
-                                <div class="header-content">
-                                    <span class="header-text">Normalizados</span>
+                        <div class="kanban-board" id="kanban-normalizados-board">
+                            <div class="kanban-column" id="coluna-normalizados" role="region" aria-label="Normalizados">
+                                <div class="kanban-column-header">
+                                    <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> Normalizados</span>
                                     <span class="card-count" id="count-normalizados-gaveta">0</span>
                                 </div>
-                                <div class="search-container" style="display: none;">
-                                    <input type="search" id="search-normalizados" placeholder="Buscar por código ou endereço...">
+                                <div class="kanban-column-filter">
+                                    <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Normalizados">
                                 </div>
-                                <button id="btn-toggle-search" class="btn-icon" aria-label="Buscar nos normalizados" title="Buscar Normalizados"><i class="fas fa-search" aria-hidden="true"></i></button>
-                                <button id="btn-toggle-arquivados" class="btn-icon" aria-label="Fechar gaveta de normalizados" title="Fechar gaveta"><i class="fas fa-times" aria-hidden="true"></i></button>
+                                <div class="kanban-cards-container"></div>
                             </div>
-                            <div class="kanban-cards-container" id="coluna-normalizados" role="region" aria-label="Normalizados"></div>
                         </div>
-                        <button id="btn-abrir-gaveta" class="btn-icon" aria-label="Ver ocorrências normalizadas" style="position: absolute; top: 10px; right: 10px; z-index: 5; background-color: var(--color-primary); color: white;" title="Ver Normalizados">
-                            <i class="fas fa-archive" aria-hidden="true"></i>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -1302,9 +1292,6 @@
             displayTotal:             document.getElementById('display-total'),
             displayPendentes:         document.getElementById('display-pendentes'),
             displayNormalizados:      document.getElementById('display-normalizados'),
-            btnToggleArquivados:      document.getElementById('btn-toggle-arquivados'),
-            gavetaArquivados:         document.getElementById('gaveta-arquivados'),
-            kanbanWrapper:            document.getElementById('kanban-wrapper'),
             colunaNormalizados:       document.getElementById('coluna-normalizados'),
             countNormalizadosGaveta:  document.getElementById('count-normalizados-gaveta'),
             modalRelatorio:           document.getElementById('modal-relatorio'),
@@ -1609,9 +1596,6 @@
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
 
-            if (this.ultimoLoteNormalizado.length) {
-                DOM.countNormalizadosGaveta?.classList.add('acao-disponivel', 'tem-novos');
-            }
             NitDateFilter.sincronizar(eventos[0]?.dataReferencia);
             this.atualizarPainel();
             DOM.relatorioBrutoInput.value = '';
@@ -2057,7 +2041,7 @@
         handleNormalizarClick(card) {
             const cod      = card.dataset.codigo;
             const eventoId = card.dataset.eventoid || cod;
-            const origem   = card.closest('.kanban-column, #gaveta-arquivados')?.id || 'desconhecido';
+            const origem   = card.closest('.kanban-column')?.id || 'desconhecido';
 
             mostrarUndoToast(`${cod} normalizando…`,
                 () => {
@@ -2163,7 +2147,7 @@
             document.querySelectorAll('.kanban-cards-container.drag-over').forEach(c => c.classList.remove('drag-over'));
 
             const card     = AppState.draggedCard;
-            const coluna   = container.closest('.kanban-column, #gaveta-arquivados')?.id || 'desconhecido';
+            const coluna   = container.closest('.kanban-column')?.id || 'desconhecido';
             const eventoId = card.dataset.eventoid || card.dataset.codigo;
             const origem   = card.dataset.coluna   || 'desconhecido';
 
@@ -2177,43 +2161,6 @@
         },
 
         // ── Gaveta normalizados ───────────────────────────────────────────
-        toggleGaveta(abrir) {
-            const gaveta  = DOM.gavetaArquivados;
-            const wrapper = DOM.kanbanWrapper;
-            const btn     = document.getElementById('btn-abrir-gaveta');
-            gaveta.classList.toggle('open', abrir);
-            wrapper?.classList.toggle('gaveta-aberta', abrir);
-            if (btn) btn.style.display = abrir ? 'none' : '';
-        },
-
-        destacarUltimosNormalizados() {
-            document.querySelectorAll('#coluna-normalizados .kanban-card').forEach(c => c.style.outline = '');
-            this.ultimoLoteNormalizado.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.style.outline = '2px solid var(--color-primary)';
-            });
-        },
-
-        inicializarBuscaPorColuna() {
-            const btn = document.getElementById('btn-toggle-search');
-            const searchContainer = document.querySelector('#gaveta-header .search-container');
-            const input = document.getElementById('search-normalizados');
-            if (!btn || !searchContainer || !input) return;
-            btn.addEventListener('click', () => {
-                const vis = searchContainer.style.display === 'flex';
-                searchContainer.style.display = vis ? 'none' : 'flex';
-                if (!vis) input.focus();
-            });
-            input.addEventListener('input', () => {
-                const q = input.value.toLowerCase();
-                DOM.colunaNormalizados.querySelectorAll('.kanban-card').forEach(c => {
-                    const match = (c.dataset.codigo    || '').toLowerCase().includes(q)
-                               || (c.dataset.endereco  || '').toLowerCase().includes(q);
-                    c.style.display = match ? '' : 'none';
-                });
-            });
-        },
-
         // ── Limpar painel ─────────────────────────────────────────────────
         limparPainel() {
             nitConfirm('🗑️ Limpar Painel', '⚠️ Remove <strong>TODOS os dados</strong> para todos os operadores conectados.', () => {
@@ -2247,24 +2194,6 @@
                 btn.addEventListener('click', () => this.selecionarTipoDespacho(btn.dataset.tipo))
             );
 
-            const btnGaveta = document.getElementById('btn-abrir-gaveta');
-            btnGaveta?.addEventListener('click', e => { e.stopPropagation(); this.toggleGaveta(true); });
-            DOM.btnToggleArquivados?.addEventListener('click', e => { e.stopPropagation(); this.toggleGaveta(false); });
-            document.addEventListener('click', e => {
-                if (DOM.gavetaArquivados?.classList.contains('open')
-                    && !DOM.gavetaArquivados.contains(e.target)
-                    && !DOM.btnToggleArquivados?.contains(e.target)
-                    && !btnGaveta?.contains(e.target)) {
-                    this.toggleGaveta(false);
-                }
-            });
-
-            DOM.countNormalizadosGaveta?.addEventListener('click', () => {
-                this.toggleGaveta(true);
-                this.destacarUltimosNormalizados();
-                DOM.countNormalizadosGaveta.classList.remove('tem-novos');
-            });
-
             const kanbanArea = document.querySelector('#tab-semaforo');
             kanbanArea.addEventListener('dragstart',  this.handleDragStart.bind(this));
             kanbanArea.addEventListener('dragend',    this.handleDragEnd.bind(this));
@@ -2273,7 +2202,6 @@
             kanbanArea.addEventListener('drop',       this.handleDrop.bind(this));
             kanbanArea.addEventListener('click',      this.handleKanbanBoardClick.bind(this));
 
-            this.inicializarBuscaPorColuna();
             this.inicializarListenerFirebase();
         },
     };
@@ -2366,16 +2294,16 @@
     // ═══════════════════════════════════════════════════════════════════════
     const NitCardDetails = {
         _COLUNAS: {
-            'coluna-espera':          { label: 'Aguardando',   cor: '#F59E0B' },
-            'coluna-sem-necessidade': { label: 'Sem Nec.',     cor: '#6B7280' },
-            'coluna-vl':              { label: 'Via Livre',    cor: '#F97316' },
-            'coluna-amc':             { label: 'AMC',          cor: '#3B82F6' },
-            'coluna-normalizados':    { label: 'Normalizado',  cor: '#22C55E' },
+            'coluna-sem-necessidade': { label: 'Sem Necessidade', cor: '#94A3B8' },
+            'coluna-espera':          { label: 'Aguardando',      cor: '#f85149' },
+            'coluna-vl':              { label: 'Via Livre',       cor: '#f0883e' },
+            'coluna-amc':             { label: 'AMC',             cor: '#58a6ff' },
+            'coluna-normalizados':    { label: 'Normalizado',     cor: '#3fb950' },
         },
 
         abrir(card) {
             const ds = card.dataset;
-            const colId  = card.closest('.kanban-column, #gaveta-arquivados')?.id || ds.coluna || '';
+            const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
             const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
 
             const set = (id, val) => {
@@ -2424,11 +2352,11 @@
         _idx:    -1,
 
         _COLUNAS_LABEL: {
-            'coluna-espera':          { label: 'Aguardando', cor: '#F59E0B' },
-            'coluna-sem-necessidade': { label: 'Sem Nec.',   cor: '#6B7280' },
-            'coluna-vl':              { label: 'Via Livre',  cor: '#F97316' },
-            'coluna-amc':             { label: 'AMC',        cor: '#3B82F6' },
-            'coluna-normalizados':    { label: 'Normalizado',cor: '#22C55E' },
+            'coluna-sem-necessidade': { label: 'Sem Nec.',    cor: '#94A3B8' },
+            'coluna-espera':          { label: 'Aguardando',  cor: '#f85149' },
+            'coluna-vl':              { label: 'Via Livre',   cor: '#f0883e' },
+            'coluna-amc':             { label: 'AMC',         cor: '#58a6ff' },
+            'coluna-normalizados':    { label: 'Normalizado', cor: '#3fb950' },
         },
 
         abrir() {
@@ -2454,7 +2382,7 @@
                 codigo:   (c.dataset.codigo   || '').toLowerCase(),
                 endereco: (c.dataset.endereco || '').toLowerCase(),
                 problema: (c.dataset.problema || '').toLowerCase(),
-                colId:    c.closest('.kanban-column, #gaveta-arquivados')?.id || c.dataset.coluna || '',
+                colId:    c.closest('.kanban-column')?.id || c.dataset.coluna || '',
                 raw:      c,
             }));
         },
