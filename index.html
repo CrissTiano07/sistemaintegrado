@@ -153,8 +153,8 @@
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; height: 100%; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); height: 100%; min-height: 0; }
-        .grid-column { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); height: 100%; min-height: 0; overflow: hidden; }
+        .grid-column { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; overflow: hidden; height: 100%; }
 
         .painel { display: flex; flex-direction: column; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); min-height: 0; }
         .painel.flex-grow { flex-grow: 1; }
@@ -200,11 +200,11 @@
         .btn-icon:hover { color: var(--color-text-primary); background-color: var(--color-border); }
 
         #tab-semaforo .grid-container { grid-template-columns: 360px 1fr; }
-        .painel-operacional-wrapper { position: relative; height: 100%; flex-grow: 1; min-height: 0; display: flex; flex-direction: column; }
-        #kanban-wrapper { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+        .painel-operacional-wrapper { position: relative; height: 100%; flex-grow: 1; min-height: 0; overflow: hidden; }
+        #kanban-wrapper { height: 100%; overflow: hidden; }
         #kanban-wrapper .kanban-board { height: 100%; min-width: max-content; }
-        .kanban-board { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: var(--space-2); height: 100%; }
-        .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 100%; overflow: hidden; min-height: 0; min-width: 0; }
+        .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); height: 100%; }
+        .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; height: 100%; overflow: hidden; min-height: 0; min-width: 0; box-sizing: border-box; }
         .kanban-column-header { padding: 10px 12px; font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); }
         .kanban-column-header .header-text { flex-grow: 1; }
         .card-count { font-size: var(--font-size-xs); background-color: var(--color-border); color: var(--color-text-secondary); font-weight: var(--font-weight-semibold); padding: 2px var(--space-1); border-radius: 8px; }
@@ -681,14 +681,14 @@
 
         /* ── RESPONSIVIDADE TABLET ──────────────────────────────────── */
         @media (max-width: 1400px) {
-            .kanban-board { grid-template-columns: repeat(3, minmax(220px, 1fr)) !important; }
+            .kanban-board { grid-template-columns: repeat(3, 1fr) !important; }
         }
         @media (max-width: 1024px) {
             body { padding: 10px; }
             #tab-semaforo .grid-container {
                 grid-template-columns: 300px 1fr !important;
             }
-            .kanban-board { grid-template-columns: repeat(2, minmax(220px, 1fr)) !important; }
+            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 768px) {
             body { padding: 6px; }
@@ -696,13 +696,13 @@
                 grid-template-columns: 1fr !important;
                 grid-template-rows: auto 1fr;
             }
-            .kanban-board { grid-template-columns: repeat(2, minmax(200px, 1fr)) !important; }
+            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
             .tab-navigation { flex-wrap: wrap; gap: 4px; }
             .tab-controls { width: 100%; justify-content: flex-end; padding-right: 0; }
             #btn-busca-global kbd { display: none; }
         }
         @media (max-width: 480px) {
-            .kanban-board { grid-template-columns: minmax(200px, 1fr) !important; }
+            .kanban-board { grid-template-columns: 1fr !important; }
             #busca-global-panel { width: 98%; border-radius: var(--radius-md); }
         }
     </style>
