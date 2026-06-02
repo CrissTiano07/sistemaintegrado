@@ -1343,16 +1343,16 @@
             let secao      = 'PENDENTE';
 
             for (const linha of linhas) {
-                if (/NORMALIZADOS✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
-                if (/PENDENTES❌/.test(linha))   { secao = 'PENDENTE';    continue; }
-                const dados = this.extrairDadosDaLinha(linha);
-                if (dados) {
-                    if (atual) eventos.push(atual);
-                    atual = { ...dados, secao, dataReferencia: dataRef };
-                } else if (atual && linha.trim()) {
-                    atual.observacoes += (atual.observacoes ? ' ' : '') + linha.trim().replace(/"/g, '');
+                // ── Finaliza card pendente antes de mudar seção ──
+                if (/NORMALIZADOS✅/.test(linha) || /PENDENTES❌/.test(linha)) {
+                    if (atual) {
+                        eventos.push(atual);
+                        atual = null;
+                    }
+                    if (/NORMALIZADOS✅/.test(linha)) secao = 'NORMALIZADO';
+                    if (/PENDENTES❌/.test(linha))   secao = 'PENDENTE';
+                    continue;
                 }
-            }
             if (atual) eventos.push(atual);
 
             return eventos
