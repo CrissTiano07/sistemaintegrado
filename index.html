@@ -1556,6 +1556,18 @@
     };
 },
 
+        _ehCabecalho(linha) {
+        const l = linha.trim();
+        if (!l) return false;
+        return /^[-=*#]{3,}/.test(l)
+            || /^\*?NORMALIZADOS\*?/i.test(l)
+            || /^\*?PENDENTES\*?/i.test(l)
+            || /^\*?STATUS\s+SEMAF/i.test(l)
+            || /^\d{2}\/\d{2}\/\d{4}/.test(l)
+            || /^ocorr[êe]ncias?:/i.test(l)
+            || /^(total|pend[eê]|norm)/i.test(l)
+            || /^[\u2600-\u27BF]{1,3}\s*\*/u.test(l);
+
         // ── Firebase listener ─────────────────────────────────────────────
         inicializarListenerFirebase() {
             NitFirebase.exec((db, ref) => {
