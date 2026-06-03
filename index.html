@@ -142,12 +142,76 @@
         }
 
         .main-container { display: flex; flex-direction: column; height: calc(100vh - 32px); overflow: hidden; }
-        .tab-navigation { display: flex; border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-2); flex-shrink: 0; }
-        .tab-button { padding: 10px 20px; cursor: pointer; background: none; border: none; color: var(--color-text-tertiary); font-weight: var(--font-weight-semibold); font-size: var(--font-size-base); border-bottom: 2px solid transparent; }
+        /* ── NAVBAR 3 ZONAS ─────────────────────────────────────────── */
+        .tab-navigation {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: var(--space-2);
+            flex-shrink: 0;
+            gap: 0;
+            min-height: 44px;
+        }
+        .nav-left  { display: flex; align-items: center; }
+        .nav-center { display: flex; justify-content: center; align-items: center; }
+        .nav-right  { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-right: 4px; }
+
+        .tab-button { padding: 10px 20px; cursor: pointer; background: none; border: none; color: var(--color-text-tertiary); font-weight: var(--font-weight-semibold); font-size: var(--font-size-base); border-bottom: 2px solid transparent; white-space: nowrap; }
         .tab-button:hover { color: var(--color-text-primary); background-color: var(--color-border); }
         .tab-button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
         .tab-button i { margin-right: var(--space-1); }
-        .tab-controls { margin-left: auto; display: flex; align-items: center; padding-right: 10px; }
+
+        /* Busca global centralizada — ocupa ~50% da viewport */
+        #btn-busca-global {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-tertiary);
+            font-size: var(--font-size-sm);
+            padding: 0 14px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: border-color 0.2s, color 0.2s;
+            white-space: nowrap;
+            width: min(50vw, 420px);
+            justify-content: flex-start;
+        }
+        #btn-busca-global i { flex-shrink: 0; font-size: 12px; }
+        #btn-busca-global span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+        #btn-busca-global:hover { border-color: var(--color-primary); color: var(--color-text-primary); }
+        #btn-busca-global kbd {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: 3px;
+            font-size: 9px;
+            padding: 1px 5px;
+            color: var(--color-text-tertiary);
+            font-family: var(--font-family-mono);
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        /* Controles direita */
+        .nav-date-input {
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-primary);
+            font-size: 11px;
+            padding: 3px 7px;
+            cursor: pointer;
+            height: 28px;
+        }
+        .nav-operador-badge {
+            font-size: 11px;
+            color: var(--color-text-tertiary);
+            white-space: nowrap;
+            display: none;
+        }
 
         .tab-content { display: none; flex-grow: 1; min-height: 0; }
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; flex: 1; min-height: 0; overflow: hidden; }
@@ -509,36 +573,6 @@
         }
 
         /* ── BUSCA GLOBAL ───────────────────────────────────────────── */
-        .nit-search-wrap {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        #btn-busca-global {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            color: var(--color-text-tertiary);
-            font-size: var(--font-size-sm);
-            padding: 0 12px;
-            height: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        #btn-busca-global:hover { border-color: var(--color-primary); color: var(--color-text-primary); }
-        #btn-busca-global kbd {
-            background: var(--color-bg);
-            border: 1px solid var(--color-border);
-            border-radius: 3px;
-            font-size: 9px;
-            padding: 1px 4px;
-            color: var(--color-text-tertiary);
-            font-family: var(--font-family-mono);
-        }
 
         /* overlay de busca global (dropdown) */
         #busca-global-overlay {
@@ -646,12 +680,13 @@
             color: var(--color-text-tertiary);
             font-size: var(--font-size-sm);
             padding: 0 8px;
-            height: 30px;
+            height: 28px;
             cursor: pointer;
             display: none;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         #btn-logout:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
@@ -730,31 +765,31 @@
         </div>
     </div>
 
-    <div class="main-container">
+        <div class="main-container">
         <div class="tab-navigation">
-            <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semafórico</button>
+            <!-- ESQUERDA: abas -->
+            <div class="nav-left">
+                <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semafórico</button>
+            </div>
 
-            <div class="tab-controls">
-                <!-- Busca global — estilo Trello -->
-                <div class="nit-search-wrap">
-                    <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
-                        <i class="fas fa-search"></i>
-                        <span>Pesquisar cards…</span>
-                        <kbd>Ctrl K</kbd>
-                    </button>
-                </div>
-                <!-- Seletor de data — filtra totais e relatório -->
-                <input type="date" id="filtro-data-input" title="Filtrar por data"
-                       style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);
-                              color:var(--color-text-primary);font-size:12px;padding:4px 8px;cursor:pointer;height:30px;">
-                <span id="nit-operador-badge" title="Operador logado"
-                      style="font-size:11px;color:var(--color-text-tertiary);white-space:nowrap;display:none;"></span>
+            <!-- CENTRO: busca global centralizada -->
+            <div class="nav-center">
+                <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
+                    <i class="fas fa-search"></i>
+                    <span>Pesquisar cards…</span>
+                    <kbd>Ctrl K</kbd>
+                </button>
+            </div>
+
+            <!-- DIREITA: controles -->
+            <div class="nav-right">
+                <input type="date" id="filtro-data-input" title="Filtrar por data" class="nav-date-input">
+                <span id="nit-operador-badge" class="nav-operador-badge"></span>
                 <span id="nit-firebase-status" class="nit-status-indicator" title="Status Firebase">
                     <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
                     <span style="color:var(--color-info);">Conectando…</span>
                 </span>
                 <button id="btn-ver-historico" class="btn-icon" aria-label="Ver histórico de ações" title="Ver Histórico de Ações"><i class="fas fa-history" aria-hidden="true"></i></button>
-                <!-- Logout -->
                 <button id="btn-logout" title="Sair / Trocar operador" aria-label="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
