@@ -1523,36 +1523,38 @@
         },
 
         extrairDadosDaLinha(linha) {
-            // Primeiro, extrai o tipo por palavra-chave
-            const tipos = ['ENEL', 'FURTO', 'ROMPIMENTO', 'FALHA DE EQUIPAMENTO', 'INVESTIGANDO', 'ACIDENTE', 'IMPROCEDENTE'];
-            let tipo = 'N/I';
-            for (const t of tipos) {
-                if (linha.toUpperCase().includes(t)) {
-                    tipo = t;
-                    break;
-                }
-            }
-            
-            // Extrai código, endereço e problema usando regex
-            const re = /🚦\s*([A-Z0-9]{2,8})\s*🚦\s*(.*?)\s*●\s*([A-ZÀ-Ú\s/]+?)\s*●(.*)/i;
-            const m = linha.match(re);
-            if (!m) return null;
-            
-            const resto = m[4] || '';
-            const inicioM = resto.match(/Início:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
-            const fimM = resto.match(/Fim:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
-            
-            return {
-                tipo:      tipo,
-                codigo:    m[1].trim(),
-                endereco:  m[2].trim().replace(/\s+/g, ' '),
-                problema:  m[3].trim().toUpperCase(),
-                inicio:    inicioM ? inicioM[1] : '',
-                fim:       fimM    ? fimM[1]    : '',
-                observacoes: '',
-                equipe: '', viatura: '', pl: '', sub: '',
-            };
-        },
+    // Tipo extraído do prefixo ANTES do primeiro 🚦
+    const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
+    const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
+    const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL'];
+    const tipo = TIPOS.find(t => prefixo.includes(t)) || 'N/I';
+
+    // Regex principal tolerante a tabs (\t) e asteriscos de negrito do WhatsApp
+    const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/iu;
+    const m = linha.match(re);
+    if (!m) return null;
+
+    const resto = m[4] || '';
+    const inicioM = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
+    const fimM    = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
+
+    // Obs inline: tudo após o 2º ● exceto datas de início/fim
+    const obsInline = linha.match(/●[^●]*●(.*)$/s)?.[1]
+        ?.replace(/In[ií]cio:.*?(?=Fim:|$)/is, '')
+        .replace(/Fim:.*$/is, '')
+        .replace(/["*]/g, '').trim() || '';
+
+    return {
+        tipo,
+        codigo:      m[1].trim(),
+        endereco:    m[2].trim().replace(/\s+/g, ' '),
+        problema:    m[3].trim().toUpperCase(),
+        inicio:      inicioM?.[1] ?? '',
+        fim:         fimM?.[1]    ?? '',
+        observacoes: obsInline,
+        equipe: '', viatura: '', pl: '', sub: '',
+    };
+},
 
         // ── Firebase listener ─────────────────────────────────────────────
         inicializarListenerFirebase() {
@@ -1683,37 +1685,32 @@
         },
 
         _parsearRelatorio(texto) {
-            const linhas   = texto.split('\n');
-            const dataRef  = this.extrairDataReferencia(linhas);
-            const eventos  = [];
-            let atual      = null;
-            let secao      = 'PENDENTE';
+    const linhas  = texto.split('\n');
+    const dataRef = this.extrairDataReferencia(linhas);
+    const eventos = [];
+    let atual     = null;
+    let secao     = 'PENDENTE';
 
-            for (const linha of linhas) {
-                // CORREÇÃO: detecta seção com asteriscos
-                if (/NORMALIZADOS[\s*]*✅/.test(linha)) {
-                    secao = 'NORMALIZADO';
-                    continue;
-                }
-                if (/PENDENTES[\s*]*❌/.test(linha)) {
-                    secao = 'PENDENTE';
-                    continue;
-                }
-                const dados = this.extrairDadosDaLinha(linha);
-                if (dados) {
-                    if (atual) eventos.push(atual);
-                    atual = { ...dados, secao, dataReferencia: dataRef };
-                } else if (atual && linha.trim()) {
-                    atual.observacoes += (atual.observacoes ? ' ' : '') + linha.trim().replace(/"/g, '');
-                }
-            }
+    for (const linha of linhas) {
+        // Detecta seção — tolera asteriscos de negrito do WhatsApp
+        if (/\*?NORMALIZADOS\*?\s*✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
+        if (/\*?PENDENTES\*?\s*❌/.test(linha))    { secao = 'PENDENTE';    continue; }
+
+        const dados = this.extrairDadosDaLinha(linha);
+        if (dados) {
             if (atual) eventos.push(atual);
+            atual = { ...dados, secao, dataReferencia: dataRef };
+        } else if (atual && linha.trim()) {
+            const limpa = linha.trim().replace(/["*]/g, '').replace(/\*?Obs:\*?/gi, '').trim();
+            if (limpa) atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
+        }
+    }
+    if (atual) eventos.push(atual);
 
-            return eventos
-                .filter(ev => ev.codigo)
-                .map(ev => ({ ...ev, eventoId: this.gerarEventoId(ev.codigo, ev.inicio) }));
-        },
-
+    return eventos
+        .filter(ev => ev.codigo)
+        .map(ev => ({ ...ev, eventoId: this.gerarEventoId(ev.codigo, ev.inicio) }));
+},
         _cargaInicial(eventos) {
             const vistos = new Set();
             const batch  = {};
