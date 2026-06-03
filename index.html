@@ -1084,6 +1084,14 @@
                         <span class="detalhe-valor" id="det-inicio">—</span>
                     </div>
                     <div class="detalhe-item">
+                        <span class="detalhe-label">Fim</span>
+                        <span class="detalhe-valor" id="det-fim">—</span>
+                    </div>
+                    <div class="detalhe-item">
+                    <span class="detalhe-label">Reincidente</span>
+    <span class="detalhe-valor" id="det-reincidente">—</span>
+</div>
+                    <div class="detalhe-item">
                         <span class="detalhe-label">Tipo</span>
                         <span class="detalhe-valor" id="det-tipo">—</span>
                     </div>
@@ -2418,41 +2426,49 @@
             'coluna-vl':              { label: 'Via Livre',       cor: '#f0883e' },
             'coluna-amc':             { label: 'AMC',             cor: '#58a6ff' },
             'coluna-normalizados':    { label: 'Normalizado',     cor: '#3fb950' },
+            
         },
 
         abrir(card) {
-            const ds = card.dataset;
-            const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
-            const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
+    const ds = card.dataset;
+    const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
+    const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
 
-            const set = (id, val) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (val && val.trim()) { el.textContent = val; el.classList.remove('vazio'); }
-                else { el.textContent = '—'; el.classList.add('vazio'); }
-            };
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (val && val.trim()) {
+            el.textContent = val;
+            el.classList.remove('vazio');
+        } else {
+            el.textContent = '—';
+            el.classList.add('vazio');
+        }
+    };
 
-            set('det-codigo',   ds.codigo);
-            set('det-problema', ds.problema);
-            set('det-endereco', ds.endereco);
-            set('det-inicio',   ds.inicio);
-            set('det-tipo',     ds.tipo);
-            set('det-equipe',   ds.equipe);
-            set('det-viatura',  ds.viatura);
-            set('det-obs',      ds.observacoes);
-            set('det-data',     ds.datareferencia);
-            set('det-operador', ds.operador);
+    set('det-codigo',      ds.codigo);
+    set('det-problema',    ds.problema);
+    set('det-endereco',    ds.endereco);
+    set('det-inicio',      ds.inicio);
+    set('det-fim',         ds.fim);
+    set('det-tipo',        ds.tipo);
+    set('det-equipe',      ds.equipe);
+    set('det-viatura',     ds.viatura);
+    set('det-obs',         ds.observacoes);
+    set('det-data',        ds.datareferencia);
+    set('det-operador',    ds.operador);
+    set('det-reincidente', ds.reincidente === 'true' ? '✅ Sim' : '❌ Não');
 
-            const badge = document.getElementById('detalhe-coluna-badge');
-            if (badge) {
-                badge.textContent = colInfo.label;
-                badge.style.background = colInfo.cor + '22';
-                badge.style.color      = colInfo.cor;
-                badge.style.border     = `1px solid ${colInfo.cor}44`;
-            }
+    const badge = document.getElementById('detalhe-coluna-badge');
+    if (badge) {
+        badge.textContent = colInfo.label;
+        badge.style.background = colInfo.cor + '22';
+        badge.style.color      = colInfo.cor;
+        badge.style.border     = `1px solid ${colInfo.cor}44`;
+    }
 
-            abrirModal(document.getElementById('modal-detalhes'));
-        },
+    abrirModal(document.getElementById('modal-detalhes'));
+},
 
         inicializar() {
             const modal = document.getElementById('modal-detalhes');
