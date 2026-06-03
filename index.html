@@ -18,9 +18,21 @@
             window.NIT_API_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
                 ? 'http://127.0.0.1:8000'
                 : 'https://nit-backend-production.up.railway.app';
+        window._NIT_KEY_CACHE = null;
 
-            const NIT_SECRET_KEY = 'NIT_INTEGRADO_20052026_da822f90-45aa-42ca-ba07-3443d0ffd730';
-            window.NIT_SECRET_KEY = NIT_SECRET_KEY;
+window.getNITKey = async function() {
+    if (window._NIT_KEY_CACHE) return window._NIT_KEY_CACHE;
+    try {
+        const response = await fetch(`${window.NIT_API_URL}/api/v1/config`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        window._NIT_KEY_CACHE = data.key;
+        return data.key;
+    } catch (error) {
+        console.warn('[NIT] Erro ao buscar chave:', error);
+        return null;
+    }
+};    
 
             const firebaseConfig = {
                 apiKey:        "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0",
@@ -1448,17 +1460,24 @@
 
     // ── API ───────────────────────────────────────────────────────────────────
     async function nitAPIFetch(endpoint, options = {}) {
-        const url = `${window.NIT_API_URL}${endpoint}`;
-        const res = await fetch(url, {
-            ...options,
-            headers: { 'Content-Type': 'application/json', 'X-NIT-Key': NIT_SECRET_KEY, ...(options.headers || {}) },
-        });
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.detail || data.error || `HTTP ${res.status}`);
-        }
-        return res.json().catch(() => ({}));
+    const key = await window.getNITKey();
+    if (!key) throw new Error('Chave de API não disponível');
+    
+    const url = `${window.NIT_API_URL}${endpoint}`;
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-NIT-Key': key,
+            ...(options.headers || {})
+        },
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail || data.error || `HTTP ${response.status}`);
     }
+    return response.json().catch(() => ({}));
+}
 
     // ── CONFIRM MODAL ─────────────────────────────────────────────────────────
     let _confirmCb = null;
