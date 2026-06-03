@@ -1714,7 +1714,7 @@
         if (dados) {
             if (atual) eventos.push(atual);
             atual = { ...dados, secao, dataReferencia: dataRef };
-        } else if (atual && linha.trim() && !_ehCabecalho(linha)) {
+        } else if (atual && linha.trim() && !this._ehCabecalho(linha)) {
             const limpa = linha.trim().replace(/["*]/g, '').replace(/\*?Obs:\*?/gi, '').trim();
             if (limpa) atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
         }
