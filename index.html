@@ -157,7 +157,7 @@
         .nav-center { display: flex; justify-content: center; align-items: center; }
         .nav-right  { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-right: 4px; }
 
-        .tab-button { padding: 10px 20px; cursor: pointer; background: none; border: none; color: var(--color-text-tertiary); font-weight: var(--font-weight-semibold); font-size: var(--font-size-base); border-bottom: 2px solid transparent; white-space: nowrap; }
+        .tab-button { padding: 10px 20px; cursor: pointer; background: none; border: none; color: #8b949e; font-weight: var(--font-weight-bold); font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid transparent; white-space: nowrap; text-transform: uppercase; }
         .tab-button:hover { color: var(--color-text-primary); background-color: var(--color-border); }
         .tab-button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
         .tab-button i { margin-right: var(--space-1); }
@@ -205,7 +205,9 @@
             padding: 3px 7px;
             cursor: pointer;
             height: 28px;
+            color-scheme: dark;
         }
+        .nav-date-input:focus { outline: none; border-color: var(--color-primary); }
         .nav-operador-badge {
             font-size: 11px;
             color: var(--color-text-tertiary);
@@ -268,15 +270,14 @@
         #kanban-wrapper { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
         .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); flex: 1; min-height: 0; }
         .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-        .kanban-column-header { padding: 10px 12px; font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); color: var(--color-text-secondary); }
-        .kanban-column-header .header-text { flex-grow: 1; }
-        .card-count { font-size: var(--font-size-xs); background-color: var(--color-border); color: var(--color-text-secondary); font-weight: var(--font-weight-semibold); padding: 2px var(--space-1); border-radius: 8px; }
+        .kanban-column-header { padding: 10px 12px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); }
+        .card-count { font-size: var(--font-size-xs); background-color: var(--color-border); color: var(--color-text-primary); font-weight: var(--font-weight-bold); padding: 2px var(--space-1); border-radius: 8px; min-width: 20px; text-align: center; }
         .kanban-cards-container { padding: var(--space-1); flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
         .kanban-card { background-color: var(--color-surface); padding: 12px; border-radius: 8px; box-shadow: var(--shadow-sm); cursor: grab; border: 1px solid var(--color-border); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-1); gap: var(--space-1); }
-        .card-header strong { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); }
+        .card-header strong { font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
         .card-status-tag { background-color: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); padding: var(--space-half) var(--space-1); border-radius: 12px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
-        .card-body { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-1); line-height: 1.4; }
+        .card-body { font-size: var(--font-size-sm); color: #b0bec5; margin-bottom: var(--space-1); line-height: 1.5; }
         .card-despacho-info { font-size: var(--font-size-xs); color: var(--color-info); margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px dashed var(--color-border); }
         .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: var(--space-1); border-top: 1px solid var(--color-border); gap: var(--space-half); }
         .btn-card-action { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); font-size: var(--font-size-md); padding: var(--space-half); }
@@ -342,22 +343,30 @@
         .toast.warning { background-color: var(--color-warning); }
         .toast.info    { background-color: var(--color-info);    }
 
-        .kanban-column-header .cor-atendimento    { color: var(--color-danger);      }
-        .kanban-column-header .cor-via-livre       { color: var(--color-vl);           }
-        .kanban-column-header .cor-amc             { color: var(--color-amc);          }
-        .kanban-column-header .cor-sem-necessidade { color: var(--color-text-tertiary);}
-        .kanban-column-header .cor-normalizado     { color: var(--color-normalizado);  }
-        .kanban-column-header .header-text i       { margin-right: var(--space-1); }
+        .kanban-column-header .cor-atendimento    { color: #ff7b72; }
+        .kanban-column-header .cor-via-livre       { color: #ffa657; }
+        .kanban-column-header .cor-amc             { color: #79c0ff; }
+        .kanban-column-header .cor-sem-necessidade { color: #8b949e; }
+        .kanban-column-header .cor-normalizado     { color: #56d364; }
+        .kanban-column-header .header-text {
+            flex-grow: 1;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-size: 11px;
+            font-weight: var(--font-weight-bold);
+        }
+        .kanban-column-header .header-text i { margin-right: 5px; font-size: 10px; }
 
         .reincident-tag { background-color: var(--color-info); color: white; font-size: 9px; font-weight: var(--font-weight-bold); padding: 2px 6px; border-radius: 8px; margin-left: var(--space-1); }
 
         #reboques-disponiveis .reboque-card { background-color: rgba(22, 163, 74, 0.1); border-left: 4px solid var(--color-success); }
         #reboques-atuando     .reboque-card { background-color: rgba(202, 138, 4, 0.1); border-left: 4px solid var(--color-warning); }
 
-        #coluna-espera          .kanban-card { background-color: rgba(220, 38, 38, 0.08); border-left: 4px solid var(--color-danger);  }
-        #coluna-vl              .kanban-card { background-color: rgba(202, 138, 4, 0.1);  border-left: 4px solid var(--color-warning); }
-        #coluna-amc             .kanban-card { background-color: rgba(22, 163, 74, 0.1);  border-left: 4px solid var(--color-success); }
-        #coluna-sem-necessidade .kanban-card { background-color: rgba(100, 116, 139, 0.08); border-left: 4px solid var(--color-text-tertiary); }
+        #coluna-espera          .kanban-card { background-color: rgba(248,113,113,.07); border-left: 4px solid #ff7b72; }
+        #coluna-vl              .kanban-card { background-color: rgba(255,166, 87,.07); border-left: 4px solid #ffa657; }
+        #coluna-amc             .kanban-card { background-color: rgba(121,192,255,.07); border-left: 4px solid #79c0ff; }
+        #coluna-sem-necessidade .kanban-card { background-color: rgba(139,148,158,.06); border-left: 4px solid #8b949e; }
+        #coluna-normalizados    .kanban-card { background-color: rgba( 86,211,100,.07); border-left: 4px solid #56d364; }
 
         .kanban-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--color-primary); }
         .card-foi-normalizado { animation: pulso-verde 2s ease-in-out 2; border-color: var(--color-success) !important; }
@@ -609,18 +618,23 @@
             border-bottom: 1px solid var(--color-border);
             gap: 10px;
         }
-        #busca-global-input-wrap i { color: var(--color-text-tertiary); font-size: 15px; flex-shrink: 0; }
+        #busca-global-input-wrap:focus-within { border-bottom-color: var(--color-border); }
+        #busca-global-input:focus { outline: none !important; box-shadow: none !important; }
+        #busca-global-input-wrap i,
+        #busca-global-input-wrap svg { color: var(--color-text-secondary); font-size: 14px; flex-shrink: 0; }
         #busca-global-input {
             flex: 1;
             background: none;
             border: none;
-            outline: none;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none;
             font-family: var(--font-family-sans);
-            font-size: 16px;
+            font-size: 15px;
             color: var(--color-text-primary);
             padding: 18px 0;
         }
-        #busca-global-input::placeholder { color: var(--color-text-tertiary); }
+        #busca-global-input::placeholder { color: #64748b; }
         #busca-global-esc {
             background: none;
             border: 1px solid var(--color-border);
@@ -769,7 +783,7 @@
         <div class="tab-navigation">
             <!-- ESQUERDA: abas -->
             <div class="nav-left">
-                <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semafórico</button>
+                <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> SEMÁFORO</button>
             </div>
 
             <!-- CENTRO: busca global centralizada -->
@@ -830,7 +844,7 @@
                             <div class="kanban-board">
                                 <div class="kanban-column" id="coluna-sem-necessidade" role="region" aria-label="Sem Necessidade">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle" aria-hidden="true"></i> Sem Necessidade</span>
+                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle" aria-hidden="true"></i> SEM NECESSIDADE</span>
                                         <span class="card-count" id="count-sem-necessidade">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -840,7 +854,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-espera" role="region" aria-label="Aguardando atendimento">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-atendimento"><i class="fas fa-clock" aria-hidden="true"></i> Aguardando Atendimento</span>
+                                        <span class="header-text cor-atendimento"><i class="fas fa-clock" aria-hidden="true"></i> AGUARDANDO</span>
                                         <span class="card-count" id="count-espera">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -850,7 +864,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-vl" role="region" aria-label="Via Livre">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-via-livre"><i class="fas fa-check-circle" aria-hidden="true"></i> Via Livre</span>
+                                        <span class="header-text cor-via-livre"><i class="fas fa-check-circle" aria-hidden="true"></i> VIA LIVRE</span>
                                         <span class="card-count" id="count-vl">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -870,7 +884,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-normalizados" role="region" aria-label="Normalizados">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> Normalizados</span>
+                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> NORMALIZADOS</span>
                                         <span class="card-count" id="count-normalizados">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -903,7 +917,7 @@
         <div class="modal-container">
             <div class="modal-header">Relatório Semafórico</div>
             <div class="modal-body">
-                <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15" style="width: 100%; border: none; resize: none; background: var(--color-bg);"></textarea>
+                <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15" style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
             </div>
             <div class="modal-footer">
                 <button id="btn-modal-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
@@ -1099,7 +1113,7 @@
     <div id="busca-global-overlay" role="dialog" aria-modal="true" aria-label="Busca global">
         <div id="busca-global-panel">
             <div id="busca-global-input-wrap">
-                <i class="fas fa-search" aria-hidden="true"></i>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;color:var(--color-text-secondary)" aria-hidden="true"><path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-.618 3.09a4.5 4.5 0 1 1 .707-.707l2.914 2.913a.5.5 0 0 1-.707.708L9.382 9.59Z" fill="currentColor"/></svg>
                 <input type="search" id="busca-global-input" placeholder="Buscar por código, endereço ou problema…" autocomplete="off" spellcheck="false">
                 <button id="busca-global-esc" title="Fechar (Esc)">ESC</button>
             </div>
