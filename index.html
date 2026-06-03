@@ -18,21 +18,21 @@
             window.NIT_API_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
                 ? 'http://127.0.0.1:8000'
                 : 'https://nit-backend-production.up.railway.app';
-        window._NIT_KEY_CACHE = null;
+            window._NIT_KEY_CACHE = null;
 
-window.getNITKey = async function() {
-    if (window._NIT_KEY_CACHE) return window._NIT_KEY_CACHE;
-    try {
-        const response = await fetch(`${window.NIT_API_URL}/api/v1/config`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        window._NIT_KEY_CACHE = data.key;
-        return data.key;
-    } catch (error) {
-        console.warn('[NIT] Erro ao buscar chave:', error);
-        return null;
-    }
-};    
+            window.getNITKey = async function() {
+                if (window._NIT_KEY_CACHE) return window._NIT_KEY_CACHE;
+                try {
+                    const response = await fetch(`${window.NIT_API_URL}/api/v1/config`);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    window._NIT_KEY_CACHE = data.key;
+                    return data.key;
+                } catch (error) {
+                    console.warn('[NIT] Erro ao buscar chave:', error);
+                    return null;
+                }
+            };
 
             const firebaseConfig = {
                 apiKey:        "AIzaSyCWAGfmCr-pHr0asIk_Sfz1WbajIEhiZn0",
@@ -1523,17 +1523,30 @@ window.getNITKey = async function() {
         },
 
         extrairDadosDaLinha(linha) {
-            const re = /(?:([A-ZÀ-Ú\s/]+?)\s*)?🚦\s*([A-Z0-9]{2,8})\s*🚦\s*(.*?)\s*●\s*([A-ZÀ-Ú\s/]+?)\s*●(.*)/i;
-            const m  = linha.match(re);
+            // Primeiro, extrai o tipo por palavra-chave
+            const tipos = ['ENEL', 'FURTO', 'ROMPIMENTO', 'FALHA DE EQUIPAMENTO', 'INVESTIGANDO', 'ACIDENTE', 'IMPROCEDENTE'];
+            let tipo = 'N/I';
+            for (const t of tipos) {
+                if (linha.toUpperCase().includes(t)) {
+                    tipo = t;
+                    break;
+                }
+            }
+            
+            // Extrai código, endereço e problema usando regex
+            const re = /🚦\s*([A-Z0-9]{2,8})\s*🚦\s*(.*?)\s*●\s*([A-ZÀ-Ú\s/]+?)\s*●(.*)/i;
+            const m = linha.match(re);
             if (!m) return null;
-            const resto    = m[5] || '';
-            const inicioM  = resto.match(/Início:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
-            const fimM     = resto.match(/Fim:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
+            
+            const resto = m[4] || '';
+            const inicioM = resto.match(/Início:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
+            const fimM = resto.match(/Fim:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2})/i);
+            
             return {
-                tipo:      (m[1] || '').trim(),
-                codigo:    m[2].trim(),
-                endereco:  m[3].trim(),
-                problema:  m[4].trim().toUpperCase(),
+                tipo:      tipo,
+                codigo:    m[1].trim(),
+                endereco:  m[2].trim().replace(/\s+/g, ' '),
+                problema:  m[3].trim().toUpperCase(),
                 inicio:    inicioM ? inicioM[1] : '',
                 fim:       fimM    ? fimM[1]    : '',
                 observacoes: '',
@@ -1677,8 +1690,15 @@ window.getNITKey = async function() {
             let secao      = 'PENDENTE';
 
             for (const linha of linhas) {
-                if (/NORMALIZADOS✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
-                if (/PENDENTES❌/.test(linha))   { secao = 'PENDENTE';    continue; }
+                // CORREÇÃO: detecta seção com asteriscos
+                if (/NORMALIZADOS[\s*]*✅/.test(linha)) {
+                    secao = 'NORMALIZADO';
+                    continue;
+                }
+                if (/PENDENTES[\s*]*❌/.test(linha)) {
+                    secao = 'PENDENTE';
+                    continue;
+                }
                 const dados = this.extrairDadosDaLinha(linha);
                 if (dados) {
                     if (atual) eventos.push(atual);
@@ -2635,7 +2655,7 @@ window.getNITKey = async function() {
     });
 
 
-</script>
+    </script>
 
 </body>
 </html>
