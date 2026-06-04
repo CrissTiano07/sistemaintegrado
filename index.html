@@ -23,13 +23,13 @@
             window.getNITKey = async function() {
                 if (window._NIT_KEY_CACHE) return window._NIT_KEY_CACHE;
                 try {
-                    const response = await fetch(`${window.NIT_API_URL}/api/v1/config`);
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    const data = await response.json();
-                    window._NIT_KEY_CACHE = data.key;
-                    return data.key;
-                } catch (error) {
-                    console.warn('[NIT] Erro ao buscar chave:', error);
+                    const r = await fetch(`${window.NIT_API_URL}/api/v1/config`);
+                    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                    const d = await r.json();
+                    window._NIT_KEY_CACHE = d.key;
+                    return d.key;
+                } catch (e) {
+                    console.warn('[NIT] Erro ao buscar chave:', e.message);
                     return null;
                 }
             };
@@ -136,6 +136,8 @@
         *::-webkit-scrollbar-thumb { background-color: var(--color-border); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
         *::-webkit-scrollbar-thumb:hover { background-color: var(--color-text-tertiary); }
 
+
+
         :focus-visible { outline: none; }
         button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
             outline: none;
@@ -229,15 +231,40 @@
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; flex: 1; min-height: 0; overflow: hidden; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); flex: 1; min-height: 0; overflow: hidden; }
-        .grid-column { display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; overflow: hidden; flex: 1; }
+        /* ── APP LAYOUT ─────────────────────────────────────────────── */
+        .app-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
-        .painel { display: flex; flex-direction: column; background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); min-height: 0; }
-        .painel.flex-grow { flex-grow: 1; }
-        .painel-header { padding: 12px var(--space-2); border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
-        .painel-header h3 { margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); display: flex; align-items: center; gap: 10px; }
-        .painel-body { padding: var(--space-2); flex-grow: 1; display: flex; flex-direction: column; gap: var(--space-2); min-height: 0; overflow-y: auto; }
-        .painel-footer { padding: var(--space-2); border-top: 1px solid var(--color-border); flex-shrink: 0; }
+        /* ── SIDEBAR ─────────────────────────────────────────────────── */
+        .sidebar { width: 260px; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; flex-shrink: 0; transition: width .22s cubic-bezier(.4,0,.2,1); overflow: hidden; }
+        .sidebar.collapsed { width: 48px; }
+        .sb-toggle { width: 48px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-bottom: 1px solid var(--color-border); cursor: pointer; color: var(--color-text-tertiary); flex-shrink: 0; transition: color .15s; }
+        .sb-toggle:hover { color: var(--color-text-primary); }
+        .sb-toggle i { transition: transform .22s; font-size: 13px; }
+        .sidebar.collapsed .sb-toggle i { transform: rotate(180deg); }
+        .sb-section { border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
+        .sb-section-header { display: flex; align-items: center; height: 42px; cursor: pointer; user-select: none; white-space: nowrap; }
+        .sb-section-header:hover .sb-label { color: var(--color-text-primary); }
+        .sb-icon { width: 48px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); flex-shrink: 0; font-size: 14px; }
+        .sb-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--color-text-secondary); flex: 1; overflow: hidden; opacity: 1; transition: opacity .12s; white-space: nowrap; }
+        .sidebar.collapsed .sb-label { opacity: 0; pointer-events: none; }
+        .sb-chevron { font-size: 11px; color: var(--color-text-tertiary); padding-right: 12px; flex-shrink: 0; transition: transform .2s, opacity .12s; }
+        .sidebar.collapsed .sb-chevron { opacity: 0; }
+        .sb-section.sec-collapsed .sb-chevron { transform: rotate(-90deg); }
+        .sb-body { max-height: 600px; overflow: hidden; transition: max-height .22s ease; }
+        .sb-section.sec-collapsed .sb-body { max-height: 0; }
+        .sidebar.collapsed .sb-body { max-height: 0; }
+        .sb-inner { padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+        .sb-textarea { width: 100%; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text-primary); font-size: 11px; padding: 7px 8px; resize: none; height: 100px; box-sizing: border-box; font-family: var(--font-family-mono); }
+        .sb-textarea[readonly] { height: 54px; color: var(--color-text-secondary); }
+        .sb-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .sb-btn-label { font-size: 12px; }
+        .sb-collapsed-icons { display: none; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+        .sidebar.collapsed .sb-collapsed-icons { display: flex; }
+        .sb-collapsed-icons > div { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; transition: background .15s, color .15s; }
+        .sb-collapsed-icons > div:hover { background: var(--color-border); color: var(--color-text-primary); }
+
+        /* ── KANBAN AREA ─────────────────────────────────────────────── */
+        .kanban-area { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
         .form-group { margin-bottom: var(--space-2); }
         .form-group label { display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--space-1); font-size: var(--font-size-base); color: var(--color-text-secondary); }
@@ -275,7 +302,6 @@
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); font-size: var(--font-size-md); padding: var(--space-half); border-radius: 50%; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; }
         .btn-icon:hover { color: var(--color-text-primary); background-color: var(--color-border); }
 
-        #tab-semaforo .grid-container { grid-template-columns: 360px 1fr; }
         .painel-operacional-wrapper { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
         #kanban-wrapper { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
         .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); flex: 1; min-height: 0; }
@@ -290,6 +316,8 @@
         .card-body { font-size: var(--font-size-sm); color: #b0bec5; margin-bottom: var(--space-1); line-height: 1.5; }
         .card-despacho-info { font-size: var(--font-size-xs); color: var(--color-info); margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px dashed var(--color-border); }
         .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: var(--space-1); border-top: 1px solid var(--color-border); gap: var(--space-half); }
+        .card-body-lazy { min-height: 28px; }
+        .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }
         .btn-card-action { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); font-size: var(--font-size-md); padding: var(--space-half); }
         .btn-card-action.copy-location:hover { color: var(--color-warning); }
         .btn-card-action.dispatch:hover { color: var(--color-primary); }
@@ -386,6 +414,8 @@
             100% { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 0%, transparent); }
         }
 
+        
+
         .kanban-card .card-footer .btn-card-action.complete {
             color: var(--color-success);
             background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
@@ -401,6 +431,8 @@
         }
         .kanban-card .card-footer .btn-card-action:not(.complete)       { opacity: 0.65; transition: opacity 0.2s ease; }
         .kanban-card .card-footer:hover .btn-card-action:not(.complete) { opacity: 1; }
+
+        
 
         .kanban-column-filter { padding: 6px 8px; background: transparent; }
         .kanban-column-filter .kanban-search {
@@ -739,20 +771,15 @@
         }
         @media (max-width: 1024px) {
             body { padding: 10px; }
-            #tab-semaforo .grid-container {
-                grid-template-columns: 300px 1fr !important;
-            }
+            .sidebar { width: 48px !important; }
             .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 768px) {
             body { padding: 6px; }
-            #tab-semaforo .grid-container {
-                grid-template-columns: 1fr !important;
-                grid-template-rows: auto 1fr;
-            }
+            .sidebar { width: 48px !important; }
             .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
             .tab-navigation { flex-wrap: wrap; gap: 4px; }
-            .tab-controls { width: 100%; justify-content: flex-end; padding-right: 0; }
+            .nav-right { padding-right: 0; }
             #btn-busca-global kbd { display: none; }
         }
         @media (max-width: 480px) {
@@ -819,32 +846,62 @@
 
         <!-- TAB SEMÁFORO ──────────────────────────────────────────────── -->
         <div id="tab-semaforo" class="tab-content active">
-            <div class="grid-container" style="grid-template-columns: 360px 1fr;">
-                <div class="grid-column">
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-paste"></i> 1. Entrada de Dados</h3></div>
-                        <div class="painel-body">
-                            <textarea id="relatorio-bruto-input" class="mono-font" placeholder="Cole aqui o relatório bruto..." rows="10"></textarea>
-                            <button id="btn-processar" class="btn btn-primario" style="width:100%; margin-top:10px;"><i class="fas fa-cogs"></i> Processar</button>
+            <div class="app-layout">
+
+                <!-- ── SIDEBAR ───────────────────────────────────────────── -->
+                <aside class="sidebar" id="sidebar" aria-label="Painel lateral">
+                    <button class="sb-toggle" id="btn-sb-toggle" title="Recolher / Expandir painel" aria-expanded="true">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </button>
+
+                    <!-- Seção 1: Entrada de Dados -->
+                    <div class="sb-section" id="sb-sec-entrada">
+                        <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-entrada')" role="button" tabindex="0">
+                            <div class="sb-icon"><i class="fas fa-paste" aria-hidden="true"></i></div>
+                            <span class="sb-label">Entrada de Dados</span>
+                            <i class="fas fa-chevron-down sb-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="sb-body">
+                            <div class="sb-inner">
+                                <textarea id="relatorio-bruto-input" class="mono-font sb-textarea" placeholder="Cole aqui o relatório bruto..."></textarea>
+                                <button id="btn-processar" class="btn btn-primario sb-btn"><i class="fas fa-cogs"></i> <span class="sb-btn-label">Processar</span></button>
+                            </div>
                         </div>
                     </div>
-                    <div class="painel">
-                        <div class="painel-header"><h3><i class="fas fa-clipboard-check"></i> 2. Saída</h3></div>
-                        <div class="painel-body">
-                            <div class="balanco-compacto">
-                                <div class="balanco-item"><span>Ocorrências</span><strong id="display-total">0</strong></div>
-                                <div class="balanco-item"><span>Normalizados</span><strong id="display-normalizados">0</strong></div>
-                                <div class="balanco-item"><span>Pendentes</span><strong id="display-pendentes">0</strong></div>
+
+                    <!-- Seção 2: Saída -->
+                    <div class="sb-section" id="sb-sec-saida">
+                        <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-saida')" role="button" tabindex="0">
+                            <div class="sb-icon"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                            <span class="sb-label">Saída</span>
+                            <i class="fas fa-chevron-down sb-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="sb-body">
+                            <div class="sb-inner">
+                                <div class="balanco-compacto">
+                                    <div class="balanco-item"><span>Ocorrências</span><strong id="display-total">0</strong></div>
+                                    <div class="balanco-item"><span>Normalizados</span><strong id="display-normalizados">0</strong></div>
+                                    <div class="balanco-item"><span>Pendentes</span><strong id="display-pendentes">0</strong></div>
+                                </div>
+                                <textarea id="relatorio-final-preview" class="mono-font sb-textarea" readonly placeholder="Pré-visualização do relatório..."></textarea>
+                                <div class="form-check">
+                                    <input type="checkbox" id="check-incluir-normalizados">
+                                    <label for="check-incluir-normalizados">Incluir Normalizados</label>
+                                </div>
+                                <button id="btn-visualizar-relatorio" class="btn btn-primario sb-btn"><i class="fas fa-eye"></i> <span class="sb-btn-label">Ver Relatório</span></button>
                             </div>
-                            <textarea id="relatorio-final-preview" class="mono-font" readonly placeholder="A pré-visualização do relatório aparecerá aqui."></textarea>
-                            <div class="form-check">
-                                <input type="checkbox" id="check-incluir-normalizados"><label for="check-incluir-normalizados">Incluir Normalizados</label>
-                            </div>
-                            <button id="btn-visualizar-relatorio" class="btn btn-primario" style="width:100%;"><i class="fas fa-eye"></i> Visualizar Relatório</button>
                         </div>
                     </div>
-                </div>
-                <div class="grid-column">
+
+                    <!-- Ícones colapsados (visíveis só quando sidebar fechada) -->
+                    <div class="sb-collapsed-icons">
+                        <div title="Entrada de Dados" onclick="NitSidebar.expandir()"><i class="fas fa-paste" aria-hidden="true"></i></div>
+                        <div title="Saída" onclick="NitSidebar.expandir()"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                    </div>
+                </aside>
+
+                <!-- ── KANBAN AREA ─────────────────────────────────────── -->
+                <div class="kanban-area">
                     <div class="painel-operacional-wrapper">
                         <div id="kanban-wrapper">
                             <div class="kanban-board">
@@ -858,13 +915,13 @@
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-espera" role="region" aria-label="Aguardando atendimento">
+                                <div class="kanban-column" id="coluna-espera" role="region" aria-label="Aguardando">
                                     <div class="kanban-column-header">
                                         <span class="header-text cor-atendimento"><i class="fas fa-clock" aria-hidden="true"></i> AGUARDANDO</span>
                                         <span class="card-count" id="count-espera">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-espera" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Aguardando Atendimento">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-espera" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Aguardando">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
@@ -902,6 +959,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -1088,9 +1146,9 @@
                         <span class="detalhe-valor" id="det-fim">—</span>
                     </div>
                     <div class="detalhe-item">
-                    <span class="detalhe-label">Reincidente</span>
-    <span class="detalhe-valor" id="det-reincidente">—</span>
-</div>
+                        <span class="detalhe-label">Reincidente</span>
+                        <span class="detalhe-valor" id="det-reincidente">—</span>
+                    </div>
                     <div class="detalhe-item">
                         <span class="detalhe-label">Tipo</span>
                         <span class="detalhe-valor" id="det-tipo">—</span>
@@ -1355,7 +1413,7 @@
             displayTotal:             document.getElementById('display-total'),
             displayPendentes:         document.getElementById('display-pendentes'),
             displayNormalizados:      document.getElementById('display-normalizados'),
-            colunaNormalizados:       document.getElementById('coluna-normalizados'),
+            colunaNormalizados:       document.querySelector('#coluna-normalizados .kanban-cards-container'),
             countNormalizados:  document.getElementById('count-normalizados'),
             modalRelatorio:           document.getElementById('modal-relatorio'),
             modalRelatorioTexto:      document.getElementById('modal-relatorio-texto'),
@@ -1462,24 +1520,17 @@
 
     // ── API ───────────────────────────────────────────────────────────────────
     async function nitAPIFetch(endpoint, options = {}) {
-    const key = await window.getNITKey();
-    if (!key) throw new Error('Chave de API não disponível');
-    
-    const url = `${window.NIT_API_URL}${endpoint}`;
-    const response = await fetch(url, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            'X-NIT-Key': key,
-            ...(options.headers || {})
-        },
-    });
-    if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.detail || data.error || `HTTP ${response.status}`);
+        const url = `${window.NIT_API_URL}${endpoint}`;
+        const res = await fetch(url, {
+            ...options,
+            headers: { 'Content-Type': 'application/json', 'X-NIT-Key': NIT_SECRET_KEY, ...(options.headers || {}) },
+        });
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+        }
+        return res.json().catch(() => ({}));
     }
-    return response.json().catch(() => ({}));
-}
 
     // ── CONFIRM MODAL ─────────────────────────────────────────────────────────
     let _confirmCb = null;
@@ -1540,11 +1591,15 @@
             const inicioM = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
             const fimM    = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
 
-            // Obs inline: tudo após o 2º ● exceto datas de início/fim
-            const obsInline = linha.match(/●[^●]*●(.*)$/s)?.[1]
-                ?.replace(/In[ií]cio:.*?(?=Fim:|$)/is, '')
-                .replace(/Fim:.*$/is, '')
-                .replace(/["*]/g, '').trim() || '';
+            // Obs inline: extrai "Obs: ..." após Inicio/Fim, ou texto residual após 2º ●
+            const _restoObs = (linha.match(/●[^●]*●(.*)$/s)?.[1] || '');
+            const _obsMatch = _restoObs.match(/Obs:(.+?)(?:\s*\/log.*)?$/is);
+            const obsInline = _obsMatch
+                ? _obsMatch[1].replace(/["*]/g, '').trim()
+                : _restoObs
+                    .replace(/In[ií]cio:.*?(?=Fim:|Obs:|$)/is, '')
+                    .replace(/Fim:.*?(?=Obs:|$)/is, '')
+                    .replace(/["*]/g, '').trim();
 
             return {
                 tipo,
@@ -1558,21 +1613,11 @@
             };
         },
 
-        _ehCabecalho(linha) {
-            const l = linha.trim();
-            if (!l) return false;
-            return /^[-=*#]{3,}/.test(l)
-                || /^\*?NORMALIZADOS\*?/i.test(l)
-                || /^\*?PENDENTES\*?/i.test(l)
-                || /^\*?STATUS\s+SEMAF/i.test(l)
-                || /^\d{2}\/\d{2}\/\d{4}/.test(l)
-                || /^ocorr[êe]ncias?:/i.test(l)
-                || /^(total|pend[eê]|norm)/i.test(l)
-                || /^[\u2600-\u27BF]{1,3}\s*\*/u.test(l);
-        },
-
         // ── Firebase listener ─────────────────────────────────────────────
+        _kanbanListenerAtivo: false,
         inicializarListenerFirebase() {
+            if (this._kanbanListenerAtivo) return;
+            this._kanbanListenerAtivo = true;
             NitFirebase.exec((db, ref) => {
                 const kanbanRef = ref(db, 'kanban');
 
@@ -1599,7 +1644,6 @@
 
                     NitDateFilter.ajustarAoDados({ [eventoId]: dados });
                     Semaforo.atualizarPainel();
-                    console.log('[NIT] card_added:', eventoId);
                 });
 
                 // child_changed: campo alterado → move coluna se necessário, atualiza dados
@@ -1640,7 +1684,6 @@
                     }
 
                     Semaforo.atualizarPainel();
-                    console.log('[NIT] card_changed:', eventoId, '→', novaColuna);
                 });
 
                 // child_removed: card removido → remove do DOM
@@ -1648,9 +1691,9 @@
                     const eventoId = snap.key;
                     const el = document.querySelector(`[data-eventoid="${eventoId}"]`);
                     if (el) {
+                        NitLazy.liberar(el);
                         el.remove();
                         Semaforo.atualizarPainel();
-                        console.log('[NIT] card_removed:', eventoId);
                     }
                 });
             });
@@ -1679,7 +1722,6 @@
 
             NitDateFilter.ajustarAoDados(dados);
             this.atualizarPainel();
-            console.log('[NIT] Kanban sincronizado via Firebase', Object.keys(dados).length, 'cards');
         },
 
         // ── Processar relatório ───────────────────────────────────────────
@@ -1699,6 +1741,23 @@
             DOM.relatorioBrutoInput.value = '';
         },
 
+        _ehCabecalho(linha) {
+            const l = linha.trim();
+            if (!l) return true;
+            // Linha contém marcador de seção NORMALIZADOS ou PENDENTES (qualquer posição)
+            if (/NORMALIZADOS/i.test(l) && /[✅❌*]/.test(l)) return true;
+            if (/PENDENTES/i.test(l)    && /[✅❌*]/.test(l)) return true;
+            return /^[-=*#_]{3,}/.test(l)
+                || /^\*?STATUS\s+SEMAF/i.test(l)
+                || /^\d{2}\/\d{2}\/\d{4}/.test(l)
+                || /^ocorr[êe]ncias?\s*[:(\d]/i.test(l)
+                || /^\*?pendentes?\s*[:(\d*]/i.test(l)
+                || /^\*?normalizados?\s*[:(\d*]/i.test(l)
+                || /^\*?\d+\s*(ocorr|pend|norm)/i.test(l)
+                || /^[\u2600-\u27BF\uFE00-\uFE0F]{1,4}\s*(\*|\d|$)/u.test(l)
+                || /^[-–—]+\s*\d{2}:\d{2}/.test(l);
+        },
+
         _parsearRelatorio(texto) {
             const linhas  = texto.split('\n');
             const dataRef = this.extrairDataReferencia(linhas);
@@ -1707,7 +1766,6 @@
             let secao     = 'PENDENTE';
 
             for (const linha of linhas) {
-                // Detecta seção — tolera asteriscos de negrito do WhatsApp
                 if (/\*?NORMALIZADOS\*?\s*✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
                 if (/\*?PENDENTES\*?\s*❌/.test(linha))    { secao = 'PENDENTE';    continue; }
 
@@ -1716,8 +1774,15 @@
                     if (atual) eventos.push(atual);
                     atual = { ...dados, secao, dataReferencia: dataRef };
                 } else if (atual && linha.trim() && !this._ehCabecalho(linha)) {
-                    const limpa = linha.trim().replace(/["*]/g, '').replace(/\*?Obs:\*?/gi, '').trim();
-                    if (limpa) atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
+                    let limpa = linha.trim()
+                        .replace(/["*]/g, '')
+                        .replace(/\*?Obs:\*?/gi, '')
+                        .replace(/\/log\b.*/i, '')   // remove sufixo /log HH:MM
+                        .replace(/\s+/g, ' ').trim();
+                    // ignora linhas que são só hora/data isolada
+                    if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
+                        atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
+                    }
                 }
             }
             if (atual) eventos.push(atual);
@@ -1726,6 +1791,7 @@
                 .filter(ev => ev.codigo)
                 .map(ev => ({ ...ev, eventoId: this.gerarEventoId(ev.codigo, ev.inicio) }));
         },
+
         _cargaInicial(eventos) {
             const vistos = new Set();
             const batch  = {};
@@ -1854,21 +1920,17 @@
                 if (v !== undefined) card.dataset[_dsMap[k] || k] = v;
             });
 
-            // 🔥 NOVO: Extrai a observação resumida (até o primeiro ponto final)
-            let resumoObs = '';
-            if (cardData.observacoes && typeof cardData.observacoes === 'string') {
-                const primeiroPonto = cardData.observacoes.indexOf('.');
-                if (primeiroPonto !== -1) {
-                    resumoObs = cardData.observacoes.substring(0, primeiroPonto + 1).trim();
-                } else {
-                    resumoObs = cardData.observacoes.substring(0, 100).trim();
-                    if (resumoObs.length === 100) resumoObs += '…';
-                }
-            }
-
             const frase = this._fraseTecnica(cardData.observacoes, cardData.status, cardData.inicio);
             const reinc = (cardData.reincidente === true || cardData.reincidente === 'true')
                 ? '<span class="reincident-tag" title="Reincidência">↺ REINC</span>' : '';
+
+            const _footer = `<div class="card-footer">
+                    <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
+                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
+                    <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
+                    <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
+                </div>`;
 
             card.innerHTML = `
                 <div class="card-header">
@@ -1876,18 +1938,17 @@
                     <span class="card-status-tag">${cardData.problema}</span>
                     ${reinc}
                 </div>
-                <div class="card-body">
-                    <p class="card-address">${cardData.endereco || ''}</p>
-                    ${frase ? `<p class="card-obs">${frase}</p>` : ''}
-                    ${cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : ''}
-                </div>
-                <div class="card-footer">
-                    <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
-                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
-                    <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
-                    <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
-                </div>`;
+                <div class="card-body card-body-lazy"></div>
+                ${_footer}`;
+
+            card.classList.add('lazy-pending');
+            NitLazy.observar(card, () => {
+                card.classList.remove('lazy-pending');
+                card.querySelector('.card-body').innerHTML =
+                    `<p class="card-address">${cardData.endereco || ''}</p>` +
+                    (frase ? `<p class="card-obs">${frase}</p>` : '') +
+                    (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
+            });
             return card;
         },
 
@@ -1900,11 +1961,11 @@
                 return `Início: ${dia}/${mes} ${hora} — Investigando.`;
             }
             if (!texto) return '';
-            
+
             // Remove asteriscos e espaços extras
             let t = texto.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
-            
-            // 🔥 NOVO: Tenta extrair até o primeiro ponto final
+
+            // Tenta extrair até o primeiro ponto final
             const pontoIndex = t.indexOf('.');
             if (pontoIndex !== -1) {
                 t = t.substring(0, pontoIndex + 1).trim();
@@ -1913,10 +1974,10 @@
                 t = t.slice(0, 100);
                 if (texto.length > 100) t += '…';
             }
-            
-            // Fallback: remove datas longas (caso não seja investigando mas tenha data)
+
+            // Remove datas longas (DD/MM/YYYY HH:MM → DD/MM HH:MM)
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
-            
+
             return t;
         },
 
@@ -2290,7 +2351,7 @@
         // ── Gaveta normalizados ───────────────────────────────────────────
         // ── Limpar painel ─────────────────────────────────────────────────
         limparPainel() {
-            nitConfirm('🗑️ Limpar Painel', '⚠️ Remove <strong>TODOS OS DADOS</strong> para todos os operadores conectados.', () => {
+            nitConfirm('🗑️ Limpar Painel', '⚠️ Remove <strong>TODOS os dados</strong> para todos os operadores conectados.', () => {
                 document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
                 if (DOM.relatorioFinalPreview) DOM.relatorioFinalPreview.value = '';
                 AppState.cardIdCounter = AppState.totalOcorrenciasCriadas = 0;
@@ -2402,6 +2463,8 @@
         NitCardDetails.inicializar();
         NitBuscaGlobal.inicializar();
         NitLogout.inicializar();
+        NitLazy.inicializar();
+        NitSidebar.inicializar();
         inicializarBuscasPorColuna();
     }
 
@@ -2413,8 +2476,89 @@
         document.querySelector(`.tab-button[data-tab="${tabId}"]`)?.classList.add('active');
     }
 
-    window.Semaforo  = Semaforo;
-    window.NitLogin  = NitLogin;
+    // ═══════════════════════════════════════════════════════════════════════
+    // SIDEBAR (colapsar / expandir / acordeão)
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitSidebar = {
+        _KEY: 'nit-sidebar-collapsed',
+
+        inicializar() {
+            const btn = document.getElementById('btn-sb-toggle');
+            if (!btn) return;
+            // Restaurar estado salvo
+            if (localStorage.getItem(this._KEY) === '1') this._setSidebar(true);
+            btn.addEventListener('click', () => this.toggle());
+            // Teclado: [ abre/fecha sidebar
+            document.addEventListener('keydown', e => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.key === '[') this.toggle();
+            });
+        },
+
+        toggle() {
+            const sb = document.getElementById('sidebar');
+            if (!sb) return;
+            this._setSidebar(!sb.classList.contains('collapsed'));
+        },
+
+        expandir() {
+            this._setSidebar(false);
+        },
+
+        _setSidebar(collapsed) {
+            const sb = document.getElementById('sidebar');
+            if (!sb) return;
+            sb.classList.toggle('collapsed', collapsed);
+            localStorage.setItem(this._KEY, collapsed ? '1' : '0');
+            const btn = document.getElementById('btn-sb-toggle');
+            if (btn) btn.setAttribute('aria-expanded', String(!collapsed));
+        },
+
+        toggleSec(id) {
+            const sec = document.getElementById(id);
+            if (sec) sec.classList.toggle('sec-collapsed');
+        },
+    };
+    window.NitSidebar = NitSidebar;
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // LAZY CARD RENDER — IntersectionObserver (performance)
+    // Cards fora do viewport têm o body renderizado como skeleton.
+    // Ao entrar na viewport, o conteúdo real é injetado.
+    // Sem dependência externa. Sem quebra de funcionalidade.
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitLazy = {
+        _io: null,
+        _queue: new Map(), // cardEl → renderFn
+
+        inicializar() {
+            if (!('IntersectionObserver' in window)) return; // fallback: renderiza tudo
+            this._io = new IntersectionObserver(entries => {
+                entries.forEach(e => {
+                    if (!e.isIntersecting) return;
+                    const fn = this._queue.get(e.target);
+                    if (fn) { fn(); this._queue.delete(e.target); this._io.unobserve(e.target); }
+                });
+            }, { rootMargin: '120px 0px', threshold: 0 });
+        },
+
+        // Registra um card para render lazy. renderFn injeta o conteúdo real.
+        observar(cardEl, renderFn) {
+            if (!this._io) { renderFn(); return; } // sem suporte → render imediato
+            this._queue.set(cardEl, renderFn);
+            this._io.observe(cardEl);
+        },
+
+        // Remove da fila (usado quando card é removido do DOM)
+        liberar(cardEl) {
+            if (this._queue.has(cardEl)) {
+                this._queue.delete(cardEl);
+                this._io?.unobserve(cardEl);
+            }
+        },
+    };
+    window.NitLazy = NitLazy;
+
 
     // ═══════════════════════════════════════════════════════════════════════
     // MODAL DETALHES DO CARD (item 6.6)
@@ -2426,49 +2570,43 @@
             'coluna-vl':              { label: 'Via Livre',       cor: '#f0883e' },
             'coluna-amc':             { label: 'AMC',             cor: '#58a6ff' },
             'coluna-normalizados':    { label: 'Normalizado',     cor: '#3fb950' },
-            
         },
 
         abrir(card) {
-    const ds = card.dataset;
-    const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
-    const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
+            const ds = card.dataset;
+            const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
+            const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
 
-    const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (val && val.trim()) {
-            el.textContent = val;
-            el.classList.remove('vazio');
-        } else {
-            el.textContent = '—';
-            el.classList.add('vazio');
-        }
-    };
+            const set = (id, val) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (val && val.trim()) { el.textContent = val; el.classList.remove('vazio'); }
+                else { el.textContent = '—'; el.classList.add('vazio'); }
+            };
 
-    set('det-codigo',      ds.codigo);
-    set('det-problema',    ds.problema);
-    set('det-endereco',    ds.endereco);
-    set('det-inicio',      ds.inicio);
-    set('det-fim',         ds.fim);
-    set('det-tipo',        ds.tipo);
-    set('det-equipe',      ds.equipe);
-    set('det-viatura',     ds.viatura);
-    set('det-obs',         ds.observacoes);
-    set('det-data',        ds.datareferencia);
-    set('det-operador',    ds.operador);
-    set('det-reincidente', ds.reincidente === 'true' ? '✅ Sim' : '❌ Não');
+            set('det-codigo',      ds.codigo);
+            set('det-problema',    ds.problema);
+            set('det-endereco',    ds.endereco);
+            set('det-inicio',      ds.inicio);
+            set('det-fim',         ds.fim);
+            set('det-tipo',        ds.tipo);
+            set('det-equipe',      ds.equipe);
+            set('det-viatura',     ds.viatura);
+            set('det-obs',         ds.observacoes);
+            set('det-data',        ds.datareferencia);
+            set('det-operador',    ds.operador);
+            set('det-reincidente', ds.reincidente === 'true' ? '✅ Sim' : '❌ Não');
 
-    const badge = document.getElementById('detalhe-coluna-badge');
-    if (badge) {
-        badge.textContent = colInfo.label;
-        badge.style.background = colInfo.cor + '22';
-        badge.style.color      = colInfo.cor;
-        badge.style.border     = `1px solid ${colInfo.cor}44`;
-    }
+            const badge = document.getElementById('detalhe-coluna-badge');
+            if (badge) {
+                badge.textContent = colInfo.label;
+                badge.style.background = colInfo.cor + '22';
+                badge.style.color      = colInfo.cor;
+                badge.style.border     = `1px solid ${colInfo.cor}44`;
+            }
 
-    abrirModal(document.getElementById('modal-detalhes'));
-},
+            abrirModal(document.getElementById('modal-detalhes'));
+        },
 
         inicializar() {
             const modal = document.getElementById('modal-detalhes');
@@ -2702,7 +2840,7 @@
     });
 
 
-    </script>
+</script>
 
 </body>
 </html>
