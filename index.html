@@ -1849,8 +1849,19 @@
                     existente.element.classList.add('card-foi-normalizado');
                     setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
                     this.ultimoLoteNormalizado.push(existente.element.id);
+    
+                    // Extrai data e hora do campo fim do relatório (formato "DD/MM/AAAA HH:MM")
+                    const fimPartes = ev.fim ? ev.fim.split(' ') : [];
+                    const dataFim = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
+                    const horaFim = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+    
                     NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${ev.eventoId}`), { coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now() })
+                        update(ref(db, `kanban/${ev.eventoId}`), {
+                            coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now(),
+                            data_fim: dataFim,
+                            hora_fim: horaFim,
+                            ts_norm: Date.now(),
+                        })
                     );
                     atualizados++;
                 }
