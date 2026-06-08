@@ -2241,7 +2241,7 @@
                             hora_fim: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}),
                             ts_norm: Date.now(),
                         })
-                );
+                    );
                     gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
                     registrarAcao(`'${cod}' normalizado.`);
                     showToast(`${cod} normalizado!`, 'success');
