@@ -2237,8 +2237,11 @@
                         update(ref(db, `kanban/${eventoId}`), {
                             coluna: 'coluna-normalizados', status: 'NORMALIZADO',
                             operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
+                            data_fim: new Date().toLocaleDateString('pt-BR'),
+                            hora_fim: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}),
+                            ts_norm: Date.now(),
                         })
-                    );
+                );
                     gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
                     registrarAcao(`'${cod}' normalizado.`);
                     showToast(`${cod} normalizado!`, 'success');
@@ -2248,6 +2251,7 @@
                         update(ref(db, `kanban/${eventoId}`), {
                             coluna: origem, status: card.dataset.status || 'PENDENTE',
                             operador: NitLogin.operador || 'anon', ts: Date.now(),
+                            data_fim: null, hora_fim: null, ts_norm: null,
                         })
                     );
                     showToast(`${cod} restaurado.`, 'info');
