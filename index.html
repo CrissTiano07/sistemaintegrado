@@ -4,20 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Pré-carrega CSS crítico para não bloquear FCP -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://www.gstatic.com">
 
-    <!-- Firebase — defer: não bloqueia renderização -->
     <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
     <script>
-        // Config e init Firebase — executado APÓS os scripts defer acima
         window.addEventListener('DOMContentLoaded', () => {
             window.NIT_API_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
                 ? 'http://127.0.0.1:8000'
-                : 'https://nit-backend-production-f09b.up.railway.app';     
+                : 'https://nit-backend-production-f09b.up.railway.app';
             window._NIT_KEY_CACHE = null;
 
             window.getNITKey = async function() {
@@ -136,8 +133,6 @@
         *::-webkit-scrollbar-thumb { background-color: var(--color-border); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
         *::-webkit-scrollbar-thumb:hover { background-color: var(--color-text-tertiary); }
 
-
-
         :focus-visible { outline: none; }
         button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
             outline: none;
@@ -154,7 +149,7 @@
         }
 
         .main-container { display: flex; flex-direction: column; height: calc(100vh - 32px); overflow: hidden; }
-        /* ── NAVBAR 3 ZONAS ─────────────────────────────────────────── */
+
         .tab-navigation {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
@@ -174,7 +169,6 @@
         .tab-button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
         .tab-button i { margin-right: var(--space-1); }
 
-        /* Busca global centralizada — ocupa ~50% da viewport */
         #btn-busca-global {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
@@ -207,7 +201,6 @@
             margin-left: auto;
         }
 
-        /* Controles direita */
         .nav-date-input {
             background: var(--color-bg);
             border: 1px solid var(--color-border);
@@ -231,10 +224,8 @@
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; flex: 1; min-height: 0; overflow: hidden; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ── APP LAYOUT ─────────────────────────────────────────────── */
         .app-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
 
-        /* ── SIDEBAR ─────────────────────────────────────────────────── */
         .sidebar { width: 260px; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; flex-shrink: 0; transition: width .22s cubic-bezier(.4,0,.2,1); overflow: hidden; }
         .sidebar.collapsed { width: 48px; }
         .sb-toggle { width: 48px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-bottom: 1px solid var(--color-border); cursor: pointer; color: var(--color-text-tertiary); flex-shrink: 0; transition: color .15s; }
@@ -263,7 +254,6 @@
         .sb-collapsed-icons > div { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; transition: background .15s, color .15s; }
         .sb-collapsed-icons > div:hover { background: var(--color-border); color: var(--color-text-primary); }
 
-        /* ── KANBAN AREA ─────────────────────────────────────────────── */
         .kanban-area { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
         .form-group { margin-bottom: var(--space-2); }
@@ -314,7 +304,6 @@
         .card-header strong { font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
         .card-status-tag { background-color: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); padding: var(--space-half) var(--space-1); border-radius: 12px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
         .card-body { font-size: var(--font-size-sm); color: #b0bec5; margin-bottom: var(--space-1); line-height: 1.5; }
-        .card-despacho-info { font-size: var(--font-size-xs); color: var(--color-info); margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px dashed var(--color-border); }
         .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: var(--space-1); border-top: 1px solid var(--color-border); gap: var(--space-half); }
         .card-body-lazy { min-height: 28px; }
         .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }
@@ -331,41 +320,6 @@
         .form-check { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) 0; }
         .kanban-cards-container.drag-over { background-color: var(--color-bg); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-2); }
-        .item-dinamico { border: 1px solid var(--color-border); padding: var(--space-2); margin-bottom: 10px; border-radius: 8px; background: var(--color-bg); position: relative; }
-        .btn-remover { position: absolute; top: var(--space-1); right: var(--space-1); background: var(--color-danger); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        #saida-turno { background: var(--color-bg); padding: 15px; white-space: pre-wrap; border-radius: var(--radius-sm); border: 1px solid var(--color-border); flex-grow: 1; }
-
-        .reboques-main-grid { grid-template-columns: 300px 1fr 350px; }
-        .reboques-kanban-container { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); height: 100%; }
-        .eventos-kanban-container { display: flex; flex-direction: column; height: 100%; }
-        .eventos-column { display: flex; flex-direction: column; gap: 8px; height: 100%; }
-        .reboque-grid, .eventos-grid { align-content: start; }
-        .reboque-card { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: var(--space-1); cursor: grab; transition: all 0.2s ease; }
-        .reboque-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .reboque-card.dragging { opacity: 0.5; transform: rotate(5deg); }
-        .reboque-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .reboque-card-header strong { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); }
-        .reboque-card .info-line { font-size: var(--font-size-sm); color: var(--color-text-secondary); }
-        .reboque-card .info-line i { margin-right: 6px; width: 14px; text-align: center; }
-        .reboque-card .status-tag { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: var(--font-weight-bold); text-transform: uppercase; }
-        .reboque-card .status-tag.disponivel { background-color: color-mix(in srgb, var(--color-success) 15%, transparent); color: var(--color-success); }
-        .reboque-card .status-tag.atuando { background-color: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); }
-        .reboque-card-footer { display: flex; justify-content: flex-end; gap: var(--space-1); margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px solid var(--color-border); }
-        .reboque-ocorrencia-info { font-size: var(--font-size-xs); background-color: var(--color-bg); padding: 6px; border-radius: var(--space-half); margin-top: var(--space-half); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .reboque-column { display: flex; flex-direction: column; gap: var(--space-1); min-height: 0; }
-        .reboque-column h4 { text-align: center; margin: var(--space-1) 0; font-size: var(--font-size-base); text-transform: uppercase; letter-spacing: 1px; }
-
-        .evento-card { background-color: var(--color-surface); border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: var(--space-1); transition: all 0.2s ease; }
-        .evento-card:hover { box-shadow: var(--shadow-md); }
-        .evento-card.drop-zone { border: 2px dashed var(--color-primary); background-color: color-mix(in srgb, var(--color-primary) 5%, transparent); }
-        .evento-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-1); }
-        .evento-card-header strong { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); color: var(--color-primary); }
-        .evento-card-body { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-1); }
-        .evento-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-1); padding-top: var(--space-1); border-top: 1px solid var(--color-border); }
-        .evento-reboquistas { display: flex; flex-wrap: wrap; gap: var(--space-half); flex-grow: 1; }
-        .evento-reboquista-tag { background-color: var(--color-primary); color: white; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: var(--font-weight-semibold); }
-        .evento-actions { display: flex; gap: var(--space-half); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
@@ -397,9 +351,6 @@
 
         .reincident-tag { background-color: var(--color-info); color: white; font-size: 9px; font-weight: var(--font-weight-bold); padding: 2px 6px; border-radius: 8px; margin-left: var(--space-1); }
 
-        #reboques-disponiveis .reboque-card { background-color: rgba(22, 163, 74, 0.1); border-left: 4px solid var(--color-success); }
-        #reboques-atuando     .reboque-card { background-color: rgba(202, 138, 4, 0.1); border-left: 4px solid var(--color-warning); }
-
         #coluna-espera          .kanban-card { background-color: rgba(248,113,113,.07); border-left: 4px solid #ff7b72; }
         #coluna-vl              .kanban-card { background-color: rgba(255,166, 87,.07); border-left: 4px solid #ffa657; }
         #coluna-amc             .kanban-card { background-color: rgba(121,192,255,.07); border-left: 4px solid #79c0ff; }
@@ -413,8 +364,6 @@
             70%  { transform: scale(1.02); box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-success) 0%, transparent); }
             100% { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 0%, transparent); }
         }
-
-        
 
         .kanban-card .card-footer .btn-card-action.complete {
             color: var(--color-success);
@@ -431,8 +380,6 @@
         }
         .kanban-card .card-footer .btn-card-action:not(.complete)       { opacity: 0.65; transition: opacity 0.2s ease; }
         .kanban-card .card-footer:hover .btn-card-action:not(.complete) { opacity: 1; }
-
-        
 
         .kanban-column-filter { padding: 6px 8px; background: transparent; }
         .kanban-column-filter .kanban-search {
@@ -473,19 +420,8 @@
             transform: translateX(-50%) translateY(0);
             pointer-events: auto;
         }
-        .undo-toast-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-        .undo-toast-msg {
-            font-size: 13px;
-            font-weight: var(--font-weight-medium);
-            color: var(--color-text-primary);
-            flex: 1;
-        }
+        .undo-toast-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+        .undo-toast-msg { font-size: 13px; font-weight: var(--font-weight-medium); color: var(--color-text-primary); flex: 1; }
         .undo-toast-btn {
             background: color-mix(in srgb, var(--color-primary) 12%, transparent);
             border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
@@ -499,19 +435,8 @@
             flex-shrink: 0;
         }
         .undo-toast-btn:hover { background: color-mix(in srgb, var(--color-primary) 20%, transparent); }
-        .undo-progress {
-            height: 3px;
-            background: var(--color-border);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        .undo-progress-bar {
-            height: 100%;
-            background: var(--color-primary);
-            border-radius: 2px;
-            width: 100%;
-            transition: width linear;
-        }
+        .undo-progress { height: 3px; background: var(--color-border); border-radius: 2px; overflow: hidden; }
+        .undo-progress-bar { height: 100%; background: var(--color-primary); border-radius: 2px; width: 100%; transition: width linear; }
 
         .despacho-preview {
             background: var(--color-bg);
@@ -522,39 +447,11 @@
             display: none;
         }
         .despacho-preview.show { display: block; }
-        .despacho-preview-title {
-            font-size: 10px;
-            font-weight: var(--font-weight-bold);
-            color: var(--color-text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: .5px;
-            margin-bottom: 8px;
-        }
-        .despacho-preview-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-        }
+        .despacho-preview-title { font-size: 10px; font-weight: var(--font-weight-bold); color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+        .despacho-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
         .despacho-preview-item { display: flex; flex-direction: column; gap: 2px; }
-        .despacho-preview-label {
-            font-size: 10px;
-            color: var(--color-text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: .4px;
-        }
-        .despacho-preview-value {
-            font-size: 13px;
-            font-weight: var(--font-weight-semibold);
-            color: var(--color-text-primary);
-            word-break: break-word;
-        }
-        .despacho-preview-tipo-vl  { color: var(--color-vl);  }
-        .despacho-preview-tipo-amc { color: var(--color-amc); }
-
-        .kanban-card.highlight-recente { outline: 2px solid var(--color-primary); outline-offset: -2px; }
-        .card-count.acao-disponivel { cursor: pointer; color: var(--color-primary); font-weight: var(--font-weight-semibold); }
-        .card-count.tem-novos { position: relative; }
-        .card-count.tem-novos::after { content: ''; position: absolute; top: -4px; right: -6px; width: 8px; height: 8px; background-color: var(--color-primary); border-radius: 50%; }
+        .despacho-preview-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: .4px; }
+        .despacho-preview-value { font-size: 13px; font-weight: var(--font-weight-semibold); color: var(--color-text-primary); word-break: break-word; }
 
         /* ── MODAL LOGIN ────────────────────────────────────────────── */
         .nit-login-overlay {
@@ -580,9 +477,7 @@
             font-size: 14px; font-family: var(--font-family-sans);
             transition: border-color .2s;
         }
-        .nit-login-field input:focus, .nit-login-field select:focus {
-            outline: none; border-color: var(--color-primary);
-        }
+        .nit-login-field input:focus, .nit-login-field select:focus { outline: none; border-color: var(--color-primary); }
         .nit-login-btn {
             width: 100%; padding: 12px; margin-top: 8px;
             background: var(--color-primary); color: #fff;
@@ -592,183 +487,65 @@
         }
         .nit-login-btn:hover { background: var(--color-primary-hover); }
         .nit-login-btn:disabled { opacity: .45; cursor: not-allowed; }
-        .nit-login-operador { font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px; }
 
-        /* ── STATUS FIREBASE VISUAL ────────────────────────────────── */
-        .nit-status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 10px;
-            font-weight: var(--font-weight-semibold);
-            letter-spacing: 0.3px;
-            padding: 0 6px;
-            white-space: nowrap;
-        }
-
-        .nit-status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
+        /* ── STATUS FIREBASE ────────────────────────────────────────── */
+        .nit-status-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: var(--font-weight-semibold); letter-spacing: 0.3px; padding: 0 6px; white-space: nowrap; }
+        .nit-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; animation: pulse-dot 2s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
         /* ── BUSCA GLOBAL ───────────────────────────────────────────── */
-
-        /* overlay de busca global (dropdown) */
         #busca-global-overlay {
-            display: none;
-            pointer-events: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            display: none; pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 4000;
-            background: rgba(15,23,42,0.6);
-            backdrop-filter: blur(3px);
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 80px;
+            background: rgba(15,23,42,0.6); backdrop-filter: blur(3px);
+            align-items: flex-start; justify-content: center; padding-top: 80px;
         }
         #busca-global-overlay.aberto { display: flex; pointer-events: all; }
         #busca-global-panel {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            width: 90%;
-            max-width: 620px;
-            box-shadow: 0 24px 64px rgba(0,0,0,.5);
-            overflow: hidden;
+            background: var(--color-surface); border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg); width: 90%; max-width: 620px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.5); overflow: hidden;
             animation: slideDown 0.18s ease;
         }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-12px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        #busca-global-input-wrap {
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--color-border);
-            gap: 10px;
-        }
-        #busca-global-input-wrap:focus-within { border-bottom-color: var(--color-border); }
-        #busca-global-input:focus { outline: none !important; box-shadow: none !important; }
-        #busca-global-input-wrap i,
-        #busca-global-input-wrap svg { color: var(--color-text-secondary); font-size: 14px; flex-shrink: 0; }
-        #busca-global-input {
-            flex: 1;
-            background: none;
-            border: none;
-            outline: none !important;
-            box-shadow: none !important;
-            -webkit-appearance: none;
-            font-family: var(--font-family-sans);
-            font-size: 15px;
-            color: var(--color-text-primary);
-            padding: 18px 0;
-        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        #busca-global-input-wrap { display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--color-border); gap: 10px; }
+        #busca-global-input { flex: 1; background: none; border: none; outline: none !important; box-shadow: none !important; -webkit-appearance: none; font-family: var(--font-family-sans); font-size: 15px; color: var(--color-text-primary); padding: 18px 0; }
         #busca-global-input::placeholder { color: #64748b; }
-        #busca-global-esc {
-            background: none;
-            border: 1px solid var(--color-border);
-            border-radius: 4px;
-            color: var(--color-text-tertiary);
-            font-size: 10px;
-            padding: 2px 6px;
-            cursor: pointer;
-            flex-shrink: 0;
-            font-family: var(--font-family-mono);
-        }
-        #busca-global-resultados {
-            max-height: 340px;
-            overflow-y: auto;
-        }
-        .busca-resultado-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--color-border);
-            transition: background 0.15s;
-        }
+        #busca-global-esc { background: none; border: 1px solid var(--color-border); border-radius: 4px; color: var(--color-text-tertiary); font-size: 10px; padding: 2px 6px; cursor: pointer; flex-shrink: 0; font-family: var(--font-family-mono); }
+        #busca-global-resultados { max-height: 340px; overflow-y: auto; }
+        .busca-resultado-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--color-border); transition: background 0.15s; }
         .busca-resultado-item:last-child { border-bottom: none; }
         .busca-resultado-item:hover, .busca-resultado-item.ativo { background: var(--color-bg); }
-        .busca-res-coluna-dot {
-            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-        }
-        .busca-res-codigo {
-            font-size: 13px; font-weight: var(--font-weight-semibold);
-            color: var(--color-text-primary); min-width: 70px; flex-shrink: 0;
-        }
-        .busca-res-endereco {
-            font-size: 12px; color: var(--color-text-secondary);
-            flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .busca-res-tag {
-            font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px;
-            background: var(--color-border); color: var(--color-text-secondary);
-            flex-shrink: 0; text-transform: uppercase;
-        }
-        .busca-res-coluna-label {
-            font-size: 10px; color: var(--color-text-tertiary); flex-shrink: 0;
-        }
-        #busca-global-vazio {
-            padding: 28px 16px; text-align: center;
-            color: var(--color-text-tertiary); font-size: 13px; display: none;
-        }
+        .busca-res-coluna-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .busca-res-codigo { font-size: 13px; font-weight: var(--font-weight-semibold); color: var(--color-text-primary); min-width: 70px; flex-shrink: 0; }
+        .busca-res-endereco { font-size: 12px; color: var(--color-text-secondary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .busca-res-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 8px; background: var(--color-border); color: var(--color-text-secondary); flex-shrink: 0; text-transform: uppercase; }
+        .busca-res-coluna-label { font-size: 10px; color: var(--color-text-tertiary); flex-shrink: 0; }
+        #busca-global-vazio { padding: 28px 16px; text-align: center; color: var(--color-text-tertiary); font-size: 13px; display: none; }
         .busca-highlight { color: var(--color-primary); font-weight: 700; }
 
         /* ── BOTÃO LOGOUT ───────────────────────────────────────────── */
         #btn-logout {
-            background: none;
-            border: 1px solid transparent;
-            border-radius: var(--radius-sm);
-            color: var(--color-text-tertiary);
-            font-size: var(--font-size-sm);
-            padding: 0 8px;
-            height: 28px;
-            cursor: pointer;
-            display: none;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.2s;
-            white-space: nowrap;
+            background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+            color: var(--color-text-tertiary); font-size: var(--font-size-sm);
+            padding: 0 8px; height: 28px; cursor: pointer;
+            display: none; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap;
         }
         #btn-logout:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
-        /* ── MODAL DETALHES DO CARD ─────────────────────────────────── */
+        /* ── MODAL DETALHES ─────────────────────────────────────────── */
         #modal-detalhes .modal-container { max-width: 540px; }
-        .detalhe-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-        }
+        .detalhe-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .detalhe-item { display: flex; flex-direction: column; gap: 3px; }
-        .detalhe-label {
-            font-size: 10px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .6px; color: var(--color-text-tertiary);
-        }
-        .detalhe-valor {
-            font-size: 13px; color: var(--color-text-primary);
-            background: var(--color-bg); border-radius: 6px; padding: 7px 10px;
-            border: 1px solid var(--color-border); word-break: break-word;
-            min-height: 34px;
-        }
+        .detalhe-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--color-text-tertiary); }
+        .detalhe-valor { font-size: 13px; color: var(--color-text-primary); background: var(--color-bg); border-radius: 6px; padding: 7px 10px; border: 1px solid var(--color-border); word-break: break-word; min-height: 34px; }
         .detalhe-valor.vazio { color: var(--color-text-tertiary); font-style: italic; }
         .detalhe-full { grid-column: 1 / -1; }
-        .detalhe-coluna-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-        }
+        .detalhe-coluna-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 
-        /* ── RESPONSIVIDADE TABLET ──────────────────────────────────── */
-        @media (max-width: 1400px) {
-            .kanban-board { grid-template-columns: repeat(3, 1fr) !important; }
-        }
+        /* ── RESPONSIVIDADE ─────────────────────────────────────────── */
+        @media (max-width: 1400px) { .kanban-board { grid-template-columns: repeat(3, 1fr) !important; } }
         @media (max-width: 1024px) {
             body { padding: 10px; }
             .sidebar { width: 48px !important; }
@@ -812,14 +589,11 @@
         </div>
     </div>
 
-        <div class="main-container">
+    <div class="main-container">
         <div class="tab-navigation">
-            <!-- ESQUERDA: abas -->
             <div class="nav-left">
                 <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> SEMÁFORO</button>
             </div>
-
-            <!-- CENTRO: busca global centralizada -->
             <div class="nav-center">
                 <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
                     <i class="fas fa-search"></i>
@@ -827,8 +601,6 @@
                     <kbd>Ctrl K</kbd>
                 </button>
             </div>
-
-            <!-- DIREITA: controles -->
             <div class="nav-right">
                 <input type="date" id="filtro-data-input" title="Filtrar por data" class="nav-date-input">
                 <span id="nit-operador-badge" class="nav-operador-badge"></span>
@@ -836,8 +608,8 @@
                     <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
                     <span style="color:var(--color-info);">Conectando…</span>
                 </span>
-                <button id="btn-ver-historico" class="btn-icon" aria-label="Ver histórico de ações" title="Ver Histórico de Ações"><i class="fas fa-history" aria-hidden="true"></i></button>
-                <button id="btn-logout" title="Sair / Trocar operador" aria-label="Logout">
+                <button id="btn-ver-historico" class="btn-icon" title="Ver Histórico de Ações"><i class="fas fa-history"></i></button>
+                <button id="btn-logout" title="Sair / Trocar operador">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </button>
@@ -848,18 +620,17 @@
         <div id="tab-semaforo" class="tab-content active">
             <div class="app-layout">
 
-                <!-- ── SIDEBAR ───────────────────────────────────────────── -->
-                <aside class="sidebar" id="sidebar" aria-label="Painel lateral">
+                <!-- SIDEBAR ─────────────────────────────────────────── -->
+                <aside class="sidebar" id="sidebar">
                     <button class="sb-toggle" id="btn-sb-toggle" title="Recolher / Expandir painel" aria-expanded="true">
-                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                        <i class="fas fa-chevron-left"></i>
                     </button>
 
-                    <!-- Seção 1: Entrada de Dados -->
                     <div class="sb-section" id="sb-sec-entrada">
                         <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-entrada')" role="button" tabindex="0">
-                            <div class="sb-icon"><i class="fas fa-paste" aria-hidden="true"></i></div>
+                            <div class="sb-icon"><i class="fas fa-paste"></i></div>
                             <span class="sb-label">Entrada de Dados</span>
-                            <i class="fas fa-chevron-down sb-chevron" aria-hidden="true"></i>
+                            <i class="fas fa-chevron-down sb-chevron"></i>
                         </div>
                         <div class="sb-body">
                             <div class="sb-inner">
@@ -869,12 +640,11 @@
                         </div>
                     </div>
 
-                    <!-- Seção 2: Saída -->
                     <div class="sb-section" id="sb-sec-saida">
                         <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-saida')" role="button" tabindex="0">
-                            <div class="sb-icon"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                            <div class="sb-icon"><i class="fas fa-chart-bar"></i></div>
                             <span class="sb-label">Saída</span>
-                            <i class="fas fa-chevron-down sb-chevron" aria-hidden="true"></i>
+                            <i class="fas fa-chevron-down sb-chevron"></i>
                         </div>
                         <div class="sb-body">
                             <div class="sb-inner">
@@ -893,65 +663,64 @@
                         </div>
                     </div>
 
-                    <!-- Ícones colapsados (visíveis só quando sidebar fechada) -->
                     <div class="sb-collapsed-icons">
-                        <div title="Entrada de Dados" onclick="NitSidebar.expandir()"><i class="fas fa-paste" aria-hidden="true"></i></div>
-                        <div title="Saída" onclick="NitSidebar.expandir()"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                        <div title="Entrada de Dados" onclick="NitSidebar.expandir()"><i class="fas fa-paste"></i></div>
+                        <div title="Saída" onclick="NitSidebar.expandir()"><i class="fas fa-chart-bar"></i></div>
                     </div>
                 </aside>
 
-                <!-- ── KANBAN AREA ─────────────────────────────────────── -->
+                <!-- KANBAN AREA ──────────────────────────────────────── -->
                 <div class="kanban-area">
                     <div class="painel-operacional-wrapper">
                         <div id="kanban-wrapper">
                             <div class="kanban-board">
-                                <div class="kanban-column" id="coluna-sem-necessidade" role="region" aria-label="Sem Necessidade">
+                                <div class="kanban-column" id="coluna-sem-necessidade">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle" aria-hidden="true"></i> SEM NECESSIDADE</span>
+                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle"></i> SEM NECESSIDADE</span>
                                         <span class="card-count" id="count-sem-necessidade">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Sem Necessidade">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-espera" role="region" aria-label="Aguardando">
+                                <div class="kanban-column" id="coluna-espera">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-atendimento"><i class="fas fa-clock" aria-hidden="true"></i> AGUARDANDO</span>
+                                        <span class="header-text cor-atendimento"><i class="fas fa-clock"></i> AGUARDANDO</span>
                                         <span class="card-count" id="count-espera">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-espera" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Aguardando">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-espera" placeholder="Buscar nesta coluna">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-vl" role="region" aria-label="Via Livre">
+                                <div class="kanban-column" id="coluna-vl">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-via-livre"><i class="fas fa-check-circle" aria-hidden="true"></i> VIA LIVRE</span>
+                                        <span class="header-text cor-via-livre"><i class="fas fa-check-circle"></i> VIA LIVRE</span>
                                         <span class="card-count" id="count-vl">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-vl" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Via Livre">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-vl" placeholder="Buscar nesta coluna">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-amc" role="region" aria-label="AMC">
+                                <div class="kanban-column" id="coluna-amc">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-amc"><i class="fas fa-shield-alt" aria-hidden="true"></i> AMC</span>
+                                        <span class="header-text cor-amc"><i class="fas fa-shield-alt"></i> AMC</span>
                                         <span class="card-count" id="count-amc">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-amc" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna AMC">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-amc" placeholder="Buscar nesta coluna">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
-                                <div class="kanban-column" id="coluna-normalizados" role="region" aria-label="Normalizados">
+                                <div class="kanban-column" id="coluna-normalizados">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double" aria-hidden="true"></i> NORMALIZADOS</span>
+                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double"></i> NORMALIZADOS</span>
                                         <span class="card-count" id="count-normalizados">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna" aria-label="Buscar na coluna Normalizados">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna">
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
@@ -976,12 +745,13 @@
         <option value="NOITE"></option>
     </datalist>
 
-    <!-- MODAIS ──────────────────────────────────────────────────────────── -->
+    <!-- MODAIS ─────────────────────────────────────────────────────────── -->
     <div id="modal-relatorio" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">Relatório Semafórico</div>
             <div class="modal-body">
-                <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15" style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
+                <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15"
+                    style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
             </div>
             <div class="modal-footer">
                 <button id="btn-modal-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
@@ -990,9 +760,9 @@
         </div>
     </div>
 
-    <div id="modal-despacho-semaforo" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-despacho-titulo">
+    <div id="modal-despacho-semaforo" class="modal-overlay" role="dialog" aria-modal="true">
         <div class="modal-container">
-            <div class="modal-header" id="modal-despacho-titulo">Despachar Equipe de Manutenção</div>
+            <div class="modal-header">Despachar Equipe de Manutenção</div>
             <div class="modal-body">
                 <input type="hidden" id="despacho-semaforo-card-id">
                 <div class="form-group">
@@ -1016,44 +786,29 @@
                     <input type="hidden" id="despacho-semaforo-tipo" value="vl">
                 </div>
                 <div class="form-group">
-                    <label for="despacho-mover-coluna">Mover card para coluna (alternativa ao arrastar):</label>
-                    <select id="despacho-mover-coluna" class="nit-select" aria-describedby="despacho-mover-help">
+                    <label for="despacho-mover-coluna">Mover card para coluna:</label>
+                    <select id="despacho-mover-coluna" class="nit-select">
                         <option value="">— manter na coluna atual —</option>
                         <option value="coluna-espera">Aguardando Atendimento</option>
                         <option value="coluna-vl">Via Livre</option>
                         <option value="coluna-amc">AMC</option>
                         <option value="coluna-sem-necessidade">Sem Necessidade</option>
                     </select>
-                    <small id="despacho-mover-help" style="color:var(--color-text-tertiary);font-size:11px;">Para usuários de teclado: selecione a coluna destino antes de confirmar.</small>
+                    <small style="color:var(--color-text-tertiary);font-size:11px;">Para usuários de teclado: selecione a coluna destino antes de confirmar.</small>
                 </div>
                 <div class="despacho-preview" id="despacho-preview" role="status">
                     <div class="despacho-preview-title">Confirmar despacho</div>
                     <div class="despacho-preview-grid">
-                        <div class="despacho-preview-item">
-                            <span class="despacho-preview-label">Código</span>
-                            <span class="despacho-preview-value" id="dp-cod">—</span>
-                        </div>
-                        <div class="despacho-preview-item">
-                            <span class="despacho-preview-label">Tipo</span>
-                            <span class="despacho-preview-value" id="dp-tipo">—</span>
-                        </div>
-                        <div class="despacho-preview-item" style="grid-column:1/-1;">
-                            <span class="despacho-preview-label">Cruzamento</span>
-                            <span class="despacho-preview-value" id="dp-loc" style="font-size:12px;">—</span>
-                        </div>
-                        <div class="despacho-preview-item">
-                            <span class="despacho-preview-label">Equipe</span>
-                            <span class="despacho-preview-value" id="dp-eq">—</span>
-                        </div>
-                        <div class="despacho-preview-item">
-                            <span class="despacho-preview-label">Viatura</span>
-                            <span class="despacho-preview-value" id="dp-vt">—</span>
-                        </div>
+                        <div class="despacho-preview-item"><span class="despacho-preview-label">Código</span><span class="despacho-preview-value" id="dp-cod">—</span></div>
+                        <div class="despacho-preview-item"><span class="despacho-preview-label">Tipo</span><span class="despacho-preview-value" id="dp-tipo">—</span></div>
+                        <div class="despacho-preview-item" style="grid-column:1/-1;"><span class="despacho-preview-label">Cruzamento</span><span class="despacho-preview-value" id="dp-loc" style="font-size:12px;">—</span></div>
+                        <div class="despacho-preview-item"><span class="despacho-preview-label">Equipe</span><span class="despacho-preview-value" id="dp-eq">—</span></div>
+                        <div class="despacho-preview-item"><span class="despacho-preview-label">Viatura</span><span class="despacho-preview-value" id="dp-vt">—</span></div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario"><i class="fas fa-paper-plane" aria-hidden="true"></i> Confirmar Despacho</button>
+                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario"><i class="fas fa-paper-plane"></i> Confirmar Despacho</button>
                 <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario">Cancelar</button>
             </div>
         </div>
@@ -1094,85 +849,42 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAÇÃO GENÉRICO — substitui confirm() nativo (bloqueado em sandboxes/iframes) -->
     <div id="modal-confirmar-generico" class="modal-overlay">
         <div class="modal-container" style="max-width:420px;">
-            <div class="modal-header" id="modal-confirmar-titulo" style="color:var(--color-danger);">
-                Confirmar Ação
-            </div>
+            <div class="modal-header" id="modal-confirmar-titulo" style="color:var(--color-danger);">Confirmar Ação</div>
             <div class="modal-body" style="text-align:center; padding:24px 16px;">
                 <p id="modal-confirmar-msg" style="font-size:15px; line-height:1.6;"></p>
             </div>
             <div class="modal-footer" style="justify-content:center; gap:16px;">
-                <button id="btn-confirmar-generico-ok"
-                        class="btn"
-                        style="background:var(--color-danger);color:#fff;border-color:var(--color-danger);min-width:120px;">
+                <button id="btn-confirmar-generico-ok" class="btn"
+                    style="background:var(--color-danger);color:#fff;border-color:var(--color-danger);min-width:120px;">
                     <i class="fas fa-check"></i> Confirmar
                 </button>
-                <button id="btn-confirmar-generico-cancel" class="btn btn-secundario" style="min-width:100px;">
-                    Cancelar
-                </button>
+                <button id="btn-confirmar-generico-cancel" class="btn btn-secundario" style="min-width:100px;">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETALHES DO CARD ──────────────────────────────────────────── -->
-    <div id="modal-detalhes" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-detalhes-titulo">
-        <div class="modal-container">
-            <div class="modal-header" id="modal-detalhes-titulo" style="display:flex;align-items:center;justify-content:space-between;">
+    <div id="modal-detalhes" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-container" style="max-width:540px;">
+            <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between;">
                 <span>Detalhes da Ocorrência</span>
                 <span id="detalhe-coluna-badge" class="detalhe-coluna-badge"></span>
             </div>
             <div class="modal-body">
                 <div class="detalhe-grid">
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Código</span>
-                        <span class="detalhe-valor" id="det-codigo">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Problema</span>
-                        <span class="detalhe-valor" id="det-problema">—</span>
-                    </div>
-                    <div class="detalhe-item detalhe-full">
-                        <span class="detalhe-label">Endereço / Cruzamento</span>
-                        <span class="detalhe-valor" id="det-endereco">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Início</span>
-                        <span class="detalhe-valor" id="det-inicio">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Fim</span>
-                        <span class="detalhe-valor" id="det-fim">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Reincidente</span>
-                        <span class="detalhe-valor" id="det-reincidente">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Tipo</span>
-                        <span class="detalhe-valor" id="det-tipo">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Equipe despachada</span>
-                        <span class="detalhe-valor" id="det-equipe">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Viatura (VT)</span>
-                        <span class="detalhe-valor" id="det-viatura">—</span>
-                    </div>
-                    <div class="detalhe-item detalhe-full">
-                        <span class="detalhe-label">Observações</span>
-                        <span class="detalhe-valor" id="det-obs" style="white-space:pre-wrap;min-height:50px;">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Data referência</span>
-                        <span class="detalhe-valor" id="det-data">—</span>
-                    </div>
-                    <div class="detalhe-item">
-                        <span class="detalhe-label">Operador</span>
-                        <span class="detalhe-valor" id="det-operador">—</span>
-                    </div>
+                    <div class="detalhe-item"><span class="detalhe-label">Código</span><span class="detalhe-valor" id="det-codigo">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Problema</span><span class="detalhe-valor" id="det-problema">—</span></div>
+                    <div class="detalhe-item detalhe-full"><span class="detalhe-label">Endereço / Cruzamento</span><span class="detalhe-valor" id="det-endereco">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Início</span><span class="detalhe-valor" id="det-inicio">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Fim</span><span class="detalhe-valor" id="det-fim">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Reincidente</span><span class="detalhe-valor" id="det-reincidente">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Tipo</span><span class="detalhe-valor" id="det-tipo">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Equipe despachada</span><span class="detalhe-valor" id="det-equipe">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Viatura (VT)</span><span class="detalhe-valor" id="det-viatura">—</span></div>
+                    <div class="detalhe-item detalhe-full"><span class="detalhe-label">Observações</span><span class="detalhe-valor" id="det-obs" style="white-space:pre-wrap;min-height:50px;">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Data referência</span><span class="detalhe-valor" id="det-data">—</span></div>
+                    <div class="detalhe-item"><span class="detalhe-label">Operador</span><span class="detalhe-valor" id="det-operador">—</span></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1181,11 +893,11 @@
         </div>
     </div>
 
-    <!-- BUSCA GLOBAL OVERLAY ────────────────────────────────────────────── -->
+    <!-- BUSCA GLOBAL ───────────────────────────────────────────────────── -->
     <div id="busca-global-overlay" role="dialog" aria-modal="true" aria-label="Busca global">
         <div id="busca-global-panel">
             <div id="busca-global-input-wrap">
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;color:var(--color-text-secondary)" aria-hidden="true"><path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-.618 3.09a4.5 4.5 0 1 1 .707-.707l2.914 2.913a.5.5 0 0 1-.707.708L9.382 9.59Z" fill="currentColor"/></svg>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;color:var(--color-text-secondary)"><path d="M10 6.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-.618 3.09a4.5 4.5 0 1 1 .707-.707l2.914 2.913a.5.5 0 0 1-.707.708L9.382 9.59Z" fill="currentColor"/></svg>
                 <input type="search" id="busca-global-input" placeholder="Buscar por código, endereço ou problema…" autocomplete="off" spellcheck="false">
                 <button id="busca-global-esc" title="Fechar (Esc)">ESC</button>
             </div>
@@ -1194,10 +906,8 @@
         </div>
     </div>
 
-    <!-- TOAST CONTAINER ────────────────────────────────────────────────── -->
+    <!-- TOAST / UNDO ───────────────────────────────────────────────────── -->
     <div id="toast-container"></div>
-
-    <!-- UNDO TOAST ──────────────────────────────────────────────────────── -->
     <div id="undo-toast" class="undo-toast" role="status" aria-live="polite">
         <div class="undo-toast-row">
             <span class="undo-toast-msg" id="undo-toast-msg"></span>
@@ -1206,16 +916,15 @@
         <div class="undo-progress"><div class="undo-progress-bar" id="undo-progress-bar"></div></div>
     </div>
 
-    <!-- FIREBASE + APP LOGIC ──────────────────────────────────────────── -->
+    <!-- APP LOGIC ──────────────────────────────────────────────────────── -->
     <script>
     'use strict';
 
-    // ── FIREBASE ─────────────────────────────────────────────────────────────
+    // ── FIREBASE ──────────────────────────────────────────────────────────────
     window.NitFirebase = {
         status: 'inicializando',
         db: null,
 
-        // Aguarda o SDK Firebase (carregado com defer) estar disponível
         _aguardarSDK() {
             return new Promise((resolve, reject) => {
                 if (typeof firebase !== 'undefined' && window.db) { resolve(); return; }
@@ -1224,7 +933,7 @@
                     tentativas++;
                     if (typeof firebase !== 'undefined' && window.db) {
                         clearInterval(check); resolve();
-                    } else if (tentativas > 40) { // 4s timeout
+                    } else if (tentativas > 40) {
                         clearInterval(check); reject(new Error('Firebase SDK timeout'));
                     }
                 }, 100);
@@ -1262,14 +971,14 @@
 
         _setStatus(status) {
             this.status = status;
-            const el  = document.getElementById('nit-firebase-status');
+            const el = document.getElementById('nit-firebase-status');
             if (!el) return;
             const map = {
-                online:        { dot: '#22C55E', text: 'Firebase online',    color: '#22C55E' },
-                offline:       { dot: '#EF4444', text: 'Firebase offline',   color: '#EF4444' },
-                inicializando: { dot: '#0EA5E9', text: 'Conectando…',        color: '#0EA5E9' },
+                online:        { dot: '#22C55E', text: 'Firebase online',  color: '#22C55E' },
+                offline:       { dot: '#EF4444', text: 'Firebase offline', color: '#EF4444' },
+                inicializando: { dot: '#0EA5E9', text: 'Conectando…',      color: '#0EA5E9' },
             };
-            const s = map[status] || map.offline;
+            const s   = map[status] || map.offline;
             const dot = el.querySelector('.nit-status-dot');
             if (dot) dot.style.backgroundColor = s.dot;
             const txt = el.querySelector('span:last-child');
@@ -1287,7 +996,6 @@
             const turno  = document.getElementById('login-turno');
             const btn    = document.getElementById('btn-login-entrar');
             const checar = () => { btn.disabled = !(nome.value.trim().length >= 2 && turno.value); };
-
             nome.addEventListener('input', checar);
             turno.addEventListener('change', checar);
             nome.addEventListener('keydown',  e => { if (e.key === 'Enter') turno.focus(); });
@@ -1300,20 +1008,15 @@
             const nome  = document.getElementById('login-nome').value.trim();
             const turno = document.getElementById('login-turno').value;
             if (!nome || !turno) return;
-
             this.operador = nome;
             this.turno    = turno;
-
             const badge = document.getElementById('nit-operador-badge');
             if (badge) { badge.textContent = `👤 ${nome} · ${turno}`; badge.style.display = ''; }
-
             sessionStorage.setItem('nit-operador', nome);
             sessionStorage.setItem('nit-turno',    turno);
-
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, 'meta/sessao'), { operador: nome, turno, entradaTs: Date.now() })
             );
-
             document.getElementById('nit-login-overlay').classList.add('hidden');
             showToast(`Bem-vindo, ${nome}!`, 'success');
             registrarAcao(`Login: ${nome} — ${turno}.`);
@@ -1342,38 +1045,31 @@
             return `${dd}/${mm}/${d.getFullYear()}`;
         },
 
-        // "DD/MM/YYYY" → "YYYY-MM-DD"
-        toISO: ddr => { if (!ddr) return ''; const [dd,mm,yyyy] = ddr.split('/'); return `${yyyy}-${mm}-${dd}`; },
-
-        // "YYYY-MM-DD" → "DD/MM/YYYY"
+        toISO:   ddr => { if (!ddr) return ''; const [dd,mm,yyyy] = ddr.split('/'); return `${yyyy}-${mm}-${dd}`; },
         fromISO: val => { if (!val) return null; const [yyyy,mm,dd] = val.split('-'); return `${dd}/${mm}/${yyyy}`; },
 
         inicializar() {
             this._input = document.getElementById('filtro-data-input');
             if (!this._input) return;
             this._input.max = this.toISO(this.hoje());
-
             if (!Semaforo._filtroData) {
                 this._input.value    = this.toISO(this.hoje());
                 Semaforo._filtroData = this.hoje();
             } else {
                 this._input.value = this.toISO(Semaforo._filtroData);
             }
-
             this._input.addEventListener('change', () => {
                 Semaforo._filtroData = this.fromISO(this._input.value);
                 Semaforo.atualizarPainel();
             });
         },
 
-        // Atualiza o input para a data do relatório processado
         sincronizar(dataReferencia) {
             if (!this._input || !dataReferencia) return;
             const iso = this.toISO(dataReferencia);
             if (iso) { this._input.value = iso; Semaforo._filtroData = dataReferencia; }
         },
 
-        // Detecta data mais recente em um conjunto de cards e atualiza o filtro
         ajustarAoDados(dados) {
             const datas = Object.values(dados).map(c => c.dataReferencia).filter(Boolean);
             if (!datas.length) return;
@@ -1414,7 +1110,7 @@
             displayPendentes:         document.getElementById('display-pendentes'),
             displayNormalizados:      document.getElementById('display-normalizados'),
             colunaNormalizados:       document.querySelector('#coluna-normalizados .kanban-cards-container'),
-            countNormalizados:  document.getElementById('count-normalizados'),
+            countNormalizados:        document.getElementById('count-normalizados'),
             modalRelatorio:           document.getElementById('modal-relatorio'),
             modalRelatorioTexto:      document.getElementById('modal-relatorio-texto'),
             btnModalCopiar:           document.getElementById('btn-modal-copiar'),
@@ -1438,7 +1134,7 @@
     // ── UTILITÁRIOS UI ────────────────────────────────────────────────────────
     function showToast(message, type = 'success', duration = 3000) {
         const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
+        toast.className = `toast ${type}`;
         toast.textContent = message;
         DOM.toastContainer?.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 100);
@@ -1506,7 +1202,7 @@
             undo:   () => { cancelado = true; cancelAnimationFrame(rafId); esconderUndoToast(); onUndo(); },
         };
 
-        document.getElementById('btn-undo-action')?.addEventListener('click', () => _undoActive?.undo(), { once: true });
+        document.getElementById('undo-toast-btn')?.addEventListener('click', () => _undoActive?.undo(), { once: true });
     }
 
     function esconderUndoToast() {
@@ -1520,10 +1216,11 @@
 
     // ── API ───────────────────────────────────────────────────────────────────
     async function nitAPIFetch(endpoint, options = {}) {
+        const key = await window.getNITKey?.() || '';
         const url = `${window.NIT_API_URL}${endpoint}`;
         const res = await fetch(url, {
             ...options,
-            headers: { 'Content-Type': 'application/json', 'X-NIT-Key': NIT_SECRET_KEY, ...(options.headers || {}) },
+            headers: { 'Content-Type': 'application/json', 'X-NIT-Key': key, ...(options.headers || {}) },
         });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
@@ -1535,9 +1232,9 @@
     // ── CONFIRM MODAL ─────────────────────────────────────────────────────────
     let _confirmCb = null;
     function nitConfirm(titulo, mensagem, onConfirm) {
-        const modal  = document.getElementById('modal-confirmar-generico');
-        const titEl  = document.getElementById('modal-confirmar-titulo');
-        const msgEl  = document.getElementById('modal-confirmar-msg');
+        const modal = document.getElementById('modal-confirmar-generico');
+        const titEl = document.getElementById('modal-confirmar-titulo');
+        const msgEl = document.getElementById('modal-confirmar-msg');
         if (!modal) { if (confirm(mensagem)) onConfirm(); return; }
         titEl.textContent = titulo;
         msgEl.innerHTML   = mensagem;
@@ -1552,7 +1249,7 @@
         ultimoLoteNormalizado: [],
         _filtroData: null,
 
-        // ── Helpers de parsing ────────────────────────────────────────────
+        // ── Helpers ───────────────────────────────────────────────────────
         gerarEventoId(codigo, inicio) {
             const ts = (inicio || '').replace(/[^0-9]/g, '').slice(0, 12) || Date.now();
             return `${codigo}_${ts}`;
@@ -1576,22 +1273,18 @@
         },
 
         extrairDadosDaLinha(linha) {
-            // Tipo extraído do prefixo ANTES do primeiro 🚦
             const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
             const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
             const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL'];
             const tipo = TIPOS.find(t => prefixo.includes(t)) || 'N/I';
 
-            // Regex principal tolerante a tabs (\t) e asteriscos de negrito do WhatsApp
             const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/iu;
             const m = linha.match(re);
             if (!m) return null;
 
-            const resto = m[4] || '';
-            const inicioM = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
-            const fimM    = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
-
-            // Obs inline: extrai "Obs: ..." após Inicio/Fim, ou texto residual após 2º ●
+            const resto    = m[4] || '';
+            const inicioM  = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
+            const fimM     = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
             const _restoObs = (linha.match(/●[^●]*●(.*)$/s)?.[1] || '');
             const _obsMatch = _restoObs.match(/Obs:(.+?)(?:\s*\/log.*)?$/is);
             const obsInline = _obsMatch
@@ -1621,19 +1314,15 @@
             NitFirebase.exec((db, ref) => {
                 const kanbanRef = ref(db, 'kanban');
 
-                // child_added: card novo → cria e insere sem tocar nos outros
                 kanbanRef.on('child_added', snap => {
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
-                    // Evita duplicata: se card já existe no DOM, ignora
                     if (document.querySelector(`[data-eventoid="${eventoId}"]`)) return;
-
                     const coluna    = dados.coluna || 'coluna-espera';
                     const container = document.querySelector(`#${coluna} .kanban-cards-container`)
                                    || document.getElementById(coluna);
                     if (!container) return;
-
                     const el = Semaforo.criarElementoCard(`card-${AppState.cardIdCounter++}`, {
                         ...dados, eventoId, codigo: dados.codigo || eventoId.split('_')[0],
                     });
@@ -1641,87 +1330,42 @@
                     el.dataset.coluna         = coluna;
                     el.dataset.datareferencia = dados.dataReferencia || '';
                     container.appendChild(el);
-
                     NitDateFilter.ajustarAoDados({ [eventoId]: dados });
                     Semaforo.atualizarPainel();
                 });
 
-                // child_changed: campo alterado → move coluna se necessário, atualiza dados
                 kanbanRef.on('child_changed', snap => {
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
-
                     const el = document.querySelector(`[data-eventoid="${eventoId}"]`);
-                    if (!el) return; // card ainda não estava no DOM (race), child_added cuida
-
-                    const novaColuna    = dados.coluna || 'coluna-espera';
-                    const colunaAtual   = el.dataset.coluna;
-
-                    // Move de coluna se necessário (sem recriar o card)
+                    if (!el) return;
+                    const novaColuna  = dados.coluna || 'coluna-espera';
+                    const colunaAtual = el.dataset.coluna;
                     if (novaColuna !== colunaAtual) {
                         const container = document.querySelector(`#${novaColuna} .kanban-cards-container`)
                                        || document.getElementById(novaColuna);
-                        if (container) {
-                            container.appendChild(el);
-                            el.dataset.coluna = novaColuna;
-                        }
+                        if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-
-                    // Atualiza campos do dataset
                     if (dados.equipe   !== undefined) el.dataset.equipe   = dados.equipe;
                     if (dados.viatura  !== undefined) el.dataset.viatura  = dados.viatura;
                     if (dados.pl       !== undefined) el.dataset.pl       = dados.pl;
                     if (dados.sub      !== undefined) el.dataset.sub      = dados.sub;
                     if (dados.status   !== undefined) el.dataset.status   = dados.status;
-
-                    // Atualiza linha de equipe no card se despacho
                     if (dados.equipe) {
                         const txt = `Equipe: ${dados.equipe}${dados.viatura ? ` · VT ${dados.viatura}` : ''}`;
                         let eq = el.querySelector('.card-equipe');
                         if (eq) eq.textContent = txt;
                         else el.querySelector('.card-body')?.insertAdjacentHTML('beforeend', `<p class="card-equipe">${txt}</p>`);
                     }
-
                     Semaforo.atualizarPainel();
                 });
 
-                // child_removed: card removido → remove do DOM
                 kanbanRef.on('child_removed', snap => {
-                    const eventoId = snap.key;
-                    const el = document.querySelector(`[data-eventoid="${eventoId}"]`);
-                    if (el) {
-                        NitLazy.liberar(el);
-                        el.remove();
-                        Semaforo.atualizarPainel();
-                    }
+                    const el = document.querySelector(`[data-eventoid="${snap.key}"]`);
+                    if (el) { NitLazy.liberar(el); el.remove(); Semaforo.atualizarPainel(); }
                 });
             });
-        },
-
-        _reconstruirKanban(dados) {
-            document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
-            DOM.colunaNormalizados.innerHTML = '';
-
-            Object.entries(dados).forEach(([eventoId, cardData]) => {
-                const coluna    = cardData.coluna || 'coluna-espera';
-                const container = document.querySelector(`#${coluna} .kanban-cards-container`)
-                               || document.getElementById(coluna);
-                if (!container) return;
-
-                const el = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, {
-                    ...cardData,
-                    eventoId,
-                    codigo: cardData.codigo || eventoId.split('_')[0],
-                });
-                el.dataset.eventoid       = eventoId;
-                el.dataset.coluna         = coluna;
-                el.dataset.datareferencia = cardData.dataReferencia || '';
-                container.appendChild(el);
-            });
-
-            NitDateFilter.ajustarAoDados(dados);
-            this.atualizarPainel();
         },
 
         // ── Processar relatório ───────────────────────────────────────────
@@ -1729,13 +1373,10 @@
             this.ultimoLoteNormalizado = [];
             const texto = DOM.relatorioBrutoInput.value;
             if (!texto.trim()) { showToast('Insira o relatório bruto para processar.', 'warning'); return; }
-
             const eventos = this._parsearRelatorio(texto);
             if (!eventos.length) { showToast('Nenhuma ocorrência encontrada.', 'warning'); return; }
-
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
-
             NitDateFilter.sincronizar(eventos[0]?.dataReferencia);
             this.atualizarPainel();
             DOM.relatorioBrutoInput.value = '';
@@ -1744,7 +1385,6 @@
         _ehCabecalho(linha) {
             const l = linha.trim();
             if (!l) return true;
-            // Linha contém marcador de seção NORMALIZADOS ou PENDENTES (qualquer posição)
             if (/NORMALIZADOS/i.test(l) && /[✅❌*]/.test(l)) return true;
             if (/PENDENTES/i.test(l)    && /[✅❌*]/.test(l)) return true;
             return /^[-=*#_]{3,}/.test(l)
@@ -1768,7 +1408,6 @@
             for (const linha of linhas) {
                 if (/\*?NORMALIZADOS\*?\s*✅/.test(linha)) { secao = 'NORMALIZADO'; continue; }
                 if (/\*?PENDENTES\*?\s*❌/.test(linha))    { secao = 'PENDENTE';    continue; }
-
                 const dados = this.extrairDadosDaLinha(linha);
                 if (dados) {
                     if (atual) eventos.push(atual);
@@ -1777,35 +1416,32 @@
                     let limpa = linha.trim()
                         .replace(/["*]/g, '')
                         .replace(/\*?Obs:\*?/gi, '')
-                        .replace(/\/log\b.*/i, '')   // remove sufixo /log HH:MM
+                        .replace(/\/log\b.*/i, '')
                         .replace(/\s+/g, ' ').trim();
-                    // ignora linhas que são só hora/data isolada
                     if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
                         atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
                     }
                 }
             }
             if (atual) eventos.push(atual);
-
             return eventos
                 .filter(ev => ev.codigo)
                 .map(ev => ({ ...ev, eventoId: this.gerarEventoId(ev.codigo, ev.inicio) }));
         },
 
+        // ── Carga inicial (painel vazio) ──────────────────────────────────
         _cargaInicial(eventos) {
             const vistos = new Set();
             const batch  = {};
-
             eventos.forEach(ev => {
-                ev.reincidente  = vistos.has(ev.codigo);
+                ev.reincidente = vistos.has(ev.codigo);
                 vistos.add(ev.codigo);
-                const status    = this.statusFromSecao(ev.secao, ev);
-                const el        = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, ev);
+                const status = this.statusFromSecao(ev.secao, ev);
+                const el     = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, ev);
                 this._colocarCardNaColuna(el, status);
                 if (status === 'NORMALIZADO') this.ultimoLoteNormalizado.push(el.id);
                 batch[ev.eventoId] = this._payloadFirebase(ev, status);
             });
-
             AppState.totalOcorrenciasCriadas = eventos.length;
             NitFirebase.exec((db, ref, update) => {
                 update(ref(db, 'kanban'), batch);
@@ -1818,109 +1454,100 @@
             showToast(`${eventos.length} ocorrência(s) processada(s).`, 'success');
         },
 
-                    if (!existente) {
-                // ── #0 Herança de pendências entre dias (eventoId diferente) ──
-                const eidsPorCodigo = codigosMap.get(ev.codigo) || [];
-                const cardHerdado   = eidsPorCodigo
-                    .map(eid => mapaAtual.get(eid))
-                    .find(c => c && !c.normalizado);
+        // ── Reprocessar (painel já tem cards) ────────────────────────────
+        //
+        // Corrige os dois blocos soltos do original: consolida a lógica de
+        // herança cross-day (codigosMap) e herança por mesmo eventoId num
+        // único método coeso, sem duplicatas.
+        _reprocessar(eventos) {
+            // Monta índices do estado atual do DOM
+            const mapaAtual  = new Map(); // eventoId → { element, normalizado }
+            const codigosMap = new Map(); // codigo   → [eventoId, ...]
 
-                if (cardHerdado) {
-                    const cardEl           = cardHerdado.element;
-                    const eventoIdAnterior = cardEl.dataset.eventoid;
-                    cardEl.dataset.datareferencia = ev.dataReferencia;
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${eventoIdAnterior}`), {
-                            dataReferencia: ev.dataReferencia,
-                            ts: Date.now(),
-                            ts_dataReferencia: Date.now(),
-                        })
-                    );
-                    herdados++;
-                    return;
+            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(el => {
+                const eid  = el.dataset.eventoid;
+                const cod  = el.dataset.codigo;
+                const norm = !!el.closest('#coluna-normalizados');
+                if (eid) mapaAtual.set(eid, { element: el, normalizado: norm });
+                if (cod) {
+                    if (!codigosMap.has(cod)) codigosMap.set(cod, []);
+                    codigosMap.get(cod).push(eid);
                 }
+            });
 
-                ev.reincidente = codigosMap.has(ev.codigo);
-                this.criarNovoCard(ev, status);
-                criados++;
-                return;
-            }
+            let criados = 0, atualizados = 0, herdados = 0;
 
-            // ── Card já existe ──
-            if (!existente.normalizado && status === 'NORMALIZADO') {
-                DOM.colunaNormalizados.prepend(existente.element);
-                existente.element.classList.add('card-foi-normalizado');
-                setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
-                this.ultimoLoteNormalizado.push(existente.element.id);
+            eventos.forEach(ev => {
+                const status    = this.statusFromSecao(ev.secao, ev);
+                const existente = mapaAtual.get(ev.eventoId);
 
-                const fimPartes = ev.fim ? ev.fim.split(' ') : [];
-                const dataFim = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
-                const horaFim = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+                if (!existente) {
+                    // Herança cross-day: mesmo código, eventoId diferente
+                    const eidsPorCodigo = codigosMap.get(ev.codigo) || [];
+                    const cardHerdado   = eidsPorCodigo
+                        .map(eid => mapaAtual.get(eid))
+                        .find(c => c && !c.normalizado);
 
-                NitFirebase.exec((db, ref, update) =>
-                    update(ref(db, `kanban/${ev.eventoId}`), {
-                        coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now(),
-                        data_fim: dataFim,
-                        hora_fim: horaFim,
-                        ts_norm: Date.now(),
-                    })
-                );
-                atualizados++;
+                    if (cardHerdado) {
+                        const cardEl           = cardHerdado.element;
+                        const eventoIdAnterior = cardEl.dataset.eventoid;
+                        cardEl.dataset.datareferencia = ev.dataReferencia;
+                        NitFirebase.exec((db, ref, update) =>
+                            update(ref(db, `kanban/${eventoIdAnterior}`), {
+                                dataReferencia:    ev.dataReferencia,
+                                ts:                Date.now(),
+                                ts_dataReferencia: Date.now(),
+                            })
+                        );
+                        herdados++;
+                        return;
+                    }
 
-            } else if (!existente.normalizado && ev.dataReferencia !== existente.element.dataset.datareferencia) {
-                // ── #0 Herança via mesmo eventoId (data mudou) ──────────────
-                existente.element.dataset.datareferencia = ev.dataReferencia;
-                NitFirebase.exec((db, ref, update) =>
-                    update(ref(db, `kanban/${ev.eventoId}`), {
-                        dataReferencia: ev.dataReferencia,
-                        ts: Date.now(),
-                        ts_dataReferencia: Date.now(),
-                    })
-                );
-                herdados++;
-            }
-                    // ─────────────────────────────────────────────────────
-        
+                    // Card genuinamente novo
                     ev.reincidente = codigosMap.has(ev.codigo);
                     this.criarNovoCard(ev, status);
                     criados++;
                     return;
                 }
-        
+
+                // Card já existe no DOM
                 if (!existente.normalizado && status === 'NORMALIZADO') {
                     DOM.colunaNormalizados.prepend(existente.element);
                     existente.element.classList.add('card-foi-normalizado');
                     setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
                     this.ultimoLoteNormalizado.push(existente.element.id);
-        
+
                     const fimPartes = ev.fim ? ev.fim.split(' ') : [];
-                    const dataFim = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
-                    const horaFim = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-        
+                    const dataFim   = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
+                    const horaFim   = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${ev.eventoId}`), {
-                            coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now(),
+                            coluna:   'coluna-normalizados',
+                            status:   'NORMALIZADO',
+                            ts:       Date.now(),
                             data_fim: dataFim,
                             hora_fim: horaFim,
-                            ts_norm: Date.now(),
+                            ts_norm:  Date.now(),
                         })
                     );
                     atualizados++;
-        
-                } else if (!existente.normalizado && ev.dataReferencia !== existente.element.dataset.datareferencia) {
-                    // ── Herança via mesmo eventoId (inicio não mudou) ────
+
+                } else if (!existente.normalizado &&
+                           ev.dataReferencia !== existente.element.dataset.datareferencia) {
+                    // Herança via mesmo eventoId (data de referência mudou)
                     existente.element.dataset.datareferencia = ev.dataReferencia;
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${ev.eventoId}`), {
-                            dataReferencia: ev.dataReferencia,
-                            ts: Date.now(),
-                            ts_dataReferencia: Date.now(), //gatilho para dataReferencia para ativar data referência na planilha (herança)
+                            dataReferencia:    ev.dataReferencia,
+                            ts:                Date.now(),
+                            ts_dataReferencia: Date.now(),
                         })
                     );
                     herdados++;
                 }
             });
-        
+
             AppState.totalOcorrenciasCriadas += criados;
             const msgs = [];
             if (criados)     msgs.push(`${criados} nova(s) adicionada(s).`);
@@ -1928,9 +1555,11 @@
             if (herdados)    msgs.push(`${herdados} pendência(s) herdada(s) do dia anterior.`);
             showToast(msgs.length ? msgs.join(' ') : 'Nenhuma mudança detectada.', msgs.length ? 'success' : 'info');
         },
+
+        // ── Helpers internos ─────────────────────────────────────────────
         _colocarCardNaColuna(el, status) {
             const mapa = {
-                NORMALIZADO:    () => DOM.colunaNormalizados.prepend(el),
+                NORMALIZADO:     () => DOM.colunaNormalizados.prepend(el),
                 SEM_NECESSIDADE: () => document.querySelector('#coluna-sem-necessidade .kanban-cards-container').appendChild(el),
             };
             (mapa[status] || (() => document.querySelector('#coluna-espera .kanban-cards-container').appendChild(el)))();
@@ -1977,9 +1606,6 @@
             card.setAttribute('role',     'article');
             card.setAttribute('tabindex', '0');
 
-            // Popula dataset — normaliza keys camelCase para evitar conversão automática do browser:
-            //   'dataReferencia' → 'datareferencia'  (evita data-data-referencia)
-            //   'eventoId'       → 'eventoid'         (evita data-evento-id ≠ dataset.eventoid)
             const _dsMap = { dataReferencia: 'datareferencia', eventoId: 'eventoid' };
             Object.entries(cardData).forEach(([k, v]) => {
                 if (v !== undefined) card.dataset[_dsMap[k] || k] = v;
@@ -1989,14 +1615,6 @@
             const reinc = (cardData.reincidente === true || cardData.reincidente === 'true')
                 ? '<span class="reincident-tag" title="Reincidência">↺ REINC</span>' : '';
 
-            const _footer = `<div class="card-footer">
-                    <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
-                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
-                    <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
-                    <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
-                </div>`;
-
             card.innerHTML = `
                 <div class="card-header">
                     <strong>${cardData.codigo}</strong>
@@ -2004,7 +1622,13 @@
                     ${reinc}
                 </div>
                 <div class="card-body card-body-lazy"></div>
-                ${_footer}`;
+                <div class="card-footer">
+                    <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
+                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
+                    <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
+                    <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
+                </div>`;
 
             card.classList.add('lazy-pending');
             NitLazy.observar(card, () => {
@@ -2018,7 +1642,6 @@
         },
 
         _fraseTecnica(texto, status, inicio) {
-            // Se for investigando, trata de maneira especial e ignora observação completa
             if (String(status).trim().toUpperCase() === 'INVESTIGANDO') {
                 if (!inicio) return 'Investigando.';
                 const [data, hora] = inicio.split(' ');
@@ -2026,29 +1649,19 @@
                 return `Início: ${dia}/${mes} ${hora} — Investigando.`;
             }
             if (!texto) return '';
-
-            // Remove asteriscos e espaços extras
             let t = texto.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
-
-            // Tenta extrair até o primeiro ponto final
             const pontoIndex = t.indexOf('.');
             if (pontoIndex !== -1) {
                 t = t.substring(0, pontoIndex + 1).trim();
             } else {
-                // Se não tiver ponto, limita a 100 caracteres
                 t = t.slice(0, 100);
                 if (texto.length > 100) t += '…';
             }
-
-            // Remove datas longas (DD/MM/YYYY HH:MM → DD/MM HH:MM)
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
-
             return t;
         },
 
         // ── Painel e relatório ────────────────────────────────────────────
-        // atualizarPainel com debounce — evita recalcular contadores
-        // dezenas de vezes durante a carga inicial (child_added em burst)
         _painelTimer: null,
         atualizarPainel() {
             clearTimeout(this._painelTimer);
@@ -2058,49 +1671,38 @@
         _atualizarPainelAgora() {
             const n = sel => document.querySelectorAll(sel).length;
             const total = {
-                espera:          n('#coluna-espera .kanban-card'),
-                semNecessidade:  n('#coluna-sem-necessidade .kanban-card'),
-                vl:              n('#coluna-vl .kanban-card'),
-                amc:             n('#coluna-amc .kanban-card'),
-                normalizados:    DOM.colunaNormalizados.querySelectorAll('.kanban-card').length,
+                espera:         n('#coluna-espera .kanban-card'),
+                semNecessidade: n('#coluna-sem-necessidade .kanban-card'),
+                vl:             n('#coluna-vl .kanban-card'),
+                amc:            n('#coluna-amc .kanban-card'),
+                normalizados:   DOM.colunaNormalizados.querySelectorAll('.kanban-card').length,
             };
-            const totalGeral  = Object.values(total).reduce((a, b) => a + b, 0);
-            const totalNorm   = total.normalizados;
-            const totalPend   = totalGeral - totalNorm;
+            const totalGeral = Object.values(total).reduce((a, b) => a + b, 0);
+            const totalNorm  = total.normalizados;
+            const totalPend  = totalGeral - totalNorm;
 
-            // Filtra por data se ativo
             const filtro = this._filtroData;
             let exibTotal = totalGeral, exibNorm = totalNorm, exibPend = totalPend;
             if (filtro) {
                 const todos = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
-                
                 todos.forEach(c => {
                     const dataBate    = c.dataset.datareferencia === filtro;
                     const normalizado = !!c.closest('#coluna-normalizados');
-                    
-                    // Pendentes sempre visíveis — normalizados só se a data bater
-                    if (normalizado) {
-                        c.style.display = dataBate ? '' : 'none';
-                    } else {
-                        c.style.display = '';
-                    }
+                    c.style.display = normalizado ? (dataBate ? '' : 'none') : '';
                 });
-            
-                const hoje   = todos.filter(c => c.dataset.datareferencia === filtro);
-                exibTotal    = hoje.length;
-                exibNorm     = hoje.filter(c => c.closest('#coluna-normalizados')).length;
-                exibPend     = exibTotal - exibNorm;
+                const hoje = todos.filter(c => c.dataset.datareferencia === filtro);
+                exibTotal  = hoje.length;
+                exibNorm   = hoje.filter(c => c.closest('#coluna-normalizados')).length;
+                exibPend   = exibTotal - exibNorm;
             }
 
             DOM.displayTotal.textContent        = exibTotal;
             DOM.displayNormalizados.textContent = exibNorm;
             DOM.displayPendentes.textContent    = exibPend;
-            DOM.countNormalizados.textContent = filtro ? exibNorm : totalNorm;
+            DOM.countNormalizados.textContent   = filtro ? exibNorm : totalNorm;
 
-            // Contadores por coluna
-            document.getElementById('count-espera')?.setAttribute('data-count', total.espera);
             document.getElementById('count-espera') && (document.getElementById('count-espera').textContent = total.espera);
-            [['vl',total.vl],['amc',total.amc],['sem-necessidade',total.semNecessidade]].forEach(([id,v]) => {
+            [['vl', total.vl], ['amc', total.amc], ['sem-necessidade', total.semNecessidade]].forEach(([id, v]) => {
                 const el = document.getElementById(`count-${id}`);
                 if (el) el.textContent = v;
             });
@@ -2117,10 +1719,10 @@
             const amc         = cards('coluna-amc');
             const norm        = Array.from(DOM.colunaNormalizados.querySelectorAll('.kanban-card'));
 
-            const totalOcorr   = espera.length + sn.length + vl.length + amc.length + norm.length;
-            const totalPend    = espera.length + sn.length;
-            const totalNorm    = norm.length;
-            const totalAtivos  = vl.length + amc.length + espera.length + sn.length;
+            const totalOcorr  = espera.length + sn.length + vl.length + amc.length + norm.length;
+            const totalPend   = espera.length + sn.length;
+            const totalNorm   = norm.length;
+            const totalAtivos = vl.length + amc.length + espera.length + sn.length;
 
             const emoji = totalAtivos === 0 ? '🟢🟢' : totalAtivos <= 5 ? '🟡🟡' : '🔴🔴';
             const hora  = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -2135,11 +1737,9 @@
                 else if (tipo.includes('FURTO'))  abrev = 'FURTO';
                 else if (tipo.includes('IMPROC')) abrev = 'IMPROC';
                 else if (tipo) abrev = tipo.slice(0, 8);
-
                 let desde = '';
-                const m = (card.dataset.inicio || '').match(/(\d{2})\/(\d{2})(?:\/\d+)?\s+(\d{2}:\d{2})/);
-                if (m) desde = ` - Desde ${m[1]}/${m[2]} - ${m[3]}`;
-
+                const mts = (card.dataset.inicio || '').match(/(\d{2})\/(\d{2})(?:\/\d+)?\s+(\d{2}:\d{2})/);
+                if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
                 if (card.dataset.equipe || card.dataset.viatura) {
                     t += ` (${card.dataset.equipe || 'N/I'}, VT: ${card.dataset.viatura || 'N/I'})`;
@@ -2157,16 +1757,8 @@
                 '',
             ];
 
-            if (vl.length) {
-                linhas.push(`🚓🟠 *VIA LIVRE (${vl.length}):*`);
-                vl.forEach(c => linhas.push(fmt(c)));
-                linhas.push('');
-            }
-            if (amc.length) {
-                linhas.push(`🚓🔵 *AMC (${amc.length}):*`);
-                amc.forEach(c => linhas.push(fmt(c)));
-                linhas.push('');
-            }
+            if (vl.length)  { linhas.push(`🚓🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
+            if (amc.length) { linhas.push(`🚓🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
             linhas.push('---');
             linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
@@ -2226,9 +1818,9 @@
         abrirModalDespacho(cardId) {
             const card = document.getElementById(cardId);
             if (!card) return;
-            DOM.despachoSemaforoCardId.value  = cardId;
-            DOM.despachoSemaforoEquipe.value  = card.dataset.equipe  || '';
-            DOM.despachoSemaforoVt.value      = card.dataset.viatura || '';
+            DOM.despachoSemaforoCardId.value = cardId;
+            DOM.despachoSemaforoEquipe.value = card.dataset.equipe  || '';
+            DOM.despachoSemaforoVt.value     = card.dataset.viatura || '';
             document.getElementById('despacho-preview')?.classList.remove('show');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
             if (btnConf) btnConf.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar Despacho';
@@ -2239,9 +1831,12 @@
 
         selecionarTipoDespacho(tipo) {
             AppState.despachoTipo = tipo;
-            document.querySelectorAll('.despacho-tipo-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tipo === tipo);
-            });
+            const btnVl  = document.getElementById('despacho-tipo-vl');
+            const btnAmc = document.getElementById('despacho-tipo-amc');
+            if (btnVl)  btnVl.style.background  = tipo === 'vl'  ? 'rgba(240,136,62,0.15)'  : '';
+            if (btnAmc) btnAmc.style.background = tipo === 'amc' ? 'rgba(88,166,255,0.15)' : '';
+            if (btnVl)  btnVl.style.borderColor  = tipo === 'vl'  ? '#f0883e' : '';
+            if (btnAmc) btnAmc.style.borderColor = tipo === 'amc' ? '#58a6ff' : '';
         },
 
         handleSalvarDespachoClick() {
@@ -2264,7 +1859,6 @@
                 return;
             }
 
-            // Segunda confirmação
             const colunaDestino = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
             const container     = document.querySelector(`#${colunaDestino} .kanban-cards-container`) || document.getElementById(colunaDestino);
             if (container) container.appendChild(card);
@@ -2287,7 +1881,6 @@
             const cod      = card.dataset.codigo;
             const eventoId = card.dataset.eventoid || cod;
             const coluna   = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
-
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, `kanban/${eventoId}`), {
                     coluna, pl: tipo === 'sn' ? 'sn' : 'atend', sub: tipo,
@@ -2299,7 +1892,6 @@
             gravarHistoricoFirebase(eventoId, card.dataset.coluna, coluna, tipo, equipe, vt, NitLogin.operador);
             registrarAcao(`Despacho '${cod}': ${equipe} VT ${vt || 'N/I'} → ${tipo.toUpperCase()}.`);
             showToast(`${cod} → ${tipo === 'sn' ? 'Sem necess.' : equipe}`, 'success');
-
             nitAPIFetch('/api/v1/despacho', { method: 'POST', body: JSON.stringify({ cod, eventoId, eq: equipe, vt, sub: tipo }) })
                 .catch(err => { if (!err.message?.includes('fetch')) console.warn('[NIT] API despacho:', err); });
         },
@@ -2314,11 +1906,14 @@
                 () => {
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${eventoId}`), {
-                            coluna: 'coluna-normalizados', status: 'NORMALIZADO',
-                            operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
-                            data_fim: new Date().toLocaleDateString('pt-BR'),
-                            hora_fim: new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'}),
-                            ts_norm: Date.now(),
+                            coluna:    'coluna-normalizados',
+                            status:    'NORMALIZADO',
+                            operador:  NitLogin.operador || 'anon',
+                            turno:     NitLogin.turno    || '',
+                            ts:        Date.now(),
+                            data_fim:  new Date().toLocaleDateString('pt-BR'),
+                            hora_fim:  new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                            ts_norm:   Date.now(),
                         })
                     );
                     gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
@@ -2328,8 +1923,10 @@
                 () => {
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${eventoId}`), {
-                            coluna: origem, status: card.dataset.status || 'PENDENTE',
-                            operador: NitLogin.operador || 'anon', ts: Date.now(),
+                            coluna:   origem,
+                            status:   card.dataset.status || 'PENDENTE',
+                            operador: NitLogin.operador || 'anon',
+                            ts:       Date.now(),
                             data_fim: null, hora_fim: null, ts_norm: null,
                         })
                     );
@@ -2343,7 +1940,7 @@
             const card = document.getElementById(cardId);
             if (!card) return;
             DOM.edicaoCardId.value   = cardId;
-            DOM.edicaoCodigo.value   = card.dataset.codigo  || '';
+            DOM.edicaoCodigo.value   = card.dataset.codigo   || '';
             DOM.edicaoEndereco.value = card.dataset.endereco || '';
             DOM.edicaoProblema.value = card.dataset.problema || 'APAGADO';
             abrirModal(DOM.modalEdicao);
@@ -2416,12 +2013,10 @@
             if (!container || !AppState.draggedCard) return;
             AppState.placeholder?.remove();
             document.querySelectorAll('.kanban-cards-container.drag-over').forEach(c => c.classList.remove('drag-over'));
-
             const card     = AppState.draggedCard;
             const coluna   = container.closest('.kanban-column')?.id || 'desconhecido';
             const eventoId = card.dataset.eventoid || card.dataset.codigo;
             const origem   = card.dataset.coluna   || 'desconhecido';
-
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, `kanban/${eventoId}`), {
                     coluna, operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
@@ -2431,7 +2026,6 @@
             registrarAcao(`'${card.dataset.codigo}' movido: ${origem} → ${coluna}.`);
         },
 
-        // ── Gaveta normalizados ───────────────────────────────────────────
         // ── Limpar painel ─────────────────────────────────────────────────
         limparPainel() {
             nitConfirm('🗑️ Limpar Painel', '⚠️ Remove <strong>TODOS os dados</strong> para todos os operadores conectados.', () => {
@@ -2442,7 +2036,10 @@
                 localStorage.removeItem(AppState.STORAGE_KEY_SEMAFORO);
                 NitFirebase.exec((db, ref, update) => {
                     ref(db, 'kanban').remove();
-                    update(ref(db, 'meta'), { ultimoReset: { ts: Date.now(), operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '' }, dataReferencia: null });
+                    update(ref(db, 'meta'), {
+                        ultimoReset: { ts: Date.now(), operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '' },
+                        dataReferencia: null,
+                    });
                 });
                 this.atualizarPainel();
                 showToast('Painel limpo para todos os operadores!', 'success');
@@ -2460,10 +2057,6 @@
                 abrirModal(DOM.modalRelatorio);
             });
             DOM.checkIncluirNormalizados?.addEventListener('change', () => this.gerarPreviewRelatorio());
-
-            document.querySelectorAll('.despacho-tipo-btn').forEach(btn =>
-                btn.addEventListener('click', () => this.selecionarTipoDespacho(btn.dataset.tipo))
-            );
 
             const kanbanArea = document.querySelector('#tab-semaforo');
             kanbanArea.addEventListener('dragstart',  this.handleDragStart.bind(this));
@@ -2490,9 +2083,8 @@
         switchTab('tab-semaforo');
 
         NitLogin.inicializar();
-        NitLogin.tentarRestaurar() || (/* aguarda login manual */ true);
+        NitLogin.tentarRestaurar() || true;
 
-        // Modais
         setupModal(DOM.modalRelatorio,        DOM.btnModalFechar);
         setupModal(DOM.modalEdicao,           DOM.btnEdicaoCancelar);
         setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, () => {
@@ -2510,7 +2102,7 @@
         can?.addEventListener('click', () => { fecharModal(mc); _confirmCb = null; });
         mc?.addEventListener('click',  e => { if (e.target === mc) { fecharModal(mc); _confirmCb = null; } });
 
-        // Copiar relatório (com fallback clipboard)
+        // Copiar relatório
         DOM.btnModalCopiar?.addEventListener('click', () => {
             const txt = DOM.modalRelatorioTexto?.value || '';
             if (navigator.clipboard && window.isSecureContext) {
@@ -2542,7 +2134,6 @@
             setupModal(modH, document.getElementById('btn-historico-fechar'));
         }
 
-        // Módulos novos v13
         NitCardDetails.inicializar();
         NitBuscaGlobal.inicializar();
         NitLogout.inicializar();
@@ -2559,34 +2150,25 @@
         document.querySelector(`.tab-button[data-tab="${tabId}"]`)?.classList.add('active');
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // SIDEBAR (colapsar / expandir / acordeão)
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // SIDEBAR
+    // ═════════════════════════════════════════════════════════════════════════
     const NitSidebar = {
         _KEY: 'nit-sidebar-collapsed',
 
         inicializar() {
             const btn = document.getElementById('btn-sb-toggle');
             if (!btn) return;
-            // Restaurar estado salvo
             if (localStorage.getItem(this._KEY) === '1') this._setSidebar(true);
             btn.addEventListener('click', () => this.toggle());
-            // Teclado: [ abre/fecha sidebar
             document.addEventListener('keydown', e => {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
                 if (e.key === '[') this.toggle();
             });
         },
 
-        toggle() {
-            const sb = document.getElementById('sidebar');
-            if (!sb) return;
-            this._setSidebar(!sb.classList.contains('collapsed'));
-        },
-
-        expandir() {
-            this._setSidebar(false);
-        },
+        toggle()   { const sb = document.getElementById('sidebar'); if (sb) this._setSidebar(!sb.classList.contains('collapsed')); },
+        expandir() { this._setSidebar(false); },
 
         _setSidebar(collapsed) {
             const sb = document.getElementById('sidebar');
@@ -2604,18 +2186,15 @@
     };
     window.NitSidebar = NitSidebar;
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // LAZY CARD RENDER — IntersectionObserver (performance)
-    // Cards fora do viewport têm o body renderizado como skeleton.
-    // Ao entrar na viewport, o conteúdo real é injetado.
-    // Sem dependência externa. Sem quebra de funcionalidade.
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // LAZY RENDER
+    // ═════════════════════════════════════════════════════════════════════════
     const NitLazy = {
-        _io: null,
-        _queue: new Map(), // cardEl → renderFn
+        _io:    null,
+        _queue: new Map(),
 
         inicializar() {
-            if (!('IntersectionObserver' in window)) return; // fallback: renderiza tudo
+            if (!('IntersectionObserver' in window)) return;
             this._io = new IntersectionObserver(entries => {
                 entries.forEach(e => {
                     if (!e.isIntersecting) return;
@@ -2625,14 +2204,12 @@
             }, { rootMargin: '120px 0px', threshold: 0 });
         },
 
-        // Registra um card para render lazy. renderFn injeta o conteúdo real.
         observar(cardEl, renderFn) {
-            if (!this._io) { renderFn(); return; } // sem suporte → render imediato
+            if (!this._io) { renderFn(); return; }
             this._queue.set(cardEl, renderFn);
             this._io.observe(cardEl);
         },
 
-        // Remove da fila (usado quando card é removido do DOM)
         liberar(cardEl) {
             if (this._queue.has(cardEl)) {
                 this._queue.delete(cardEl);
@@ -2642,10 +2219,9 @@
     };
     window.NitLazy = NitLazy;
 
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // MODAL DETALHES DO CARD (item 6.6)
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // MODAL DETALHES DO CARD
+    // ═════════════════════════════════════════════════════════════════════════
     const NitCardDetails = {
         _COLUNAS: {
             'coluna-sem-necessidade': { label: 'Sem Necessidade', cor: '#94A3B8' },
@@ -2656,14 +2232,14 @@
         },
 
         abrir(card) {
-            const ds = card.dataset;
-            const colId  = card.closest('.kanban-column')?.id || ds.coluna || '';
+            const ds      = card.dataset;
+            const colId   = card.closest('.kanban-column')?.id || ds.coluna || '';
             const colInfo = this._COLUNAS[colId] || { label: colId || '—', cor: '#94A3B8' };
 
             const set = (id, val) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                if (val && val.trim()) { el.textContent = val; el.classList.remove('vazio'); }
+                if (val && String(val).trim()) { el.textContent = val; el.classList.remove('vazio'); }
                 else { el.textContent = '—'; el.classList.add('vazio'); }
             };
 
@@ -2682,12 +2258,11 @@
 
             const badge = document.getElementById('detalhe-coluna-badge');
             if (badge) {
-                badge.textContent = colInfo.label;
+                badge.textContent    = colInfo.label;
                 badge.style.background = colInfo.cor + '22';
                 badge.style.color      = colInfo.cor;
                 badge.style.border     = `1px solid ${colInfo.cor}44`;
             }
-
             abrirModal(document.getElementById('modal-detalhes'));
         },
 
@@ -2700,9 +2275,9 @@
         },
     };
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // BUSCA GLOBAL — barra estilo Trello (items 3.1 + busca por coluna 3.2)
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // BUSCA GLOBAL
+    // ═════════════════════════════════════════════════════════════════════════
     const NitBuscaGlobal = {
         _aberto: false,
         _idx:    -1,
@@ -2716,13 +2291,12 @@
         },
 
         abrir() {
-            const ov = document.getElementById('busca-global-overlay');
-            const in_ = document.getElementById('busca-global-input');
+            const ov  = document.getElementById('busca-global-overlay');
+            const inp = document.getElementById('busca-global-input');
             if (!ov) return;
             ov.classList.add('aberto');
             this._aberto = true;
-            in_?.focus();
-            in_ && (in_.value = '');
+            if (inp) { inp.value = ''; inp.focus(); }
             this._renderizar('');
         },
 
@@ -2750,23 +2324,20 @@
 
         _hl(texto, q) {
             if (!q || !texto) return texto || '';
-            const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+            const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
             return texto.replace(re, '<span class="busca-highlight">$1</span>');
         },
 
         _renderizar(q) {
-            const lista  = document.getElementById('busca-global-resultados');
-            const vazio  = document.getElementById('busca-global-vazio');
+            const lista = document.getElementById('busca-global-resultados');
+            const vazio = document.getElementById('busca-global-vazio');
             if (!lista || !vazio) return;
-
             const termo = q.toLowerCase().trim();
             const todos = this._coletarCards();
             const hits  = termo ? todos.filter(c => this._match(c, termo)) : todos.slice(0, 20);
-
             lista.innerHTML = '';
             vazio.style.display = hits.length ? 'none' : 'block';
             this._idx = -1;
-
             hits.forEach((c, i) => {
                 const colInfo = this._COLUNAS_LABEL[c.colId] || { label: c.colId, cor: '#94A3B8' };
                 const item = document.createElement('div');
@@ -2785,11 +2356,10 @@
 
         _selecionar(cardEl) {
             this.fechar();
-            // Defer para garantir que o overlay fechou antes do scroll
             requestAnimationFrame(() => {
                 cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                cardEl.style.outline = '2px solid var(--color-primary)';
-                cardEl.style.boxShadow = '0 0 0 4px rgba(59,130,246,.25)';
+                cardEl.style.outline    = '2px solid var(--color-primary)';
+                cardEl.style.boxShadow  = '0 0 0 4px rgba(59,130,246,.25)';
                 setTimeout(() => { cardEl.style.outline = ''; cardEl.style.boxShadow = ''; }, 2200);
             });
         },
@@ -2804,11 +2374,7 @@
         },
 
         _confirmarFoco() {
-            const ativo = document.querySelector('#busca-global-resultados .busca-resultado-item.ativo');
-            if (!ativo) return;
-            const i = parseInt(ativo.dataset.i, 10);
-            const hits = Array.from(document.querySelectorAll('#busca-global-resultados .busca-resultado-item'));
-            ativo.click();
+            document.querySelector('#busca-global-resultados .busca-resultado-item.ativo')?.click();
         },
 
         inicializar() {
@@ -2816,50 +2382,37 @@
             const overlay  = document.getElementById('busca-global-overlay');
             const input    = document.getElementById('busca-global-input');
             const btnEsc   = document.getElementById('busca-global-esc');
-            const panel    = document.getElementById('busca-global-panel');
-
             if (!overlay || !input) return;
-
             btnAbrir?.addEventListener('click', () => this.abrir());
             btnEsc?.addEventListener('click',  () => this.fechar());
-
-            // Fechar ao clicar fora do painel
             overlay.addEventListener('click', e => { if (e.target === overlay) this.fechar(); });
-
-            // Atalho Ctrl+K / Cmd+K
             document.addEventListener('keydown', e => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.abrir(); return; }
                 if (e.key === 'Escape' && this._aberto) { e.stopPropagation(); this.fechar(); }
             });
-
-            // Navegação por teclado no overlay
             input.addEventListener('keydown', e => {
-                if (e.key === 'ArrowDown') { e.preventDefault(); this._moverFoco(+1); }
-                else if (e.key === 'ArrowUp')  { e.preventDefault(); this._moverFoco(-1); }
-                else if (e.key === 'Enter')     { e.preventDefault(); this._confirmarFoco(); }
-                else if (e.key === 'Escape')    { e.stopPropagation(); this.fechar(); }
+                if      (e.key === 'ArrowDown') { e.preventDefault(); this._moverFoco(+1); }
+                else if (e.key === 'ArrowUp')   { e.preventDefault(); this._moverFoco(-1); }
+                else if (e.key === 'Enter')      { e.preventDefault(); this._confirmarFoco(); }
+                else if (e.key === 'Escape')     { e.stopPropagation(); this.fechar(); }
             });
-
             input.addEventListener('input', () => this._renderizar(input.value));
         },
     };
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // LOGOUT (item 1.4 / 6.2)
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // LOGOUT
+    // ═════════════════════════════════════════════════════════════════════════
     const NitLogout = {
         inicializar() {
             const btn = document.getElementById('btn-logout');
             if (!btn) return;
             btn.addEventListener('click', () => this._executar());
-
-            // Mostrar botão após login bem-sucedido — monkey-patch no confirmar do NitLogin
             const _orig = NitLogin.confirmar.bind(NitLogin);
             NitLogin.confirmar = function() {
                 _orig();
                 btn.style.display = 'flex';
             };
-            // Se já estava logado (restaurou sessão), mostrar imediatamente
             if (sessionStorage.getItem('nit-operador')) btn.style.display = 'flex';
         },
 
@@ -2877,14 +2430,10 @@
                     sessionStorage.removeItem('nit-turno');
                     NitLogin.operador = null;
                     NitLogin.turno    = null;
-
                     const badge = document.getElementById('nit-operador-badge');
                     if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
-
                     const btn = document.getElementById('btn-logout');
                     if (btn) btn.style.display = 'none';
-
-                    // Resetar campos de login e mostrar overlay
                     const nomeI  = document.getElementById('login-nome');
                     const turnoI = document.getElementById('login-turno');
                     if (nomeI)  nomeI.value  = '';
@@ -2897,15 +2446,15 @@
         },
     };
 
-    // ── Também inicializar busca por coluna em VL e AMC (item 3.2 já wired)
-    // As colunas VL e AMC agora têm .kanban-search no HTML; o listener
-    // global abaixo captura todos de uma vez, sem precisar de código extra.
+    // ═════════════════════════════════════════════════════════════════════════
+    // BUSCA POR COLUNA
+    // ═════════════════════════════════════════════════════════════════════════
     function inicializarBuscasPorColuna() {
         document.querySelectorAll('.kanban-search').forEach(input => {
             const colunaId = input.dataset.coluna;
             if (!colunaId) return;
             input.addEventListener('input', () => {
-                const q = input.value.toLowerCase();
+                const q         = input.value.toLowerCase();
                 const container = document.querySelector(`#${colunaId} .kanban-cards-container`);
                 if (!container) return;
                 container.querySelectorAll('.kanban-card').forEach(c => {
@@ -2922,8 +2471,6 @@
         inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
     });
 
-
-</script>
-
+    </script>
 </body>
 </html>
