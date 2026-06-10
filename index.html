@@ -1819,82 +1819,93 @@
         },
 
         _reprocessar(eventos) {
-    const mapaAtual  = new Map();
-    const codigosMap = new Map();
-    document.querySelectorAll('#tab-semaforo .kanban-card').forEach(card => {
-        const eid = card.dataset.eventoid || card.dataset.codigo;
-        mapaAtual.set(eid, {
-            element:     card,
-            normalizado: !!card.closest('#coluna-normalizados'),
-        });
-        const cod = card.dataset.codigo;
-        if (!codigosMap.has(cod)) codigosMap.set(cod, []);
-        codigosMap.get(cod).push(eid);
-    });
-
-    let criados = 0, atualizados = 0, herdados = 0;
-
-    eventos.forEach(ev => {
-        const existente = mapaAtual.get(ev.eventoId);
-        const status    = this.statusFromSecao(ev.secao, ev);
-
-        if (!existente) {
-            // ── #0 Herança de pendências entre dias ──────────────
-            const eidsPorCodigo = codigosMap.get(ev.codigo) || [];
-            const cardHerdado   = eidsPorCodigo
-                .map(eid => mapaAtual.get(eid))
-                .find(c => c && !c.normalizado);
-
-            if (cardHerdado) {
-                const cardEl           = cardHerdado.element;
-                const eventoIdAnterior = cardEl.dataset.eventoid;
-                cardEl.dataset.datareferencia = ev.dataReferencia;
-                NitFirebase.exec((db, ref, update) =>
-                    update(ref(db, `kanban/${eventoIdAnterior}`), {
-                        dataReferencia: ev.dataReferencia,
-                        ts: Date.now(),
-                    })
-                );
-                herdados++;
-                return;
-            }
-            // ─────────────────────────────────────────────────────
-
-            ev.reincidente = codigosMap.has(ev.codigo);
-            this.criarNovoCard(ev, status);
-            criados++;
-            return;
-        }
-
-        if (!existente.normalizado && status === 'NORMALIZADO') {
-            DOM.colunaNormalizados.prepend(existente.element);
-            existente.element.classList.add('card-foi-normalizado');
-            setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
-            this.ultimoLoteNormalizado.push(existente.element.id);
-
-            const fimPartes = ev.fim ? ev.fim.split(' ') : [];
-            const dataFim = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
-            const horaFim = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-
-            NitFirebase.exec((db, ref, update) =>
-                update(ref(db, `kanban/${ev.eventoId}`), {
-                    coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now(),
-                    data_fim: dataFim,
-                    hora_fim: horaFim,
-                    ts_norm: Date.now(),
-                })
-            );
-            atualizados++;
-        }
-    });
-
-    AppState.totalOcorrenciasCriadas += criados;
-    const msgs = [];
-    if (criados)   msgs.push(`${criados} nova(s) adicionada(s).`);
-    if (atualizados) msgs.push(`${atualizados} normalizada(s).`);
-    if (herdados)  msgs.push(`${herdados} pendência(s) herdada(s) do dia anterior.`);
-    showToast(msgs.length ? msgs.join(' ') : 'Nenhuma mudança detectada.', msgs.length ? 'success' : 'info');
-},
+            const mapaAtual  = new Map();
+            const codigosMap = new Map();
+            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(card => {
+                const eid = card.dataset.eventoid || card.dataset.codigo;
+                mapaAtual.set(eid, {
+                    element:     card,
+                    normalizado: !!card.closest('#coluna-normalizados'),
+                });
+                const cod = card.dataset.codigo;
+                if (!codigosMap.has(cod)) codigosMap.set(cod, []);
+                codigosMap.get(cod).push(eid);
+            });
+        
+            let criados = 0, atualizados = 0, herdados = 0;
+        
+            eventos.forEach(ev => {
+                const existente = mapaAtual.get(ev.eventoId);
+                const status    = this.statusFromSecao(ev.secao, ev);
+        
+                if (!existente) {
+                    // ── #0 Herança de pendências entre dias ──────────────
+                    const eidsPorCodigo = codigosMap.get(ev.codigo) || [];
+                    const cardHerdado   = eidsPorCodigo
+                        .map(eid => mapaAtual.get(eid))
+                        .find(c => c && !c.normalizado);
+        
+                    if (cardHerdado) {
+                        const cardEl           = cardHerdado.element;
+                        const eventoIdAnterior = cardEl.dataset.eventoid;
+                        cardEl.dataset.datareferencia = ev.dataReferencia;
+                        NitFirebase.exec((db, ref, update) =>
+                            update(ref(db, `kanban/${eventoIdAnterior}`), {
+                                dataReferencia: ev.dataReferencia,
+                                ts: Date.now(),
+                            })
+                        );
+                        herdados++;
+                        return;
+                    }
+                    // ─────────────────────────────────────────────────────
+        
+                    ev.reincidente = codigosMap.has(ev.codigo);
+                    this.criarNovoCard(ev, status);
+                    criados++;
+                    return;
+                }
+        
+                if (!existente.normalizado && status === 'NORMALIZADO') {
+                    DOM.colunaNormalizados.prepend(existente.element);
+                    existente.element.classList.add('card-foi-normalizado');
+                    setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
+                    this.ultimoLoteNormalizado.push(existente.element.id);
+        
+                    const fimPartes = ev.fim ? ev.fim.split(' ') : [];
+                    const dataFim = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
+                    const horaFim = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+        
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${ev.eventoId}`), {
+                            coluna: 'coluna-normalizados', status: 'NORMALIZADO', ts: Date.now(),
+                            data_fim: dataFim,
+                            hora_fim: horaFim,
+                            ts_norm: Date.now(),
+                        })
+                    );
+                    atualizados++;
+        
+                } else if (!existente.normalizado && ev.dataReferencia !== existente.element.dataset.datareferencia) {
+                    // ── Herança via mesmo eventoId (inicio não mudou) ────
+                    existente.element.dataset.datareferencia = ev.dataReferencia;
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${ev.eventoId}`), {
+                            dataReferencia: ev.dataReferencia,
+                            ts: Date.now(),
+                        })
+                    );
+                    herdados++;
+                }
+            });
+        
+            AppState.totalOcorrenciasCriadas += criados;
+            const msgs = [];
+            if (criados)     msgs.push(`${criados} nova(s) adicionada(s).`);
+            if (atualizados) msgs.push(`${atualizados} normalizada(s).`);
+            if (herdados)    msgs.push(`${herdados} pendência(s) herdada(s) do dia anterior.`);
+            showToast(msgs.length ? msgs.join(' ') : 'Nenhuma mudança detectada.', msgs.length ? 'success' : 'info');
+        },
         _colocarCardNaColuna(el, status) {
             const mapa = {
                 NORMALIZADO:    () => DOM.colunaNormalizados.prepend(el),
