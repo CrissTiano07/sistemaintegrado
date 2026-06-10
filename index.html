@@ -2073,7 +2073,7 @@
             DOM.displayTotal.textContent        = exibTotal;
             DOM.displayNormalizados.textContent = exibNorm;
             DOM.displayPendentes.textContent    = exibPend;
-            DOM.countNormalizados.textContent = totalNorm;
+            DOM.countNormalizados.textContent = filtro ? exibNorm : totalNorm;
 
             // Contadores por coluna
             document.getElementById('count-espera')?.setAttribute('data-count', total.espera);
