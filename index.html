@@ -2050,7 +2050,20 @@
             const filtro = this._filtroData;
             let exibTotal = totalGeral, exibNorm = totalNorm, exibPend = totalPend;
             if (filtro) {
-                const todos  = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
+                const todos = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
+                
+                todos.forEach(c => {
+                    const dataBate    = c.dataset.datareferencia === filtro;
+                    const normalizado = !!c.closest('#coluna-normalizados');
+                    
+                    // Pendentes sempre visíveis — normalizados só se a data bater
+                    if (normalizado) {
+                        c.style.display = dataBate ? '' : 'none';
+                    } else {
+                        c.style.display = '';
+                    }
+                });
+            
                 const hoje   = todos.filter(c => c.dataset.datareferencia === filtro);
                 exibTotal    = hoje.length;
                 exibNorm     = hoje.filter(c => c.closest('#coluna-normalizados')).length;
