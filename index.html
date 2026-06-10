@@ -1893,6 +1893,7 @@
                         update(ref(db, `kanban/${ev.eventoId}`), {
                             dataReferencia: ev.dataReferencia,
                             ts: Date.now(),
+                            ts_dataReferencia: Date.now(), //gatilho para dataReferencia para ativar data referência na planilha (herança)
                         })
                     );
                     herdados++;
