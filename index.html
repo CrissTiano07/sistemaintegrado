@@ -2226,6 +2226,7 @@
                     coluna, pl: tipo === 'sn' ? 'sn' : 'atend', sub: tipo,
                     equipe: equipe || '', viatura: vt || 'N/I',
                     operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
+                    ts_despacho: Date.now(),
                 })
             );
             gravarHistoricoFirebase(eventoId, card.dataset.coluna, coluna, tipo, equipe, vt, NitLogin.operador);
