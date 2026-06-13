@@ -50,12 +50,16 @@
         :root {
             --color-primary:        #3B82F6;
             --color-primary-hover:  #60A5FA;
-            --color-bg:      #0F172A;
-            --color-surface: #1E293B;
-            --color-border:  #334155;
-            --color-text-primary:   #F1F5F9;
-            --color-text-secondary: #CBD5E1;
-            --color-text-tertiary:  #94A3B8;
+            --color-primary-glow:   rgba(59,130,246,0.18);
+            --color-primary-glow2:  rgba(59,130,246,0.08);
+            --color-bg:      #080f1e;
+            --color-surface: #111827;
+            --color-surface2:#162032;
+            --color-border:  #1e2d45;
+            --color-border2: #243450;
+            --color-text-primary:   #e8f0fe;
+            --color-text-secondary: #94a8c8;
+            --color-text-tertiary:  #4e6480;
             --color-success: #22C55E;
             --color-warning: #EAB308;
             --color-danger:  #EF4444;
@@ -127,7 +131,7 @@
             font-size: var(--font-size-base);
         }
 
-        * { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+        * { scrollbar-width: thin; scrollbar-color: var(--color-border2) transparent; }
         *::-webkit-scrollbar { width: 8px; height: 8px; }
         *::-webkit-scrollbar-track { background: transparent; }
         *::-webkit-scrollbar-thumb { background-color: var(--color-border); border-radius: 10px; border: 3px solid transparent; background-clip: content-box; }
@@ -150,84 +154,273 @@
 
         .main-container { display: flex; flex-direction: column; height: calc(100vh - 32px); overflow: hidden; }
 
+        /* ── NAVBAR PREMIUM ──────────────────────────────────────────── */
         .tab-navigation {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            border-bottom: 1px solid var(--color-border);
-            margin-bottom: var(--space-2);
             flex-shrink: 0;
-            gap: 0;
-            min-height: 44px;
+            margin-bottom: var(--space-2);
         }
-        .nav-left  { display: flex; align-items: center; }
-        .nav-center { display: flex; justify-content: center; align-items: center; }
-        .nav-right  { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding-right: 4px; }
 
-        .tab-button { padding: 10px 20px; cursor: pointer; background: none; border: none; color: #8b949e; font-weight: var(--font-weight-bold); font-size: 12px; letter-spacing: 0.5px; border-bottom: 2px solid transparent; white-space: nowrap; text-transform: uppercase; }
-        .tab-button:hover { color: var(--color-text-primary); background-color: var(--color-border); }
-        .tab-button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
-        .tab-button i { margin-right: var(--space-1); }
+        .nav-pill {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #1a2d4d 0%, #0f1d34 60%, #0a1628 100%);
+            border-radius: 999px;
+            height: 46px;
+            padding: 0 16px;
+            border: 1px solid rgba(59,130,246,0.30);
+            box-shadow:
+                0 0 0 1px rgba(59,130,246,0.08),
+                0 2px 24px rgba(0,0,0,0.55),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+            gap: 8px;
+        }
+
+        .nav-left        { display: flex; align-items: center; gap: 2px; }
+        .nav-pill-center { display: flex; align-items: center; justify-content: center; flex: 1; }
+        .nav-right       { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+
+        .tab-button {
+            padding: 6px 14px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: rgba(148,168,200,0.85);
+            font-weight: 600;
+            font-size: 10.5px;
+            letter-spacing: 0.7px;
+            border-radius: 999px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            transition: background 0.18s, color 0.18s;
+        }
+        .tab-button:hover  { color: #e8f0fe; background: rgba(59,130,246,0.12); }
+        .tab-button.active { color: #93c5fd; background: rgba(59,130,246,0.18); box-shadow: inset 0 0 0 1px rgba(59,130,246,0.25); }
+        .tab-button i { margin-right: 5px; font-size: 10px; opacity: 0.8; }
 
         #btn-busca-global {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            color: var(--color-text-tertiary);
-            font-size: var(--font-size-sm);
-            padding: 0 14px;
-            height: 30px;
+            background: rgba(59,130,246,0.06);
+            border: 1px solid rgba(59,130,246,0.20);
+            border-radius: 999px;
+            color: rgba(148,168,200,0.7);
+            font-size: 11px;
+            padding: 0 16px;
+            height: 28px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: border-color 0.2s, color 0.2s;
+            transition: all 0.15s;
             white-space: nowrap;
-            width: min(50vw, 420px);
+            width: min(42vw, 380px);
             justify-content: flex-start;
         }
-        #btn-busca-global i { flex-shrink: 0; font-size: 12px; }
-        #btn-busca-global span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; }
-        #btn-busca-global:hover { border-color: var(--color-primary); color: var(--color-text-primary); }
+        #btn-busca-global i { font-size: 11px; flex-shrink: 0; }
+        #btn-busca-global span { flex: 1; text-align: left; font-size: 10.5px; }
+        #btn-busca-global:hover { border-color: rgba(59,130,246,0.5); color: #93c5fd; background: rgba(59,130,246,0.10); }
         #btn-busca-global kbd {
-            background: var(--color-bg);
-            border: 1px solid var(--color-border);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 3px;
-            font-size: 9px;
+            font-size: 8.5px;
             padding: 1px 5px;
-            color: var(--color-text-tertiary);
+            color: rgba(148,168,200,0.5);
             font-family: var(--font-family-mono);
-            flex-shrink: 0;
             margin-left: auto;
         }
 
         .nav-date-input {
-            background: var(--color-bg);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-sm);
-            color: var(--color-text-primary);
-            font-size: 11px;
-            padding: 3px 7px;
+            background: rgba(59,130,246,0.06);
+            border: 1px solid rgba(59,130,246,0.18);
+            border-radius: 6px;
+            color: var(--color-text-secondary);
+            font-size: 10.5px;
+            padding: 2px 6px;
             cursor: pointer;
-            height: 28px;
+            height: 24px;
             color-scheme: dark;
+            transition: border-color 0.15s;
         }
-        .nav-date-input:focus { outline: none; border-color: var(--color-primary); }
+        .nav-date-input:focus { outline: none; border-color: rgba(59,130,246,0.5); }
+
         .nav-operador-badge {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
+            font-size: 10.5px;
+            color: #4e6480;
             white-space: nowrap;
             display: none;
+            letter-spacing: 0.2px;
+        }
+
+        /* ── CÍRCULO PREMIUM NA SIDEBAR ──────────────────────────────── */
+        /* ── ENTRADA DE DADOS — CÍRCULO PREMIUM ─────────────────────
+           Todas as classes são semânticas, sem inline styles,
+           sem !important, sem seletores de ID.
+        ────────────────────────────────────────────────────────── */
+
+        .sb-inner-circulo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 8px 14px;
+            gap: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Container do conjunto de anéis */
+        .sb-circulo-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            overflow: hidden;
+            padding: 4px 0 0;
+            box-sizing: border-box;
+        }
+
+        /* Anel externo — borda sutil, glow radial de fundo */
+        .sb-ring-outer {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+            border: 1px solid rgba(59,130,246,0.25);
+            max-width: calc(100% - 8px);
+            max-height: calc(100% - 8px);
+            transition: border-color 0.25s;
+        }
+        .sb-ring-outer:focus-within {
+            border-color: rgba(59,130,246,0.50);
+        }
+
+        /* Anel interno — gap escuro entre anéis */
+        .sb-ring-inner {
+            width: 188px;
+            height: 188px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--color-bg);
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.6);
+        }
+
+        /* Disco principal */
+        .sb-circulo {
+            width: 174px;
+            height: 174px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            overflow: hidden;
+            position: relative;
+            background: radial-gradient(ellipse at 38% 28%, #1a2d4d 0%, #0c1726 70%);
+            border: 2px solid rgba(59,130,246,0.55);
+            box-shadow:
+                0 0 20px rgba(59,130,246,0.14),
+                0 4px 20px rgba(0,0,0,0.45),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            transition: border-color 0.25s, box-shadow 0.25s;
+        }
+        .sb-circulo:focus-within {
+            border-color: rgba(59,130,246,0.90);
+            box-shadow:
+                0 0 30px rgba(59,130,246,0.30),
+                0 4px 20px rgba(0,0,0,0.45),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        /* Textarea dentro do círculo */
+        .sb-textarea-circulo {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            resize: none;
+            color: #c8daf5;
+            font-size: 10.5px;
+            font-family: var(--font-family-mono);
+            padding-top: calc(50% - 0.75rem);
+            padding-left: 18px;
+            padding-right: 18px;
+            padding-bottom: 0;
+            outline: none;
+            text-align: center;
+            line-height: 1.5rem;
+            overflow: hidden;
+            box-sizing: border-box;
+            scrollbar-width: none;
+            cursor: text;
+            border-radius: 50%;
+            letter-spacing: 0.2px;
+        }
+        .sb-textarea-circulo::-webkit-scrollbar { display: none; }
+        .sb-textarea-circulo:focus { outline: none; box-shadow: none; }
+        .sb-textarea-circulo::placeholder {
+            color: rgba(96,165,250,0.40);
+            font-family: var(--font-family-sans);
+            letter-spacing: 0.3px;
+        }
+
+        /* ── BOTÃO PROCESSAR — sem inline style, hover via CSS ──── */
+        .sb-btn-processar-full {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px 0;
+            border-radius: 10px;
+            background: #1e293b;
+            color: #f1f5f9;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2);
+            font-family: var(--font-family-sans);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-sizing: border-box;
+            line-height: 1;
+            transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.12s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .sb-btn-processar-full:hover {
+            background: #2563eb;
+            border-color: #3b82f6;
+            color: #ffffff;
+        }
+        .sb-btn-processar-full:active {
+            transform: scale(0.97);
+            background: #1d4ed8;
+        }
+        .sb-btn-processar-full svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+        .sb-btn-processar-full:hover svg {
+            transform: rotate(45deg);
         }
 
         .tab-content { display: none; flex-grow: 1; min-height: 0; }
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; flex: 1; min-height: 0; overflow: hidden; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .app-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+        .app-layout { display: flex; flex: 1; min-height: 0; overflow: hidden; gap: var(--space-2); padding: 0 var(--space-half); }
 
-        .sidebar { width: 260px; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; flex-shrink: 0; transition: width .22s cubic-bezier(.4,0,.2,1); overflow: hidden; }
-        .sidebar.collapsed { width: 48px; }
+        .sidebar { width: 260px; min-width: 260px; max-width: 260px; background: linear-gradient(180deg, #0f1c2e 0%, #090f1b 100%); border-right: 1px solid var(--color-border); border-radius: var(--radius-md); display: flex; flex-direction: column; flex-shrink: 0; flex-grow: 0; transition: width .22s cubic-bezier(.4,0,.2,1), min-width .22s, max-width .22s; overflow: hidden; box-sizing: border-box; }
+        .sidebar.collapsed { width: 48px; min-width: 48px; max-width: 48px; }
         .sb-toggle { width: 48px; height: 44px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-bottom: 1px solid var(--color-border); cursor: pointer; color: var(--color-text-tertiary); flex-shrink: 0; transition: color .15s; }
         .sb-toggle:hover { color: var(--color-text-primary); }
         .sb-toggle i { transition: transform .22s; font-size: 13px; }
@@ -254,7 +447,12 @@
         .sb-collapsed-icons > div { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; transition: background .15s, color .15s; }
         .sb-collapsed-icons > div:hover { background: var(--color-border); color: var(--color-text-primary); }
 
-        .kanban-area { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+        /* Círculo e botão — somem quando sidebar colapsada */
+        .sidebar.collapsed .sb-circulo-wrap { display: none; }
+        .sidebar.collapsed .sb-btn-processar-full { display: none; }
+        .sidebar.collapsed .sb-inner-circulo { padding: 0; gap: 0; }
+
+        .kanban-area { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 
         .form-group { margin-bottom: var(--space-2); }
         .form-group label { display: block; font-weight: var(--font-weight-medium); margin-bottom: var(--space-1); font-size: var(--font-size-base); color: var(--color-text-secondary); }
@@ -293,25 +491,168 @@
         .btn-icon:hover { color: var(--color-text-primary); background-color: var(--color-border); }
 
         .painel-operacional-wrapper { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-        #kanban-wrapper { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
-        .kanban-board { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2); flex: 1; min-height: 0; }
-        .kanban-column { background-color: var(--color-bg); border-radius: var(--radius-md); display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-        .kanban-column-header { padding: 10px 12px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); }
-        .card-count { font-size: var(--font-size-xs); background-color: var(--color-border); color: var(--color-text-primary); font-weight: var(--font-weight-bold); padding: 2px var(--space-1); border-radius: 8px; min-width: 20px; text-align: center; }
+        #kanban-wrapper { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; display: flex; flex-direction: column; }
+        .kanban-board { display: grid; grid-template-columns: repeat(4, minmax(200px,1fr)) minmax(200px,1fr); gap: var(--space-2); flex: 1; min-height: 0; min-width: 0; transition: grid-template-columns .25s cubic-bezier(.4,0,.2,1); overflow-y: hidden; }
+        .kanban-board.norm-collapsed { grid-template-columns: repeat(4, 1fr) 36px; }
+
+        /* ── Coluna normalizados colapsável ──────────────────────────── */
+
+        /* Estado expandido: group é passthrough, botão normal */
+        .norm-collapsed-group { display: contents; }
+        #btn-toggle-norm {
+            background: none; border: none; cursor: pointer;
+            color: var(--color-text-tertiary); font-size: 11px;
+            padding: 2px; flex-shrink: 0;
+            transition: transform .25s, color .15s; line-height: 1;
+        }
+        #btn-toggle-norm:hover { color: #3fb950; }
+
+        /* A coluna em si: largura fixa quando colapsada, overflow contido */
+        #coluna-normalizados {
+            transition: width .25s cubic-bezier(.4,0,.2,1);
+        }
+        #coluna-normalizados.collapsed {
+            width: 36px;
+            min-width: 36px;
+            max-width: 36px;
+            overflow: hidden;
+        }
+
+        /* Esconde filtro e cards */
+        #coluna-normalizados.collapsed .kanban-column-filter,
+        #coluna-normalizados.collapsed .kanban-cards-container { display: none; }
+
+        /* Header vira trilha vertical: ocupa toda a altura da coluna */
+        #coluna-normalizados.collapsed .kanban-column-header {
+            width: 36px;
+            min-width: 36px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 0;
+            gap: 12px;
+            border-bottom: none;
+            border-left: 2px solid #3fb95044;
+            flex: 1;
+            overflow: visible;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        /* Botão vira ‹ e fica no topo do grupo */
+        #coluna-normalizados.collapsed #btn-toggle-norm {
+            transform: rotate(180deg);
+            flex-shrink: 0;
+        }
+
+        /* Grupo texto + contador: empilhados e centralizados */
+        #coluna-normalizados.collapsed .norm-collapsed-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Texto vertical de baixo para cima */
+        #coluna-normalizados.collapsed .header-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            letter-spacing: 1.5px;
+            white-space: nowrap;
+            flex-grow: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            max-height: 160px;
+            overflow: hidden;
+        }
+        /* Ícone no modo vertical: compensa a rotação do pai */
+        #coluna-normalizados.collapsed .header-text i {
+            transform: rotate(180deg);
+            margin-right: 0;
+        }
+
+        /* Contador: horizontal, dimensões livres para respirar */
+        #coluna-normalizados.collapsed .card-count {
+            writing-mode: horizontal-tb;
+            transform: none;
+            min-width: unset;
+            max-width: unset;
+            width: auto;
+            padding: 2px 6px;
+        }
+        .kanban-column { background: linear-gradient(180deg, #0a1220 0%, #080f1a 100%); border-radius: var(--radius-md); display: flex; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid var(--color-border); }
+        .kanban-column-header { padding: 10px 12px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; display: flex; align-items: center; gap: var(--space-1); background: rgba(255,255,255,0.015); }
+        .card-count { font-size: 10px; background: rgba(59,130,246,0.12); color: #93c5fd; font-weight: 700; padding: 2px 8px; border-radius: 999px; min-width: 22px; text-align: center; border: 1px solid rgba(59,130,246,0.20); letter-spacing: 0.3px; }
         .kanban-cards-container { padding: var(--space-1); flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-        .kanban-card { background-color: var(--color-surface); padding: 12px; border-radius: 8px; box-shadow: var(--shadow-sm); cursor: grab; border: 1px solid var(--color-border); }
+        .kanban-card { background: transparent; padding: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: grab; border: 1px solid var(--color-border); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-1); gap: var(--space-1); }
-        .card-header strong { font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
-        .card-status-tag { background-color: color-mix(in srgb, var(--color-warning) 15%, transparent); color: var(--color-warning); padding: var(--space-half) var(--space-1); border-radius: 12px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+        .card-header strong { font-size: 15px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.2px; }
+        .card-status-tag { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); white-space: nowrap; }
         .card-body { font-size: var(--font-size-sm); color: #b0bec5; margin-bottom: var(--space-1); line-height: 1.5; }
-        .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: var(--space-1); border-top: 1px solid var(--color-border); gap: var(--space-half); }
+        .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
         .card-body-lazy { min-height: 28px; }
         .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }
-        .btn-card-action { background: none; border: none; cursor: pointer; color: var(--color-text-tertiary); font-size: var(--font-size-md); padding: var(--space-half); }
-        .btn-card-action.copy-location:hover { color: var(--color-warning); }
-        .btn-card-action.dispatch:hover { color: var(--color-primary); }
-        .btn-card-action.edit:hover { color: var(--color-info); }
-        .btn-card-action.complete:hover { color: var(--color-success); }
+        /* ── Botões de card — sistema padronizado ─────────────────── */
+        .btn-card-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            border: 1px solid transparent;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            color: var(--color-text-tertiary);
+            font-size: 12px;
+            padding: 0;
+            flex-shrink: 0;
+            transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+        }
+        .btn-card-action:hover {
+            transform: translateY(-1px);
+        }
+        /* copy-location → amarelo */
+        .btn-card-action.copy-location:hover {
+            color: var(--color-warning);
+            background: rgba(234,179,8,.12);
+            border-color: rgba(234,179,8,.22);
+        }
+        /* info → azul */
+        .btn-card-action.info-btn:hover {
+            color: #93c5fd;
+            background: rgba(59,130,246,.12);
+            border-color: rgba(59,130,246,.22);
+        }
+        /* edit → ciano */
+        .btn-card-action.edit:hover {
+            color: var(--color-info);
+            background: rgba(14,165,233,.12);
+            border-color: rgba(14,165,233,.22);
+        }
+        /* dispatch → azul primário */
+        .btn-card-action.dispatch:hover {
+            color: var(--color-primary);
+            background: rgba(59,130,246,.12);
+            border-color: rgba(59,130,246,.22);
+        }
+        /* complete — permanentemente destacado (verde pill) */
+        .btn-card-action.complete {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(34,197,94,.12);
+            border-color: rgba(34,197,94,.25);
+            color: var(--color-success);
+        }
+        .btn-card-action.complete:hover {
+            background: rgba(34,197,94,.22);
+            border-color: rgba(34,197,94,.45);
+            color: #4ade80;
+        }
+        .btn-card-action:active { transform: translateY(0) scale(0.94); }
 
         .balanco-compacto { display: flex; justify-content: space-around; text-align: center; padding: var(--space-1) 0; }
         .balanco-item span { font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); text-transform: uppercase; }
@@ -323,7 +664,7 @@
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
         .modal-overlay.visible { opacity: 1; visibility: visible; }
-        .modal-container { background-color: var(--color-surface); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); border-radius: var(--radius-md); width: 90%; max-width: 500px; }
+        .modal-container { background: linear-gradient(160deg, #111d30 0%, #0a1220 100%); box-shadow: 0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(59,130,246,0.12); border-radius: var(--radius-md); width: 90%; max-width: 500px; border: 1px solid var(--color-border2); }
         .modal-header { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); font-size: 18px; font-weight: var(--font-weight-semibold); }
         .modal-body { padding: var(--space-3); overflow-y: auto; }
         .modal-footer { padding: var(--space-2) var(--space-3); border-top: 1px solid var(--color-border); display: flex; justify-content: flex-end; gap: var(--space-1); }
@@ -351,13 +692,13 @@
 
         .reincident-tag { background-color: var(--color-info); color: white; font-size: 9px; font-weight: var(--font-weight-bold); padding: 2px 6px; border-radius: 8px; margin-left: var(--space-1); }
 
-        #coluna-espera          .kanban-card { background-color: rgba(248,113,113,.07); border-left: 4px solid #ff7b72; }
-        #coluna-vl              .kanban-card { background-color: rgba(255,166, 87,.07); border-left: 4px solid #ffa657; }
-        #coluna-amc             .kanban-card { background-color: rgba(121,192,255,.07); border-left: 4px solid #79c0ff; }
-        #coluna-sem-necessidade .kanban-card { background-color: rgba(139,148,158,.06); border-left: 4px solid #8b949e; }
-        #coluna-normalizados    .kanban-card { background-color: rgba( 86,211,100,.07); border-left: 4px solid #56d364; }
+        #coluna-espera          .kanban-card { background: linear-gradient(135deg, rgba(248,81,73,.10) 0%, rgba(10,18,32,.0) 55%);  border-left: 3px solid #ff7b72; }
+        #coluna-vl              .kanban-card { background: linear-gradient(135deg, rgba(255,166,87,.10) 0%, rgba(10,18,32,.0) 55%);  border-left: 3px solid #ffa657; }
+        #coluna-amc             .kanban-card { background: linear-gradient(135deg, rgba(88,166,255,.10) 0%, rgba(10,18,32,.0) 55%);  border-left: 3px solid #79c0ff; }
+        #coluna-sem-necessidade .kanban-card { background: linear-gradient(135deg, rgba(139,148,158,.08) 0%, rgba(10,18,32,.0) 55%); border-left: 3px solid #8b949e; }
+        #coluna-normalizados    .kanban-card { background: linear-gradient(135deg, rgba(63,185,80,.10) 0%, rgba(10,18,32,.0) 55%);   border-left: 3px solid #56d364; }
 
-        .kanban-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--color-primary); }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.4); }
         .card-foi-normalizado { animation: pulso-verde 2s ease-in-out 2; border-color: var(--color-success) !important; }
         @keyframes pulso-verde {
             0%   { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 50%, transparent); }
@@ -462,9 +803,9 @@
         }
         .nit-login-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .nit-login-box {
-            background: var(--color-surface); border-radius: var(--radius-lg);
+            background: linear-gradient(160deg, #111d30 0%, #080f1e 100%); border-radius: var(--radius-lg);
             padding: 36px 32px; max-width: 380px; width: 90%; text-align: center;
-            box-shadow: 0 24px 64px rgba(0,0,0,.5); border: 1px solid var(--color-border);
+            box-shadow: 0 32px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(59,130,246,0.18); border: 1px solid var(--color-border2);
         }
         .nit-login-logo { font-size: 32px; font-weight: 700; color: var(--color-primary); letter-spacing: -1px; margin-bottom: 4px; }
         .nit-login-sub  { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 2px; }
@@ -544,30 +885,208 @@
         .detalhe-full { grid-column: 1 / -1; }
         .detalhe-coluna-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 
-        /* ── RESPONSIVIDADE ─────────────────────────────────────────── */
-        @media (max-width: 1400px) { .kanban-board { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (max-width: 1024px) {
-            body { padding: 10px; }
-            .sidebar { width: 48px !important; }
-            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVIDADE — Sistema de breakpoints em 5 camadas
+           ──────────────────────────────────────────────────────────
+           ≥1440  Desktop largo    — layout padrão completo
+           1280   Notebook 13-15"  — sidebar ligeiramente compacta
+           1024   Tablet landscape — sidebar recolhe, 2 colunas
+            768   Tablet portrait  — navbar compacta, sem labels
+            480   Mobile           — coluna única, overlay sidebar
+           ══════════════════════════════════════════════════════════ */
+
+        /* ── 1440px — telas largas: mostrar span do btn-logout ──── */
+        @media (min-width: 1440px) {
+            #btn-logout span { display: inline; }
+            .nav-pill { padding: 0 28px; }
         }
+
+        /* ── 1280px — notebook padrão ───────────────────────────── */
+        @media (max-width: 1280px) {
+            .sidebar { width: 240px; }
+            .sb-ring-outer { width: 188px; height: 188px; }
+            .sb-ring-inner { width: 176px; height: 176px; }
+            .sb-circulo { width: 160px; height: 160px; }
+            .sb-circulo #relatorio-bruto-input { padding: 22px 14px; font-size: 10px; }
+            .kanban-board { gap: 10px; }
+            #btn-busca-global { width: min(34vw, 300px); }
+        }
+
+        /* ── 1100px — notebooks pequenos / kanban 4+1 ───────────── */
+        @media (max-width: 1100px) {
+            body { padding: 10px; }
+            .main-container { height: calc(100vh - 20px); }
+            .sidebar { width: 220px; }
+            .sb-ring-outer { width: 176px; height: 176px; }
+            .sb-ring-inner { width: 164px; height: 164px; }
+            .sb-ring-outer { width: 176px; height: 176px; }
+            .sb-ring-inner { width: 164px; height: 164px; }
+            .sb-circulo { width: 148px; height: 148px; }
+            .kanban-board { gap: 8px; }
+            #btn-busca-global { width: min(28vw, 240px); }
+            #btn-busca-global span { display: none; }
+            .nav-pill { padding: 0 16px; }
+            .tab-button { padding: 5px 10px; font-size: 10px; }
+        }
+
+        /* ── 960px — tablet landscape / sidebar recolhe ─────────── */
+        @media (max-width: 960px) {
+            body { padding: 8px; }
+            .main-container { height: calc(100vh - 16px); }
+
+            /* sidebar vira overlay deslizável */
+            .sidebar {
+                position: absolute;
+                top: 0; left: 0; bottom: 0;
+                z-index: 100;
+                width: 260px !important;
+                transform: translateX(-100%);
+                transition: transform .25s cubic-bezier(.4,0,.2,1),
+                            box-shadow .25s;
+                box-shadow: none;
+            }
+            .sidebar.sb-open {
+                transform: translateX(0);
+                box-shadow: 4px 0 32px rgba(0,0,0,.6);
+            }
+            .sidebar.collapsed {
+                width: 260px !important;
+                transform: translateX(-100%);
+            }
+
+            /* overlay escuro por trás da sidebar */
+            .sb-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,.55);
+                z-index: 99;
+                backdrop-filter: blur(2px);
+            }
+            .sb-backdrop.visible { display: block; }
+
+            /* botão hamburguer na navbar */
+            .btn-sb-hamburger {
+                display: flex !important;
+            }
+
+            .kanban-board { grid-template-columns: repeat(3, 1fr) !important; gap: 8px; }
+            .kanban-area  { padding-left: 0; }
+
+            /* navbar: esconder label do logout, compactar */
+            #btn-logout span { display: none; }
+            #btn-busca-global { width: min(36vw, 280px); }
+            .nav-pill { height: 42px; }
+        }
+
+        /* ── 768px — tablet portrait ─────────────────────────────── */
         @media (max-width: 768px) {
             body { padding: 6px; }
-            .sidebar { width: 48px !important; }
-            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; }
-            .tab-navigation { flex-wrap: wrap; gap: 4px; }
-            .nav-right { padding-right: 0; }
+            .main-container { height: calc(100vh - 12px); }
+
+            /* navbar pill empilha em 2 linhas se necessário */
+            .nav-pill {
+                height: auto;
+                min-height: 42px;
+                padding: 6px 14px;
+                border-radius: 16px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .nav-pill-center { order: 3; width: 100%; }
+            #btn-busca-global {
+                width: 100%;
+                height: 30px;
+                border-radius: 8px;
+                justify-content: flex-start;
+            }
             #btn-busca-global kbd { display: none; }
+            #btn-busca-global span { display: block; font-size: 10px; }
+            .nav-left  { order: 1; }
+            .nav-right { order: 2; }
+
+            .kanban-board { grid-template-columns: repeat(2, 1fr) !important; gap: 6px; }
+            .kanban-column-header .header-text i { display: none; }
+
+            /* cards: reduzir padding */
+            .kanban-card { padding: 10px; }
+            .card-scn    { font-size: 14px; }
         }
+
+        /* ── 480px — mobile ─────────────────────────────────────── */
         @media (max-width: 480px) {
-            .kanban-board { grid-template-columns: 1fr !important; }
-            #busca-global-panel { width: 98%; border-radius: var(--radius-md); }
+            body { padding: 4px; }
+            .main-container { height: calc(100vh - 8px); }
+
+            .nav-pill { border-radius: 12px; gap: 4px; padding: 5px 10px; }
+            .tab-button { font-size: 9.5px; padding: 4px 8px; letter-spacing: 0.3px; }
+
+            /* datas e badges somem — economizar espaço */
+            .nav-date-input   { display: none; }
+            .nav-operador-badge { display: none !important; }
+            .nit-status-indicator span:last-child { display: none; } /* só o dot */
+
+            .kanban-board { grid-template-columns: 1fr !important; gap: 6px; }
+
+            /* busca global ocupa tela inteira */
+            #busca-global-panel { width: 98vw; max-width: 98vw; border-radius: var(--radius-md); }
+
+            /* modal fullscreen */
+            .modal-container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; margin: 0; max-height: 100vh; border-radius: 0; }
+            .modal-overlay { align-items: flex-end; padding: 0; }
+
+            /* cards: ainda mais compactos */
+            .kanban-card { padding: 8px 10px; }
+            .card-scn    { font-size: 13px; }
+            .btn-card-action { width: 26px; height: 26px; font-size: 11px; }
+
+            /* botão ver histórico some */
+            #btn-ver-historico { display: none !important; }
+        }
+
+        /* ── 360px — mobile pequeno ─────────────────────────────── */
+        @media (max-width: 360px) {
+            .tab-button { display: none; }
+            .tab-button.active { display: flex; }
+            .nav-pill { justify-content: space-between; }
+        }
+
+        /* ── Utilitários responsivos ────────────────────────────── */
+        /* Hamburguer — oculto por padrão, JS + CSS <960px mostram */
+        .btn-sb-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: rgba(148,168,200,0.85);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            align-items: center;
+            transition: background 0.15s;
+        }
+        .btn-sb-hamburger:hover { background: rgba(59,130,246,0.15); color: #93c5fd; }
+
+        /* Coluna normalizados recolhida em telas pequenas */
+        @media (max-width: 768px) {
+            .kanban-board.norm-collapsed { grid-template-columns: repeat(2, 1fr) 36px !important; }
+        }
+
+        /* Touch: aumentar área de toque dos botões de card */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-card-action { width: 34px; height: 34px; font-size: 13px; }
+            .kanban-card { padding: 12px; }
+            .kanban-column-filter .kanban-search { height: 34px; font-size: 13px; }
+            .tab-button { padding: 8px 14px; }
         }
     </style>
 </head>
 <body data-theme="dark">
 
     <!-- LOGIN ────────────────────────────────────────────────────────── -->
+    <!-- Backdrop sidebar (mobile/tablet) -->
+    <div class="sb-backdrop" id="sb-backdrop"></div>
+
     <div id="nit-login-overlay" class="nit-login-overlay">
         <div class="nit-login-box">
             <div class="nit-login-logo">NIT</div>
@@ -591,28 +1110,33 @@
 
     <div class="main-container">
         <div class="tab-navigation">
-            <div class="nav-left">
-                <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> SEMÁFORO</button>
-            </div>
-            <div class="nav-center">
-                <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
-                    <i class="fas fa-search"></i>
-                    <span>Pesquisar cards…</span>
-                    <kbd>Ctrl K</kbd>
-                </button>
-            </div>
-            <div class="nav-right">
-                <input type="date" id="filtro-data-input" title="Filtrar por data" class="nav-date-input">
-                <span id="nit-operador-badge" class="nav-operador-badge"></span>
-                <span id="nit-firebase-status" class="nit-status-indicator" title="Status Firebase">
-                    <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
-                    <span style="color:var(--color-info);">Conectando…</span>
-                </span>
-                <button id="btn-ver-historico" class="btn-icon" title="Ver Histórico de Ações"><i class="fas fa-history"></i></button>
-                <button id="btn-logout" title="Sair / Trocar operador">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </button>
+            <div class="nav-pill">
+                <div class="nav-left">
+                    <button class="btn-sb-hamburger" id="btn-sb-hamburger" title="Abrir painel lateral" aria-label="Abrir painel lateral">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semáforo</button>
+                </div>
+                <div class="nav-pill-center">
+                    <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
+                        <i class="fas fa-search"></i>
+                        <span>Pesquisar cards…</span>
+                        <kbd>Ctrl K</kbd>
+                    </button>
+                </div>
+                <div class="nav-right">
+                    <input type="date" id="filtro-data-input" title="Filtrar por data" class="nav-date-input">
+                    <span id="nit-operador-badge" class="nav-operador-badge"></span>
+                    <span id="nit-firebase-status" class="nit-status-indicator" title="Status Firebase">
+                        <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
+                        <span style="color:var(--color-info);">Conectando…</span>
+                    </span>
+                    <button id="btn-ver-historico" class="btn-icon" title="Ver Histórico de Ações" style="width:26px;height:26px;font-size:12px;"><i class="fas fa-history"></i></button>
+                    <button id="btn-logout" title="Sair / Trocar operador">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -626,16 +1150,38 @@
                         <i class="fas fa-chevron-left"></i>
                     </button>
 
-                    <div class="sb-section" id="sb-sec-entrada">
-                        <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-entrada')" role="button" tabindex="0">
-                            <div class="sb-icon"><i class="fas fa-paste"></i></div>
-                            <span class="sb-label">Entrada de Dados</span>
-                            <i class="fas fa-chevron-down sb-chevron"></i>
-                        </div>
-                        <div class="sb-body">
-                            <div class="sb-inner">
-                                <textarea id="relatorio-bruto-input" class="mono-font sb-textarea" placeholder="Cole aqui o relatório bruto..."></textarea>
-                                <button id="btn-processar" class="btn btn-primario sb-btn"><i class="fas fa-cogs"></i> <span class="sb-btn-label">Processar</span></button>
+                    <div class="sb-section" id="sb-sec-entrada" style="border-bottom:1px solid var(--color-border);">
+                        <div class="sb-body" style="max-height:none;">
+                            <div class="sb-inner sb-inner-circulo">
+
+                                <!-- Wrapper do círculo — some via CSS quando .collapsed -->
+                                <div class="sb-circulo-wrap">
+                                    <div class="sb-ring-outer">
+                                        <div class="sb-ring-inner">
+                                            <div class="sb-circulo">
+                                                <textarea
+                                                    id="relatorio-bruto-input"
+                                                    class="sb-textarea-circulo"
+                                                    placeholder="Cole o relatório aqui…"
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botão processar — estilo 100% via classe CSS -->
+                                <button
+                                    type="button"
+                                    id="btn-processar"
+                                    class="sb-btn-processar-full"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827a1.125 1.125 0 0 1 .26 1.43l-1.297 2.247a1.125 1.125 0 0 1-1.37.491l-1.216-.456c-.356-.133-.751-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.43l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.991l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128c.332-.183.582-.495.644-.869l.214-1.281Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                    <span class="sb-label">Processar</span>
+                                </button>
+
                             </div>
                         </div>
                     </div>
@@ -665,6 +1211,7 @@
 
                     <div class="sb-collapsed-icons">
                         <div title="Entrada de Dados" onclick="NitSidebar.expandir()"><i class="fas fa-paste"></i></div>
+                        <div title="Processar relatório" id="btn-processar-collapsed" onclick="document.getElementById('btn-processar').click()" style="color:var(--color-primary);"><i class="fas fa-cogs"></i></div>
                         <div title="Saída" onclick="NitSidebar.expandir()"><i class="fas fa-chart-bar"></i></div>
                     </div>
                 </aside>
@@ -674,16 +1221,6 @@
                     <div class="painel-operacional-wrapper">
                         <div id="kanban-wrapper">
                             <div class="kanban-board">
-                                <div class="kanban-column" id="coluna-sem-necessidade">
-                                    <div class="kanban-column-header">
-                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle"></i> SEM NECESSIDADE</span>
-                                        <span class="card-count" id="count-sem-necessidade">0</span>
-                                    </div>
-                                    <div class="kanban-column-filter">
-                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna">
-                                    </div>
-                                    <div class="kanban-cards-container"></div>
-                                </div>
                                 <div class="kanban-column" id="coluna-espera">
                                     <div class="kanban-column-header">
                                         <span class="header-text cor-atendimento"><i class="fas fa-clock"></i> AGUARDANDO</span>
@@ -714,10 +1251,23 @@
                                     </div>
                                     <div class="kanban-cards-container"></div>
                                 </div>
+                                <div class="kanban-column" id="coluna-sem-necessidade">
+                                    <div class="kanban-column-header">
+                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle"></i> SEM NECESSIDADE</span>
+                                        <span class="card-count" id="count-sem-necessidade">0</span>
+                                    </div>
+                                    <div class="kanban-column-filter">
+                                        <input type="text" class="kanban-search" data-coluna="coluna-sem-necessidade" placeholder="Buscar nesta coluna">
+                                    </div>
+                                    <div class="kanban-cards-container"></div>
+                                </div>
                                 <div class="kanban-column" id="coluna-normalizados">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-normalizado"><i class="fas fa-check-double"></i> NORMALIZADOS</span>
-                                        <span class="card-count" id="count-normalizados">0</span>
+                                        <button id="btn-toggle-norm" onclick="NitNormalizados.toggle()" title="Recolher coluna"><i class="fas fa-chevron-right"></i></button>
+                                        <div class="norm-collapsed-group">
+                                            <span class="header-text cor-normalizado"><i class="fas fa-check-double"></i> NORMALIZADOS</span>
+                                            <span class="card-count" id="count-normalizados">0</span>
+                                        </div>
                                     </div>
                                     <div class="kanban-column-filter">
                                         <input type="text" class="kanban-search" data-coluna="coluna-normalizados" placeholder="Buscar nesta coluna">
@@ -2139,6 +2689,7 @@
         NitLogout.inicializar();
         NitLazy.inicializar();
         NitSidebar.inicializar();
+        NitNormalizados.inicializar();
         inicializarBuscasPorColuna();
     }
 
@@ -2449,6 +3000,41 @@
     // ═════════════════════════════════════════════════════════════════════════
     // BUSCA POR COLUNA
     // ═════════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    // COLUNA NORMALIZADOS — colapso inline
+    // ═════════════════════════════════════════════════════════════════════════
+    const NitNormalizados = {
+        _KEY: 'nit-norm-collapsed',
+
+        inicializar() {
+            if (localStorage.getItem(this._KEY) === '1') this._set(true);
+            // Clicar no header inteiro também abre quando colapsado
+            document.getElementById('coluna-normalizados')
+                ?.querySelector('.kanban-column-header')
+                ?.addEventListener('click', e => {
+                    const col = document.getElementById('coluna-normalizados');
+                    if (col?.classList.contains('collapsed') && !e.target.closest('#btn-toggle-norm')) {
+                        this._set(false);
+                    }
+                });
+        },
+
+        toggle() {
+            const col = document.getElementById('coluna-normalizados');
+            this._set(!col?.classList.contains('collapsed'));
+        },
+
+        _set(collapsed) {
+            const col   = document.getElementById('coluna-normalizados');
+            const board = document.querySelector('.kanban-board');
+            if (!col || !board) return;
+            col.classList.toggle('collapsed', collapsed);
+            board.classList.toggle('norm-collapsed', collapsed);
+            localStorage.setItem(this._KEY, collapsed ? '1' : '0');
+        },
+    };
+    window.NitNormalizados = NitNormalizados;
+
     function inicializarBuscasPorColuna() {
         document.querySelectorAll('.kanban-search').forEach(input => {
             const colunaId = input.dataset.coluna;
@@ -2471,6 +3057,47 @@
         inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
     });
 
+
+        // ── Placeholder overlay do círculo ───────────────────────────────
+        (function() {
+            const ta    = document.getElementById('relatorio-bruto-input');
+            const label = document.getElementById('circulo-placeholder-label');
+            if (!ta || !label) return;
+            const update = () => { label.style.display = ta.value ? 'none' : 'flex'; };
+            ta.addEventListener('input', update);
+            ta.addEventListener('focus', () => { label.style.opacity = '0.4'; });
+            ta.addEventListener('blur',  () => { label.style.opacity = '1'; update(); });
+            update();
+        })();
+
+        // ── Sidebar overlay (mobile/tablet) ──────────────────────────────
+        (function() {
+            const sidebar   = document.getElementById('sidebar');
+            const backdrop  = document.getElementById('sb-backdrop');
+            const hamburger = document.getElementById('btn-sb-hamburger');
+            if (!sidebar || !backdrop || !hamburger) return;
+
+            function openSidebar() {
+                sidebar.classList.add('sb-open');
+                backdrop.classList.add('visible');
+                hamburger.querySelector('i').className = 'fas fa-times';
+            }
+            function closeSidebar() {
+                sidebar.classList.remove('sb-open');
+                backdrop.classList.remove('visible');
+                hamburger.querySelector('i').className = 'fas fa-bars';
+            }
+
+            hamburger.addEventListener('click', () => {
+                sidebar.classList.contains('sb-open') ? closeSidebar() : openSidebar();
+            });
+            backdrop.addEventListener('click', closeSidebar);
+
+            // fechar ao redimensionar para desktop
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 960) closeSidebar();
+            });
+        })();
     </script>
 </body>
 </html>
