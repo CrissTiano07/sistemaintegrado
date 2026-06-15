@@ -6,6 +6,7 @@
 
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://www.gstatic.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
     <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -44,7 +45,6 @@
     </script>
     <title>NIT — Painel de Gestão Integrada v13.0</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -403,15 +403,7 @@
             transform: scale(0.97);
             background: #1d4ed8;
         }
-        .sb-btn-processar-full svg {
-            width: 14px;
-            height: 14px;
-            flex-shrink: 0;
-            transition: transform 0.3s;
-        }
-        .sb-btn-processar-full:hover svg {
-            transform: rotate(45deg);
-        }
+        /* svg removido do btn-processar — regras órfãs limpas */
 
         .tab-content { display: none; flex-grow: 1; min-height: 0; }
         .tab-content.active { display: flex; flex-direction: column; animation: fadeIn 0.5s; flex: 1; min-height: 0; overflow: hidden; }
@@ -446,6 +438,7 @@
         .sidebar.collapsed .sb-collapsed-icons { display: flex; }
         .sb-collapsed-icons > div { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; transition: background .15s, color .15s; }
         .sb-collapsed-icons > div:hover { background: var(--color-border); color: var(--color-text-primary); }
+        .sb-collapsed-processar { color: var(--color-primary); }
 
         /* Círculo e botão — somem quando sidebar colapsada */
         .sidebar.collapsed .sb-circulo-wrap { display: none; }
@@ -591,6 +584,28 @@
         .card-header strong { font-size: 15px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.2px; }
         .card-status-tag { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); white-space: nowrap; }
         .card-body { font-size: var(--font-size-sm); color: #b0bec5; margin-bottom: var(--space-1); line-height: 1.5; }
+        .card-address { margin: 0 0 4px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
+        .card-obs {
+            margin: 4px 0 0;
+            font-size: 11px;
+            color: var(--color-text-tertiary);
+            line-height: 1.4;
+            font-style: italic;
+            border-left: 2px solid var(--color-border2);
+            padding-left: 6px;
+        }
+        .card-equipe { margin: 4px 0 0; font-size: 11px; color: var(--color-text-tertiary); }
+        .card-address { margin: 0 0 4px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
+        .card-obs {
+            margin: 4px 0 0;
+            font-size: 11px;
+            color: var(--color-text-tertiary);
+            line-height: 1.4;
+            font-style: italic;
+            border-left: 2px solid var(--color-border2);
+            padding-left: 6px;
+        }
+        .card-equipe { margin: 4px 0 0; font-size: 11px; color: var(--color-text-tertiary); }
         .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
         .card-body-lazy { min-height: 28px; }
         .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }
@@ -654,9 +669,41 @@
         }
         .btn-card-action:active { transform: translateY(0) scale(0.94); }
 
-        .balanco-compacto { display: flex; justify-content: space-around; text-align: center; padding: var(--space-1) 0; }
-        .balanco-item span { font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); text-transform: uppercase; }
-        .balanco-item strong { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); display: block; }
+        .balanco-compacto {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            text-align: center;
+            padding: 10px 0 12px;
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 4px;
+        }
+        .balanco-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .balanco-item span {
+            display: block;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--color-text-tertiary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .balanco-item strong {
+            display: block;
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-bold);
+            font-family: var(--font-family-mono);
+            color: var(--balanco-cor, var(--color-text-primary));
+            line-height: 1;
+        }
 
         .form-check { display: flex; align-items: center; gap: var(--space-1); padding: var(--space-1) 0; }
         .kanban-cards-container.drag-over { background-color: var(--color-bg); }
@@ -1113,13 +1160,13 @@
             <div class="nav-pill">
                 <div class="nav-left">
                     <button class="btn-sb-hamburger" id="btn-sb-hamburger" title="Abrir painel lateral" aria-label="Abrir painel lateral">
-                        <i class="fas fa-bars"></i>
+                        &#9776;
                     </button>
-                    <button class="tab-button active" data-tab="tab-semaforo"><i class="fas fa-traffic-light"></i> Semáforo</button>
+                    <button class="tab-button active" data-tab="tab-semaforo"> Semáforo</button>
                 </div>
                 <div class="nav-pill-center">
                     <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
-                        <i class="fas fa-search"></i>
+                        
                         <span>Pesquisar cards…</span>
                         <kbd>Ctrl K</kbd>
                     </button>
@@ -1147,7 +1194,7 @@
                 <!-- SIDEBAR ─────────────────────────────────────────── -->
                 <aside class="sidebar" id="sidebar">
                     <button class="sb-toggle" id="btn-sb-toggle" title="Recolher / Expandir painel" aria-expanded="true">
-                        <i class="fas fa-chevron-left"></i>
+                        
                     </button>
 
                     <div class="sb-section" id="sb-sec-entrada" style="border-bottom:1px solid var(--color-border);">
@@ -1175,7 +1222,6 @@
                                     id="btn-processar"
                                     class="sb-btn-processar-full"
                                 >
-                                    
                                     <span class="sb-label">Processar</span>
                                 </button>
 
@@ -1185,31 +1231,40 @@
 
                     <div class="sb-section" id="sb-sec-saida">
                         <div class="sb-section-header" onclick="NitSidebar.toggleSec('sb-sec-saida')" role="button" tabindex="0">
-                            <div class="sb-icon"><i class="fas fa-chart-bar"></i></div>
+                            <div class="sb-icon"></div>
                             <span class="sb-label">Saída</span>
-                            <i class="fas fa-chevron-down sb-chevron"></i>
+                            
                         </div>
                         <div class="sb-body">
                             <div class="sb-inner">
                                 <div class="balanco-compacto">
-                                    <div class="balanco-item"><span>Ocorrências</span><strong id="display-total">0</strong></div>
-                                    <div class="balanco-item"><span>Normalizados</span><strong id="display-normalizados">0</strong></div>
-                                    <div class="balanco-item"><span>Pendentes</span><strong id="display-pendentes">0</strong></div>
+                                    <div class="balanco-item">
+                                        <span>Ocorrências</span>
+                                        <strong id="display-total">0</strong>
+                                    </div>
+                                    <div class="balanco-item" style="--balanco-cor: var(--color-success)">
+                                        <span>Normalizados</span>
+                                        <strong id="display-normalizados">0</strong>
+                                    </div>
+                                    <div class="balanco-item" style="--balanco-cor: var(--color-warning)">
+                                        <span>Pendentes</span>
+                                        <strong id="display-pendentes">0</strong>
+                                    </div>
                                 </div>
                                 <textarea id="relatorio-final-preview" class="mono-font sb-textarea" readonly placeholder="Pré-visualização do relatório..."></textarea>
                                 <div class="form-check">
                                     <input type="checkbox" id="check-incluir-normalizados">
                                     <label for="check-incluir-normalizados">Incluir Normalizados</label>
                                 </div>
-                                <button id="btn-visualizar-relatorio" class="btn btn-primario sb-btn"><i class="fas fa-eye"></i> <span class="sb-btn-label">Ver Relatório</span></button>
+                                <button id="btn-visualizar-relatorio" class="btn btn-primario sb-btn"><span class="sb-btn-label">Ver Relatório</span></button>
                             </div>
                         </div>
                     </div>
 
                     <div class="sb-collapsed-icons">
-                        <div title="Entrada de Dados" onclick="NitSidebar.expandir()"><i class="fas fa-paste"></i></div>
-                        <div title="Processar relatório" id="btn-processar-collapsed" onclick="document.getElementById('btn-processar').click()" style="color:var(--color-primary);"><i class="fas fa-cogs"></i></div>
-                        <div title="Saída" onclick="NitSidebar.expandir()"><i class="fas fa-chart-bar"></i></div>
+                        <div title="Entrada de Dados" onclick="NitSidebar.expandir()"></div>
+                        <div title="Processar relatorio" id="btn-processar-collapsed" class="sb-collapsed-processar" onclick="document.getElementById('btn-processar').click()"></div>
+                        <div title="Saída" onclick="NitSidebar.expandir()"></div>
                     </div>
                 </aside>
 
@@ -1220,7 +1275,7 @@
                             <div class="kanban-board">
                                 <div class="kanban-column" id="coluna-espera">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-atendimento"><i class="fas fa-clock"></i> AGUARDANDO</span>
+                                        <span class="header-text cor-atendimento">AGUARDANDO</span>
                                         <span class="card-count" id="count-espera">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -1230,7 +1285,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-vl">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-via-livre"><i class="fas fa-shield-alt"></i> VIA LIVRE</span>
+                                        <span class="header-text cor-via-livre">VIA LIVRE</span>
                                         <span class="card-count" id="count-vl">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -1240,7 +1295,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-amc">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-amc"><i class="fas fa-shield-alt"></i> AMC</span>
+                                        <span class="header-text cor-amc">AMC</span>
                                         <span class="card-count" id="count-amc">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -1250,7 +1305,7 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-sem-necessidade">
                                     <div class="kanban-column-header">
-                                        <span class="header-text cor-sem-necessidade"><i class="fas fa-minus-circle"></i> SEM NECESSIDADE</span>
+                                        <span class="header-text cor-sem-necessidade">SEM NECESSIDADE</span>
                                         <span class="card-count" id="count-sem-necessidade">0</span>
                                     </div>
                                     <div class="kanban-column-filter">
@@ -1260,9 +1315,9 @@
                                 </div>
                                 <div class="kanban-column" id="coluna-normalizados">
                                     <div class="kanban-column-header">
-                                        <button id="btn-toggle-norm" onclick="NitNormalizados.toggle()" title="Recolher coluna"><i class="fas fa-chevron-right"></i></button>
+                                        <button id="btn-toggle-norm" onclick="NitNormalizados.toggle()" title="Recolher coluna"></button>
                                         <div class="norm-collapsed-group">
-                                            <span class="header-text cor-normalizado"><i class="fas fa-check-double"></i> NORMALIZADOS</span>
+                                            <span class="header-text cor-normalizado">NORMALIZADOS</span>
                                             <span class="card-count" id="count-normalizados">0</span>
                                         </div>
                                     </div>
@@ -1301,7 +1356,7 @@
                     style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
             </div>
             <div class="modal-footer">
-                <button id="btn-modal-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
+                <button id="btn-modal-copiar" class="btn btn-primario">Copiar</button>
                 <button id="btn-modal-fechar" class="btn btn-secundario">Fechar</button>
             </div>
         </div>
@@ -1355,7 +1410,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario"><i class="fas fa-paper-plane"></i> Confirmar Despacho</button>
+                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario">Confirmar Despacho</button>
                 <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario">Cancelar</button>
             </div>
         </div>
@@ -1380,8 +1435,44 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btn-edicao-salvar" class="btn btn-primario"><i class="fas fa-save"></i> Salvar</button>
+                <button id="btn-edicao-salvar" class="btn btn-primario">Salvar</button>
                 <button id="btn-edicao-cancelar" class="btn btn-secundario">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NORMALIZAR ───────────────────────────────────────────────────── -->
+    <div id="modal-normalizar" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-container" style="max-width:420px;">
+            <div class="modal-header" style="display:flex;align-items:center;gap:10px;">
+                <span style="color:var(--color-success);font-size:18px;">✅</span>
+                <span>Normalizar Ocorrência</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="norm-card-id">
+                <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:16px;">
+                    <div style="font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Ocorrência</div>
+                    <div id="norm-card-info" style="font-size:13px;font-weight:600;color:var(--color-text-primary);"></div>
+                </div>
+                <div class="form-group">
+                    <label for="norm-data-fim">Data de Normalização <span style="color:var(--color-danger)">*</span></label>
+                    <input type="date" id="norm-data-fim" style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-primary);font-size:14px;font-family:var(--font-family-sans);color-scheme:dark;">
+                </div>
+                <div class="form-group">
+                    <label for="norm-hora-fim">Hora de Normalização <span style="color:var(--color-danger)">*</span></label>
+                    <input type="time" id="norm-hora-fim" style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-primary);font-size:14px;font-family:var(--font-family-sans);color-scheme:dark;">
+                </div>
+                <div class="form-group">
+                    <label for="norm-obs">Observação</label>
+                    <textarea id="norm-obs" rows="3" style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-primary);font-size:13px;font-family:var(--font-family-sans);resize:none;"></textarea>
+                </div>
+                <div id="norm-erro" style="display:none;color:var(--color-danger);font-size:12px;margin-top:-8px;margin-bottom:8px;padding:8px 10px;background:rgba(239,68,68,0.08);border-radius:6px;border:1px solid rgba(239,68,68,0.2);"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-norm-confirmar" class="btn btn-primario" style="background:var(--color-success);border-color:var(--color-success);">
+                    <i class="fas fa-check"></i> Confirmar Normalização
+                </button>
+                <button id="btn-norm-cancelar" class="btn btn-secundario">Cancelar</button>
             </div>
         </div>
     </div>
@@ -1405,7 +1496,7 @@
             <div class="modal-footer" style="justify-content:center; gap:16px;">
                 <button id="btn-confirmar-generico-ok" class="btn"
                     style="background:var(--color-danger);color:#fff;border-color:var(--color-danger);min-width:120px;">
-                    <i class="fas fa-check"></i> Confirmar
+                    Confirmar
                 </button>
                 <button id="btn-confirmar-generico-cancel" class="btn btn-secundario" style="min-width:100px;">Cancelar</button>
             </div>
@@ -1435,7 +1526,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btn-detalhes-fechar" class="btn btn-secundario"><i class="fas fa-times"></i> Fechar</button>
+                <button id="btn-detalhes-fechar" class="btn btn-secundario">Fechar</button>
             </div>
         </div>
     </div>
@@ -1449,7 +1540,7 @@
                 <button id="busca-global-esc" title="Fechar (Esc)">ESC</button>
             </div>
             <div id="busca-global-resultados"></div>
-            <div id="busca-global-vazio"><i class="fas fa-inbox" style="margin-right:8px;"></i>Nenhum card encontrado</div>
+            <div id="busca-global-vazio">Nenhum card encontrado.</div>
         </div>
     </div>
 
@@ -1558,7 +1649,7 @@
             this.operador = nome;
             this.turno    = turno;
             const badge = document.getElementById('nit-operador-badge');
-            if (badge) { badge.textContent = `👤 ${nome} · ${turno}`; badge.style.display = ''; }
+            if (badge) { badge.textContent = `${nome} · ${turno}`; badge.style.display = ''; }
             sessionStorage.setItem('nit-operador', nome);
             sessionStorage.setItem('nit-turno',    turno);
             NitFirebase.exec((db, ref, update) =>
@@ -1811,6 +1902,8 @@
         },
 
         statusFromSecao(secao, card) {
+            // Fim preenchido → sempre NORMALIZADO (fix: ENTRE/PGV não sobrepõe)
+            if (card.fim && card.fim.trim()) return 'NORMALIZADO';
             if (secao === 'NORMALIZADO') return 'NORMALIZADO';
             const end = (card.endereco || '').toLowerCase();
             const obs = (card.observacoes || '').toLowerCase();
@@ -1833,13 +1926,15 @@
             const inicioM  = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
             const fimM     = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
             const _restoObs = (linha.match(/●[^●]*●(.*)$/s)?.[1] || '');
-            const _obsMatch = _restoObs.match(/Obs:(.+?)(?:\s*\/log.*)?$/is);
+            const _obsMatch = _restoObs.match(/Obs[.:]?\s*(.+?)(?:\s*\/log.*)?$/is);
             const obsInline = _obsMatch
                 ? _obsMatch[1].replace(/["*]/g, '').trim()
                 : _restoObs
-                    .replace(/In[ií]cio:.*?(?=Fim:|Obs:|$)/is, '')
-                    .replace(/Fim:.*?(?=Obs:|$)/is, '')
-                    .replace(/["*]/g, '').trim();
+                    .replace(/In[ií]cio:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
+                    .replace(/Fim:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
+                    .replace(/["*\t]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
 
             return {
                 tipo,
@@ -1887,6 +1982,8 @@
                     if (!dados) return;
                     const el = document.querySelector(`[data-eventoid="${eventoId}"]`);
                     if (!el) return;
+
+                    // ── Coluna ────────────────────────────────────────────
                     const novaColuna  = dados.coluna || 'coluna-espera';
                     const colunaAtual = el.dataset.coluna;
                     if (novaColuna !== colunaAtual) {
@@ -1894,17 +1991,40 @@
                                        || document.getElementById(novaColuna);
                         if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-                    if (dados.equipe   !== undefined) el.dataset.equipe   = dados.equipe;
-                    if (dados.viatura  !== undefined) el.dataset.viatura  = dados.viatura;
-                    if (dados.pl       !== undefined) el.dataset.pl       = dados.pl;
-                    if (dados.sub      !== undefined) el.dataset.sub      = dados.sub;
-                    if (dados.status   !== undefined) el.dataset.status   = dados.status;
+
+                    // ── Datasets (leitura do Firebase → DOM, sem escrever de volta) ──
+                    const campos = ['equipe','viatura','pl','sub','status','problema','endereco','inicio','fim','tipo'];
+                    campos.forEach(c => { if (dados[c] !== undefined) el.dataset[c] = dados[c]; });
+
+                    // ── Observação: atualiza dataset e DOM (Regra 3) ──────
+                    if (dados.observacoes !== undefined) {
+                        el.dataset.observacoes = dados.observacoes;
+                        const obsEl = el.querySelector('.card-obs');
+                        const frasaNova = Semaforo._fraseTecnica(
+                            dados.observacoes, dados.status, dados.tipo, dados.inicio
+                        );
+                        const obsTexto = frasaNova || dados.observacoes
+                            .replace(/NORMALIZADOS\s*✅/gi,'')
+                            .replace(/\*/g,'').trim().slice(0,140);
+                        if (obsEl) {
+                            // Atualiza texto existente
+                            obsEl.textContent = obsTexto;
+                            obsEl.style.display = obsTexto ? '' : 'none';
+                        } else if (obsTexto) {
+                            // Insere se não existia
+                            const addr = el.querySelector('.card-address');
+                            if (addr) addr.insertAdjacentHTML('afterend', `<p class="card-obs">${obsTexto}</p>`);
+                        }
+                    }
+
+                    // ── Equipe no DOM ─────────────────────────────────────
                     if (dados.equipe) {
                         const txt = `Equipe: ${dados.equipe}${dados.viatura ? ` · VT ${dados.viatura}` : ''}`;
-                        let eq = el.querySelector('.card-equipe');
+                        const eq  = el.querySelector('.card-equipe');
                         if (eq) eq.textContent = txt;
                         else el.querySelector('.card-body')?.insertAdjacentHTML('beforeend', `<p class="card-equipe">${txt}</p>`);
                     }
+
                     Semaforo.atualizarPainel();
                 });
 
@@ -2058,6 +2178,20 @@
                 }
 
                 // Card já existe no DOM
+                // Regra 3: se obs do relatório veio atualizada, gravar no Firebase
+                // Sem loop: este update só escreve observacoes, não dispara outro
+                // child_changed que escreva de volta (child_changed nunca grava).
+                if (existente && !existente.normalizado && ev.observacoes &&
+                    ev.observacoes !== existente.element.dataset.observacoes) {
+                    existente.element.dataset.observacoes = ev.observacoes;
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${ev.eventoId}`), {
+                            observacoes: ev.observacoes,
+                            ts_obs: Date.now(),
+                        })
+                    );
+                }
+
                 if (!existente.normalizado && status === 'NORMALIZADO') {
                     DOM.colunaNormalizados.prepend(existente.element);
                     existente.element.classList.add('card-foi-normalizado');
@@ -2158,7 +2292,7 @@
                 if (v !== undefined) card.dataset[_dsMap[k] || k] = v;
             });
 
-            const frase = this._fraseTecnica(cardData.observacoes, cardData.status, cardData.inicio);
+            const frase = this._fraseTecnica(cardData.observacoes, cardData.status, cardData.tipo, cardData.inicio);
             const reinc = (cardData.reincidente === true || cardData.reincidente === 'true')
                 ? '<span class="reincident-tag" title="Reincidência">↺ REINC</span>' : '';
 
@@ -2178,33 +2312,64 @@
                 </div>`;
 
             card.classList.add('lazy-pending');
-            NitLazy.observar(card, () => {
-                card.classList.remove('lazy-pending');
-                card.querySelector('.card-body').innerHTML =
-                    `<p class="card-address">${cardData.endereco || ''}</p>` +
-                    (frase ? `<p class="card-obs">${frase}</p>` : '') +
-                    (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
-            });
+	    const _fraseTecnica = this._fraseTecnica.bind(this);
+	    NitLazy.observar(card, () => {
+  					card.classList.remove('lazy-pending');
+    					const obsExibir = frase || _fraseTecnica(
+        					card.dataset.observacoes || '',
+        					card.dataset.tipo        || '',
+        					card.dataset.inicio      || '',
+    				);
+    				const equipeEl = (card.dataset.equipe || cardData.equipe)
+        				? `<p class="card-equipe">Equipe: ${card.dataset.equipe || cardData.equipe}${(card.dataset.viatura || cardData.viatura) ? ` · VT ${card.dataset.viatura || cardData.viatura}` : ''}</p>`
+        				: '';
+    				card.querySelector('.card-body').innerHTML =
+        				`<p class="card-address">${cardData.endereco || ''}</p>` +
+        				(obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+        				equipeEl;
+	  });
             return card;
         },
 
-        _fraseTecnica(texto, status, inicio) {
-            if (String(status).trim().toUpperCase() === 'INVESTIGANDO') {
+        _fraseTecnica(texto, tipo, inicio) {
+            // tipo INVESTIGANDO (campo 'tipo' do card, não 'status')
+            const tipoUp = String(tipo || '').trim().toUpperCase();
+            if (tipoUp === 'INVESTIGANDO' || tipoUp.includes('INVEST')) {
                 if (!inicio) return 'Investigando.';
-                const [data, hora] = inicio.split(' ');
-                const [dia, mes]   = data.split('/');
-                return `Início: ${dia}/${mes} ${hora} — Investigando.`;
+                const partes = (inicio || '').split(' ');
+                const dataBR = partes[0] || '';
+                const hora   = partes[1] || '';
+                const [dia, mes] = dataBR.split('/');
+                return dia ? `Início: ${dia}/${mes} ${hora} — Investigando.` : 'Investigando.';
             }
+
             if (!texto) return '';
-            let t = texto.replace(/\*/g, '').replace(/\s+/g, ' ').trim();
+
+            // Limpeza base
+            let t = texto
+                .replace(/NORMALIZADOS\s*✅/gi, '')
+                .replace(/PENDENTES\s*❌/gi,    '')
+                .replace(/\*/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (!t) return '';
+
+            // Texto isolado "investigando"
+            if (t.toLowerCase() === 'investigando') return 'Investigando.';
+
+            // Cortar no primeiro ponto
             const pontoIndex = t.indexOf('.');
             if (pontoIndex !== -1) {
                 t = t.substring(0, pontoIndex + 1).trim();
             } else {
-                t = t.slice(0, 100);
-                if (texto.length > 100) t += '…';
+                t = t.slice(0, 120);
+                if (texto.length > 120) t += '…';
             }
+
+            // Compactar datas: 13/06/2026 07:41 → 13/06 07:41
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
+
             return t;
         },
 
@@ -2259,12 +2424,24 @@
 
         gerarPreviewRelatorio() {
             const incluirNorm = DOM.checkIncluirNormalizados?.checked;
-            const cards       = id => Array.from(document.querySelectorAll(`#${id} .kanban-card`));
-            const espera      = cards('coluna-espera');
-            const sn          = cards('coluna-sem-necessidade');
-            const vl          = cards('coluna-vl');
-            const amc         = cards('coluna-amc');
-            const norm        = Array.from(DOM.colunaNormalizados.querySelectorAll('.kanban-card'));
+            const filtroData  = this._filtroData || null;
+
+            // Filtra por data de referência ativa — evita acumulado de plantões anteriores
+            const cards = id => {
+                const todos = Array.from(document.querySelectorAll(`#${id} .kanban-card`));
+                if (!filtroData) return todos;
+                return todos.filter(c => c.dataset.datareferencia === filtroData);
+            };
+
+            const espera = cards('coluna-espera');
+            const sn     = cards('coluna-sem-necessidade');
+            const vl     = cards('coluna-vl');
+            const amc    = cards('coluna-amc');
+            const norm   = (() => {
+                const todos = Array.from(DOM.colunaNormalizados.querySelectorAll('.kanban-card'));
+                if (!filtroData) return todos;
+                return todos.filter(c => c.dataset.datareferencia === filtroData);
+            })();
 
             const totalOcorr  = espera.length + sn.length + vl.length + amc.length + norm.length;
             const totalPend   = espera.length + sn.length;
@@ -2340,7 +2517,7 @@
         },
 
         copiarLocalizacao(card) {
-            const txt = `*${card.dataset.codigo}🚦 ${card.dataset.endereco} ● ${card.dataset.problema}*`;
+            const txt = `*${card.dataset.codigo} ${card.dataset.endereco} - ${card.dataset.problema}*`;
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(txt)
                     .then(() => showToast('Localização copiada!', 'success'))
@@ -2370,7 +2547,7 @@
             DOM.despachoSemaforoVt.value     = card.dataset.viatura || '';
             document.getElementById('despacho-preview')?.classList.remove('show');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
-            if (btnConf) btnConf.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar Despacho';
+            if (btnConf) btnConf.innerHTML = 'Confirmar Despacho';
             AppState.despachoTipo = card.dataset.sub || 'vl';
             this.selecionarTipoDespacho(AppState.despachoTipo);
             abrirModal(DOM.modalDespachoSemaforo);
@@ -2402,7 +2579,7 @@
                     <div class="despacho-preview-title">Confirmar despacho</div>
                     <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()} · ${equipe} · VT ${vt || 'N/I'}</div>`;
                 preview.classList.add('show');
-                if (btnConf) btnConf.innerHTML = '<i class="fas fa-check"></i> Confirmar';
+                if (btnConf) btnConf.innerHTML = 'Confirmar';
                 return;
             }
 
@@ -2445,41 +2622,7 @@
 
         // ── Normalizar ────────────────────────────────────────────────────
         handleNormalizarClick(card) {
-            const cod      = card.dataset.codigo;
-            const eventoId = card.dataset.eventoid || cod;
-            const origem   = card.closest('.kanban-column')?.id || 'desconhecido';
-
-            mostrarUndoToast(`${cod} normalizando…`,
-                () => {
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${eventoId}`), {
-                            coluna:    'coluna-normalizados',
-                            status:    'NORMALIZADO',
-                            operador:  NitLogin.operador || 'anon',
-                            turno:     NitLogin.turno    || '',
-                            ts:        Date.now(),
-                            data_fim:  new Date().toLocaleDateString('pt-BR'),
-                            hora_fim:  new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-                            ts_norm:   Date.now(),
-                        })
-                    );
-                    gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
-                    registrarAcao(`'${cod}' normalizado.`);
-                    showToast(`${cod} normalizado!`, 'success');
-                },
-                () => {
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${eventoId}`), {
-                            coluna:   origem,
-                            status:   card.dataset.status || 'PENDENTE',
-                            operador: NitLogin.operador || 'anon',
-                            ts:       Date.now(),
-                            data_fim: null, hora_fim: null, ts_norm: null,
-                        })
-                    );
-                    showToast(`${cod} restaurado.`, 'info');
-                }
-            );
+            NitNormalizar.abrir(card);
         },
 
         // ── Edição ────────────────────────────────────────────────────────
@@ -2637,7 +2780,7 @@
         setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, () => {
             document.getElementById('despacho-preview')?.classList.remove('show');
             const b = document.getElementById('btn-despacho-semaforo-confirmar');
-            if (b) b.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar Despacho';
+            if (b) b.innerHTML = 'Confirmar Despacho';
         });
         DOM.tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
 
@@ -2686,8 +2829,10 @@
         NitLogout.inicializar();
         NitLazy.inicializar();
         NitSidebar.inicializar();
+        NitNormalizar.inicializar();
         NitNormalizados.inicializar();
         inicializarBuscasPorColuna();
+        NitViradaDia.inicializar();
     }
 
     function switchTab(tabId) {
@@ -2697,6 +2842,164 @@
         document.getElementById(tabId).classList.add('active');
         document.querySelector(`.tab-button[data-tab="${tabId}"]`)?.classList.add('active');
     }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // NORMALIZAR — modal com data/hora fim obrigatórios + undo robusto
+    // ═════════════════════════════════════════════════════════════════════════
+    const NitNormalizar = {
+        _cardAtual: null,
+        _origemAtual: null,
+
+        abrir(card) {
+            this._cardAtual  = card;
+            this._origemAtual = card.closest('.kanban-column')?.id || 'desconhecido';
+
+            // Pré-preencher com data/hora atual
+            const agora   = new Date();
+            const dataISO = agora.toISOString().slice(0, 10); // YYYY-MM-DD
+            const horaHM  = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const infoEl = document.getElementById('norm-card-info');
+            if (infoEl) infoEl.textContent = `${card.dataset.codigo} — ${card.dataset.endereco}`;
+
+            const dataInput = document.getElementById('norm-data-fim');
+            const horaInput = document.getElementById('norm-hora-fim');
+            const obsInput  = document.getElementById('norm-obs');
+            const erroEl    = document.getElementById('norm-erro');
+
+            // Se o card já tem fim do relatório, usar esse valor
+            if (card.dataset.fim) {
+                const [dataBR, horaCard] = (card.dataset.fim).split(' ');
+                if (dataBR) {
+                    const [dd, mm, yyyy] = dataBR.split('/');
+                    if (dataInput) dataInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+                if (horaCard && horaInput) horaInput.value = horaCard.slice(0, 5);
+            } else {
+                if (dataInput) dataInput.value = dataISO;
+                if (horaInput) horaInput.value = horaHM;
+            }
+
+            if (obsInput)  obsInput.value  = card.dataset.observacoes || '';
+            if (erroEl)    erroEl.style.display = 'none';
+
+            document.getElementById('norm-card-id').value = card.id;
+            abrirModal(document.getElementById('modal-normalizar'));
+
+            // Focar hora para confirmação rápida
+            setTimeout(() => horaInput?.focus(), 120);
+        },
+
+        confirmar() {
+            const card   = this._cardAtual;
+            const origem = this._origemAtual;
+            if (!card) return;
+
+            const dataInput = document.getElementById('norm-data-fim');
+            const horaInput = document.getElementById('norm-hora-fim');
+            const obsInput  = document.getElementById('norm-obs');
+            const erroEl    = document.getElementById('norm-erro');
+
+            // Validação obrigatória
+            if (!dataInput?.value || !horaInput?.value) {
+                if (erroEl) {
+                    erroEl.textContent = 'Data e hora de normalização são obrigatórios.';
+                    erroEl.style.display = 'block';
+                }
+                return;
+            }
+
+            const [yyyy, mm, dd] = dataInput.value.split('-');
+            const dataFimBR  = `${dd}/${mm}/${yyyy}`;
+            const horaFimHM  = horaInput.value.slice(0, 5);
+            const obsNova    = obsInput?.value.trim() || card.dataset.observacoes || '';
+            const cod        = card.dataset.codigo;
+            const eventoId   = card.dataset.eventoid || cod;
+
+            fecharModal(document.getElementById('modal-normalizar'));
+
+            // 1. Mover card no DOM imediatamente (otimista)
+            const containerNorm = DOM.colunaNormalizados;
+            containerNorm.prepend(card);
+            card.dataset.coluna = 'coluna-normalizados';
+            card.classList.add('card-foi-normalizado');
+            setTimeout(() => card.classList.remove('card-foi-normalizado'), 2000);
+            Semaforo.atualizarPainel();
+
+            // 2. Undo toast — 5s para desfazer antes de gravar no Firebase
+            mostrarUndoToast(
+                `${cod} normalizado — ${horaFimHM}`,
+
+                // onCommit: grava no Firebase
+                () => {
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${eventoId}`), {
+                            coluna:      'coluna-normalizados',
+                            status:      'NORMALIZADO',
+                            operador:    NitLogin.operador || 'anon',
+                            turno:       NitLogin.turno    || '',
+                            ts:          Date.now(),
+                            data_fim:    dataFimBR,
+                            hora_fim:    horaFimHM,
+                            observacoes: obsNova,
+                            ts_norm:     Date.now(),
+                        })
+                    );
+                    // Atualizar dataset com fim para exibição no modal detalhes
+                    card.dataset.fim         = `${dataFimBR} ${horaFimHM}`;
+                    card.dataset.observacoes = obsNova;
+                    gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
+                    registrarAcao(`'${cod}' normalizado — fim: ${dataFimBR} ${horaFimHM}.`);
+                    showToast(`${cod} normalizado!`, 'success');
+                },
+
+                // onUndo: reverter DOM + Firebase
+                () => {
+                    const containerOrigem = document.querySelector(`#${origem} .kanban-cards-container`);
+                    if (containerOrigem) containerOrigem.appendChild(card);
+                    card.dataset.coluna = origem;
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${eventoId}`), {
+                            coluna:   origem,
+                            status:   'PENDENTE',
+                            operador: NitLogin.operador || 'anon',
+                            ts:       Date.now(),
+                            data_fim: null,
+                            hora_fim: null,
+                            ts_norm:  null,
+                        })
+                    );
+                    Semaforo.atualizarPainel();
+                    showToast(`${cod} restaurado.`, 'info');
+                }
+            );
+        },
+
+        inicializar() {
+            const modal   = document.getElementById('modal-normalizar');
+            const btnConf = document.getElementById('btn-norm-confirmar');
+            const btnCanc = document.getElementById('btn-norm-cancelar');
+            if (!modal) return;
+            btnConf?.addEventListener('click', () => this.confirmar());
+            btnCanc?.addEventListener('click', () => {
+                fecharModal(modal);
+                this._cardAtual  = null;
+                this._origemAtual = null;
+            });
+            modal.addEventListener('click', e => {
+                if (e.target === modal) {
+                    fecharModal(modal);
+                    this._cardAtual  = null;
+                    this._origemAtual = null;
+                }
+            });
+            // Enter no campo hora confirma
+            document.getElementById('norm-hora-fim')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') this.confirmar();
+            });
+        },
+    };
+    window.NitNormalizar = NitNormalizar;
 
     // ═════════════════════════════════════════════════════════════════════════
     // SIDEBAR
@@ -2802,7 +3105,7 @@
             set('det-obs',         ds.observacoes);
             set('det-data',        ds.datareferencia);
             set('det-operador',    ds.operador);
-            set('det-reincidente', ds.reincidente === 'true' ? '✅ Sim' : '❌ Não');
+            set('det-reincidente', ds.reincidente === 'true' ? 'Sim' : 'Nao');
 
             const badge = document.getElementById('detalhe-coluna-badge');
             if (badge) {
@@ -3049,6 +3352,106 @@
             });
         });
     }
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // NitViradaDia — Garante que o último relatório do dia anterior
+    // seja carregado ao iniciar novo plantão, evitando estado vazio.
+    //
+    // Funcionamento:
+    //   1. Ao inicializar, compara a data de referência dos cards
+    //      ativos no Firebase com a data atual (hoje).
+    //   2. Se TODOS os cards ativos são de dia anterior E não há
+    //      nenhum card do dia de hoje → exibe aviso ao operador
+    //      pedindo para colar o primeiro relatório do dia.
+    //   3. Se o painel está VAZIO e existe um snapshot salvo do
+    //      último relatório bruto em localStorage → oferece reprocessar
+    //      automaticamente sem necessidade de nova colagem.
+    //   4. Salva automaticamente o texto bruto a cada processamento
+    //      bem-sucedido em localStorage (chave: nit-ultimo-relatorio).
+    // ══════════════════════════════════════════════════════════════════
+    const NitViradaDia = {
+
+        STORAGE_KEY: 'nit-ultimo-relatorio-v1',
+
+        // Chamado após inicializarApp — aguarda Firebase sincronizar (1s)
+        inicializar() {
+            setTimeout(() => this._avaliar(), 1200);
+            this._interceptarProcessamento();
+        },
+
+        // Salva o relatório bruto sempre que processado com sucesso
+        _interceptarProcessamento() {
+            const btnProcessar = document.getElementById('btn-processar');
+            if (!btnProcessar) return;
+            btnProcessar.addEventListener('click', () => {
+                const input = document.getElementById('relatorio-bruto-input');
+                if (!input) return;
+                const texto = input.value.trim();
+                if (texto.length < 20) return;
+                try {
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+                        texto,
+                        ts: Date.now(),
+                        data: new Date().toLocaleDateString('pt-BR'),
+                    }));
+                } catch (e) { /* storage cheio — ignorar */ }
+            }, true); // capture: antes do handler original
+        },
+
+        _avaliar() {
+            const hoje = new Date().toLocaleDateString('pt-BR'); // dd/mm/yyyy
+            const cards = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
+            const painelVazio = cards.length === 0;
+
+            if (painelVazio) {
+                this._tentarRestaurar(hoje);
+                return;
+            }
+
+            // Verificar se todos os cards ativos são de dia anterior
+            const datasAtivos = cards
+                .filter(el => !el.closest('#coluna-normalizados'))
+                .map(el => el.dataset.datareferencia)
+                .filter(Boolean);
+
+            if (datasAtivos.length === 0) return;
+
+            const todasAnteriores = datasAtivos.every(d => d !== hoje);
+            if (todasAnteriores) {
+                const dataAnt = datasAtivos[0];
+                showToast(
+                    `Pendencias do dia ${dataAnt} ativas. Cole o primeiro relatorio de hoje para iniciar o plantao.`,
+                    'warning',
+                    8000
+                );
+            }
+        },
+
+        _tentarRestaurar(hoje) {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            if (!raw) return;
+            let salvo;
+            try { salvo = JSON.parse(raw); } catch (e) { return; }
+            if (!salvo?.texto || !salvo?.data) return;
+
+            // Só oferece restaurar se o relatório salvo for de ontem ou hoje
+            const tsMs   = salvo.ts || 0;
+            const idadeH = (Date.now() - tsMs) / 3600000;
+            if (idadeH > 30) return; // mais de 30h — muito antigo, ignorar
+
+            // Preencher a textarea e exibir aviso
+            const input = document.getElementById('relatorio-bruto-input');
+            if (input) {
+                input.value = salvo.texto;
+                showToast(
+                    `Ultimo relatorio de ${salvo.data} restaurado. Revise e clique em Processar para iniciar o dia.`,
+                    'info',
+                    10000
+                );
+            }
+        },
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
