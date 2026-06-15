@@ -1160,7 +1160,7 @@
             <div class="nav-pill">
                 <div class="nav-left">
                     <button class="btn-sb-hamburger" id="btn-sb-hamburger" title="Abrir painel lateral" aria-label="Abrir painel lateral">
-                        &#9776;
+                        <i class="fas fa-bars"></i>
                     </button>
                     <button class="tab-button active" data-tab="tab-semaforo"> Semáforo</button>
                 </div>
@@ -1209,8 +1209,21 @@
                                                 <textarea
                                                     id="relatorio-bruto-input"
                                                     class="sb-textarea-circulo"
-                                                    placeholder="Cole o relatório aqui…"
+                                                    placeholder=""
                                                 ></textarea>
+                                                <!-- Placeholder visual do círculo — controlado por JS -->
+                                                <div id="circulo-placeholder-label" style="
+                                                    position:absolute;inset:0;display:flex;
+                                                    flex-direction:column;align-items:center;
+                                                    justify-content:center;pointer-events:none;
+                                                    color:rgba(148,168,200,0.45);font-size:11px;
+                                                    font-family:var(--font-family-mono);
+                                                    text-align:center;padding:0 20px;
+                                                    line-height:1.5;transition:opacity .2s;
+                                                ">
+                                                    <i class="fas fa-paste" style="font-size:18px;margin-bottom:6px;opacity:.6;"></i>
+                                                    Cole o relatório aqui…
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
