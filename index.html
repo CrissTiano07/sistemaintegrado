@@ -1960,16 +1960,8 @@
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
-                    // Guard 1: eventoId já no DOM
+                    // Guard: eventoId já no DOM — evita duplicata na sincronização Firebase
                     if (document.querySelector(`[data-eventoid="${eventoId}"]`)) return;
-                    // Guard 2: mesmo código já normalizado no DOM (deduplicação de reincidência no dia)
-                    const codigoSnap = dados.codigo || eventoId.split('_')[0];
-                    if (dados.status === 'NORMALIZADO') {
-                        const jaExiste = document.querySelector(
-                            `#coluna-normalizados [data-codigo="${codigoSnap}"]`
-                        );
-                        if (jaExiste) return;
-                    }
                     const coluna    = dados.coluna || 'coluna-espera';
                     const container = document.querySelector(`#${coluna} .kanban-cards-container`)
                                    || document.getElementById(coluna);
@@ -2096,11 +2088,14 @@
 
         // ── Carga inicial (painel vazio) ──────────────────────────────────
         _cargaInicial(eventos) {
-            const vistos = new Set();
+            const vistos = new Set(); // códigos já vistos — marca reincidência visual (↺ REINC)
             const batch  = {};
             eventos.forEach(ev => {
+                // Reincidência: mesmo código, início diferente → dois cards legítimos
+                // A tag ↺ REINC sinaliza ao operador que o cruzamento quebrou mais de uma vez
                 ev.reincidente = vistos.has(ev.codigo);
                 vistos.add(ev.codigo);
+
                 const status = this.statusFromSecao(ev.secao, ev);
                 const el     = this.criarElementoCard(`card-${AppState.cardIdCounter++}`, ev);
                 this._colocarCardNaColuna(el, status);
@@ -2197,19 +2192,9 @@
                         return;
                     }
 
-                    // ✅ fix: SCN normalizado aparece duas vezes no mesmo relatório
-                    // (ex: 228 com início 05:15 e depois 13:15 — ambos normalizados).
-                    // Se já existe card normalizado desse código no painel, ignora a segunda
-                    // entrada para não duplicar a contagem.
-                    if (status === 'NORMALIZADO') {
-                        const jaNormalizado = (codigosMap.get(ev.codigo) || [])
-                            .map(eid => mapaAtual.get(eid))
-                            .filter(Boolean)
-                            .some(c => c.normalizado);
-                        if (jaNormalizado) return; // deduplica
-                    }
-
-                    // Card genuinamente novo
+                    // Card com eventoId novo — pode ser reincidência legítima
+                    // (mesmo SCN, início diferente = dois eventos distintos no mesmo dia)
+                    // A tag ↺ REINC sinaliza ao operador que o cruzamento quebrou mais de uma vez.
                     ev.reincidente = codigosMap.has(ev.codigo);
                     this.criarNovoCard(ev, status);
                     criados++;
@@ -2372,7 +2357,21 @@
                 }
             };
 
-            NitLazy.observar(card, _renderCardBody);
+            // Renderiza imediatamente se NitLazy não estiver disponível,
+            // ou registra para render quando o card entrar no viewport.
+            // Para cards já no viewport no momento da inserção, o IntersectionObserver
+            // pode não disparar — por isso forçamos render via requestAnimationFrame.
+            if (typeof NitLazy !== 'undefined' && NitLazy.observar) {
+                NitLazy.observar(card, _renderCardBody);
+                // Força render no próximo frame caso o card já esteja visível
+                requestAnimationFrame(() => {
+                    if (card.classList.contains('lazy-pending')) {
+                        _renderCardBody();
+                    }
+                });
+            } else {
+                _renderCardBody();
+            }
             return card;
         },
 
