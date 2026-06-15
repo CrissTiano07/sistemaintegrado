@@ -1960,7 +1960,16 @@
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
+                    // Guard 1: eventoId já no DOM
                     if (document.querySelector(`[data-eventoid="${eventoId}"]`)) return;
+                    // Guard 2: mesmo código já normalizado no DOM (deduplicação de reincidência no dia)
+                    const codigoSnap = dados.codigo || eventoId.split('_')[0];
+                    if (dados.status === 'NORMALIZADO') {
+                        const jaExiste = document.querySelector(
+                            `#coluna-normalizados [data-codigo="${codigoSnap}"]`
+                        );
+                        if (jaExiste) return;
+                    }
                     const coluna    = dados.coluna || 'coluna-espera';
                     const container = document.querySelector(`#${coluna} .kanban-cards-container`)
                                    || document.getElementById(coluna);
@@ -1989,17 +1998,31 @@
                                        || document.getElementById(novaColuna);
                         if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-                    if (dados.equipe   !== undefined) el.dataset.equipe   = dados.equipe;
-                    if (dados.viatura  !== undefined) el.dataset.viatura  = dados.viatura;
-                    if (dados.pl       !== undefined) el.dataset.pl       = dados.pl;
-                    if (dados.sub      !== undefined) el.dataset.sub      = dados.sub;
-                    if (dados.status   !== undefined) el.dataset.status   = dados.status;
-                    if (dados.equipe) {
-                        const txt = `Equipe: ${dados.equipe}${dados.viatura ? ` · VT ${dados.viatura}` : ''}`;
-                        let eq = el.querySelector('.card-equipe');
-                        if (eq) eq.textContent = txt;
-                        else el.querySelector('.card-body')?.insertAdjacentHTML('beforeend', `<p class="card-equipe">${txt}</p>`);
+                    if (dados.equipe      !== undefined) el.dataset.equipe      = dados.equipe;
+                    if (dados.viatura     !== undefined) el.dataset.viatura     = dados.viatura;
+                    if (dados.pl          !== undefined) el.dataset.pl          = dados.pl;
+                    if (dados.sub         !== undefined) el.dataset.sub         = dados.sub;
+                    if (dados.status      !== undefined) el.dataset.status      = dados.status;
+                    if (dados.observacoes !== undefined) el.dataset.observacoes = dados.observacoes;
+
+                    // ✅ fix: rerenderiza o card-body com dados frescos do Firebase
+                    // garante que observações, equipe e status apareçam após child_changed
+                    const bodyEl = el.querySelector('.card-body');
+                    if (bodyEl) {
+                        const obs        = dados.observacoes || el.dataset.observacoes || '';
+                        const status     = dados.status      || el.dataset.status      || '';
+                        const inicio     = dados.inicio      || el.dataset.inicio      || '';
+                        const equipe     = dados.equipe      || el.dataset.equipe      || '';
+                        const viatura    = dados.viatura     || el.dataset.viatura     || '';
+                        const frase      = Semaforo._fraseTecnica(obs, status, inicio);
+                        const obsExibir  = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
+                        bodyEl.innerHTML =
+                            `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
+                            (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+                            (equipe    ? `<p class="card-equipe">Equipe: ${equipe}${viatura ? ` · VT ${viatura}` : ''}</p>` : '');
+                        el.classList.remove('lazy-pending');
                     }
+
                     Semaforo.atualizarPainel();
                 });
 
@@ -2326,32 +2349,30 @@
                     <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
                 </div>`;
 
-            card.classList.add('lazy-pending');
-            NitLazy.observar(card, () => {
-                card.classList.remove('lazy-pending');
-
-                // CORREÇÃO: lê direto do objeto cardData em memória (nunca do dataset)
-                // evita race condition onde o IntersectionObserver dispara antes do
-                // dataset ser totalmente populado pelo child_changed do Firebase.
-                const obsBruta    = cardData.observacoes || '';
+            // ✅ fix: renderiza o body imediatamente com dados em memória
+            // NitLazy continua observando para cards fora do viewport,
+            // mas cards visíveis recebem conteúdo sem depender do IntersectionObserver.
+            const _renderCardBody = () => {
+                const obsBruta   = cardData.observacoes || '';
                 const statusAtual = cardData.status  || '';
                 const inicioAtual = cardData.inicio  || '';
-
-                const fraseTratada = Semaforo._fraseTecnica(obsBruta, statusAtual, inicioAtual);
-                const obsExibir    = fraseTratada || obsBruta
+                const frase       = Semaforo._fraseTecnica(obsBruta, statusAtual, inicioAtual);
+                const obsExibir   = frase || obsBruta
                     .replace(/NORMALIZADOS\s*✅/gi, '')
                     .replace(/\*/g, '')
                     .trim()
                     .slice(0, 100);
-
                 const bodyEl = card.querySelector('.card-body');
                 if (bodyEl) {
                     bodyEl.innerHTML =
                         `<p class="card-address">${cardData.endereco || ''}</p>` +
                         (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
                         (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
+                    card.classList.remove('lazy-pending');
                 }
-            });
+            };
+
+            NitLazy.observar(card, _renderCardBody);
             return card;
         },
 
