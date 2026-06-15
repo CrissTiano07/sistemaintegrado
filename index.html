@@ -1982,8 +1982,6 @@
                     if (!dados) return;
                     const el = document.querySelector(`[data-eventoid="${eventoId}"]`);
                     if (!el) return;
-
-                    // ── Coluna ────────────────────────────────────────────
                     const novaColuna  = dados.coluna || 'coluna-espera';
                     const colunaAtual = el.dataset.coluna;
                     if (novaColuna !== colunaAtual) {
@@ -1991,40 +1989,17 @@
                                        || document.getElementById(novaColuna);
                         if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-
-                    // ── Datasets (leitura do Firebase → DOM, sem escrever de volta) ──
-                    const campos = ['equipe','viatura','pl','sub','status','problema','endereco','inicio','fim','tipo'];
-                    campos.forEach(c => { if (dados[c] !== undefined) el.dataset[c] = dados[c]; });
-
-                    // ── Observação: atualiza dataset e DOM (Regra 3) ──────
-                    if (dados.observacoes !== undefined) {
-                        el.dataset.observacoes = dados.observacoes;
-                        const obsEl = el.querySelector('.card-obs');
-                        const frasaNova = Semaforo._fraseTecnica(
-                            dados.observacoes, dados.status, dados.tipo, dados.inicio
-                        );
-                        const obsTexto = frasaNova || dados.observacoes
-                            .replace(/NORMALIZADOS\s*✅/gi,'')
-                            .replace(/\*/g,'').trim().slice(0,140);
-                        if (obsEl) {
-                            // Atualiza texto existente
-                            obsEl.textContent = obsTexto;
-                            obsEl.style.display = obsTexto ? '' : 'none';
-                        } else if (obsTexto) {
-                            // Insere se não existia
-                            const addr = el.querySelector('.card-address');
-                            if (addr) addr.insertAdjacentHTML('afterend', `<p class="card-obs">${obsTexto}</p>`);
-                        }
-                    }
-
-                    // ── Equipe no DOM ─────────────────────────────────────
+                    if (dados.equipe   !== undefined) el.dataset.equipe   = dados.equipe;
+                    if (dados.viatura  !== undefined) el.dataset.viatura  = dados.viatura;
+                    if (dados.pl       !== undefined) el.dataset.pl       = dados.pl;
+                    if (dados.sub      !== undefined) el.dataset.sub      = dados.sub;
+                    if (dados.status   !== undefined) el.dataset.status   = dados.status;
                     if (dados.equipe) {
                         const txt = `Equipe: ${dados.equipe}${dados.viatura ? ` · VT ${dados.viatura}` : ''}`;
-                        const eq  = el.querySelector('.card-equipe');
+                        let eq = el.querySelector('.card-equipe');
                         if (eq) eq.textContent = txt;
                         else el.querySelector('.card-body')?.insertAdjacentHTML('beforeend', `<p class="card-equipe">${txt}</p>`);
                     }
-
                     Semaforo.atualizarPainel();
                 });
 
@@ -2158,6 +2133,35 @@
                     if (cardHerdado) {
                         const cardEl           = cardHerdado.element;
                         const eventoIdAnterior = cardEl.dataset.eventoid;
+
+                        // ✅ fix: se o evento chegou NORMALIZADO, normaliza o card existente
+                        if (status === 'NORMALIZADO') {
+                            DOM.colunaNormalizados.prepend(cardEl);
+                            cardEl.classList.add('card-foi-normalizado');
+                            setTimeout(() => cardEl.classList.remove('card-foi-normalizado'), 2000);
+                            this.ultimoLoteNormalizado.push(cardEl.id);
+
+                            const fimPartes = (ev.fim || '').trim().split(' ');
+                            const dataFim   = fimPartes[0] || '';
+                            const horaFim   = fimPartes[1] || '';
+
+                            NitFirebase.exec((db, ref, update) =>
+                                update(ref(db, `kanban/${eventoIdAnterior}`), {
+                                    coluna:   'coluna-normalizados',
+                                    status:   'NORMALIZADO',
+                                    ts:       Date.now(),
+                                    data_fim: dataFim,
+                                    hora_fim: horaFim,
+                                    ts_norm:  Date.now(),
+                                    // preserva observacoes do relatório mais recente
+                                    ...(ev.observacoes && { observacoes: ev.observacoes }),
+                                })
+                            );
+                            atualizados++;
+                            return;
+                        }
+
+                        // Herança cross-day: pendente → atualiza dataReferencia
                         cardEl.dataset.datareferencia = ev.dataReferencia;
                         NitFirebase.exec((db, ref, update) =>
                             update(ref(db, `kanban/${eventoIdAnterior}`), {
@@ -2170,6 +2174,18 @@
                         return;
                     }
 
+                    // ✅ fix: SCN normalizado aparece duas vezes no mesmo relatório
+                    // (ex: 228 com início 05:15 e depois 13:15 — ambos normalizados).
+                    // Se já existe card normalizado desse código no painel, ignora a segunda
+                    // entrada para não duplicar a contagem.
+                    if (status === 'NORMALIZADO') {
+                        const jaNormalizado = (codigosMap.get(ev.codigo) || [])
+                            .map(eid => mapaAtual.get(eid))
+                            .filter(Boolean)
+                            .some(c => c.normalizado);
+                        if (jaNormalizado) return; // deduplica
+                    }
+
                     // Card genuinamente novo
                     ev.reincidente = codigosMap.has(ev.codigo);
                     this.criarNovoCard(ev, status);
@@ -2178,29 +2194,16 @@
                 }
 
                 // Card já existe no DOM
-                // Regra 3: se obs do relatório veio atualizada, gravar no Firebase
-                // Sem loop: este update só escreve observacoes, não dispara outro
-                // child_changed que escreva de volta (child_changed nunca grava).
-                if (existente && !existente.normalizado && ev.observacoes &&
-                    ev.observacoes !== existente.element.dataset.observacoes) {
-                    existente.element.dataset.observacoes = ev.observacoes;
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${ev.eventoId}`), {
-                            observacoes: ev.observacoes,
-                            ts_obs: Date.now(),
-                        })
-                    );
-                }
-
                 if (!existente.normalizado && status === 'NORMALIZADO') {
                     DOM.colunaNormalizados.prepend(existente.element);
                     existente.element.classList.add('card-foi-normalizado');
                     setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
                     this.ultimoLoteNormalizado.push(existente.element.id);
 
-                    const fimPartes = ev.fim ? ev.fim.split(' ') : [];
-                    const dataFim   = fimPartes[0] || new Date().toLocaleDateString('pt-BR');
-                    const horaFim   = fimPartes[1] || new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    // ✅ fix: usa apenas o fim extraído do relatório; não inventa data/hora
+                    const fimPartes = (ev.fim || '').trim().split(' ');
+                    const dataFim   = fimPartes[0] || '';
+                    const horaFim   = fimPartes[1] || '';
 
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${ev.eventoId}`), {
@@ -2248,6 +2251,12 @@
 
         _payloadFirebase(ev, status) {
             const colunaMap = { NORMALIZADO: 'coluna-normalizados', SEM_NECESSIDADE: 'coluna-sem-necessidade' };
+
+            // Extrai data e hora de fim do campo ev.fim (formato "DD/MM/YYYY HH:MM")
+            const fimPartes = (ev.fim || '').trim().split(' ');
+            const dataFim   = fimPartes[0] || '';
+            const horaFim   = fimPartes[1] || '';
+
             return {
                 coluna:         colunaMap[status] || 'coluna-espera',
                 codigo:         ev.codigo,
@@ -2267,6 +2276,12 @@
                 operador:       NitLogin.operador || 'anon',
                 turno:          NitLogin.turno    || '',
                 ts:             Date.now(),
+                // ✅ fix: gravar campos de fim quando ocorrência nasce normalizada
+                ...(status === 'NORMALIZADO' && {
+                    data_fim: dataFim,
+                    hora_fim: horaFim,
+                    ts_norm:  Date.now(),
+                }),
             };
         },
 
@@ -2292,7 +2307,7 @@
                 if (v !== undefined) card.dataset[_dsMap[k] || k] = v;
             });
 
-            const frase = this._fraseTecnica(cardData.observacoes, cardData.status, cardData.tipo, cardData.inicio);
+            const frase = this._fraseTecnica(cardData.observacoes, cardData.status, cardData.inicio);
             const reinc = (cardData.reincidente === true || cardData.reincidente === 'true')
                 ? '<span class="reincident-tag" title="Reincidência">↺ REINC</span>' : '';
 
@@ -2312,40 +2327,32 @@
                 </div>`;
 
             card.classList.add('lazy-pending');
-	    const _fraseTecnica = this._fraseTecnica.bind(this);
-	    NitLazy.observar(card, () => {
-  					card.classList.remove('lazy-pending');
-    					const obsExibir = frase || _fraseTecnica(
-        					card.dataset.observacoes || '',
-        					card.dataset.tipo        || '',
-        					card.dataset.inicio      || '',
-    				);
-    				const equipeEl = (card.dataset.equipe || cardData.equipe)
-        				? `<p class="card-equipe">Equipe: ${card.dataset.equipe || cardData.equipe}${(card.dataset.viatura || cardData.viatura) ? ` · VT ${card.dataset.viatura || cardData.viatura}` : ''}</p>`
-        				: '';
-    				card.querySelector('.card-body').innerHTML =
-        				`<p class="card-address">${cardData.endereco || ''}</p>` +
-        				(obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-        				equipeEl;
-	  });
+            NitLazy.observar(card, () => {
+                card.classList.remove('lazy-pending');
+                // Fallback: se _fraseTecnica retornou vazio mas há observacoes no dataset
+                const obsExibir = frase
+                    || (card.dataset.observacoes
+                        ? card.dataset.observacoes.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,120)
+                        : '');
+                card.querySelector('.card-body').innerHTML =
+                    `<p class="card-address">${cardData.endereco || ''}</p>` +
+                    (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+                    (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
+            });
             return card;
         },
 
-        _fraseTecnica(texto, tipo, inicio) {
-            // tipo INVESTIGANDO (campo 'tipo' do card, não 'status')
-            const tipoUp = String(tipo || '').trim().toUpperCase();
-            if (tipoUp === 'INVESTIGANDO' || tipoUp.includes('INVEST')) {
+        _fraseTecnica(texto, status, inicio) {
+            // Estado INVESTIGANDO — frase padrão com data/hora
+            if (String(status).trim().toUpperCase() === 'INVESTIGANDO') {
                 if (!inicio) return 'Investigando.';
-                const partes = (inicio || '').split(' ');
-                const dataBR = partes[0] || '';
-                const hora   = partes[1] || '';
-                const [dia, mes] = dataBR.split('/');
-                return dia ? `Início: ${dia}/${mes} ${hora} — Investigando.` : 'Investigando.';
+                const [data, hora] = inicio.split(' ');
+                const [dia, mes]   = data.split('/');
+                return `Início: ${dia}/${mes} ${hora} — Investigando.`;
             }
-
             if (!texto) return '';
 
-            // Limpeza base
+            // Limpeza base: remove cabeçalhos de seção que podem vazar do parser
             let t = texto
                 .replace(/NORMALIZADOS\s*✅/gi, '')
                 .replace(/PENDENTES\s*❌/gi,    '')
@@ -2355,19 +2362,19 @@
 
             if (!t) return '';
 
-            // Texto isolado "investigando"
+            // Estado investigando no texto da observação
             if (t.toLowerCase() === 'investigando') return 'Investigando.';
 
-            // Cortar no primeiro ponto
+            // Cortar no primeiro ponto final
             const pontoIndex = t.indexOf('.');
             if (pontoIndex !== -1) {
                 t = t.substring(0, pontoIndex + 1).trim();
             } else {
-                t = t.slice(0, 120);
-                if (texto.length > 120) t += '…';
+                t = t.slice(0, 100);
+                if (texto.length > 100) t += '…';
             }
 
-            // Compactar datas: 13/06/2026 07:41 → 13/06 07:41
+            // Compactar datas longas: 13/06/2026 07:41 → 13/06 07:41
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
 
             return t;
