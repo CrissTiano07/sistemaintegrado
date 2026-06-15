@@ -2329,15 +2329,28 @@
             card.classList.add('lazy-pending');
             NitLazy.observar(card, () => {
                 card.classList.remove('lazy-pending');
-                // Fallback: se _fraseTecnica retornou vazio mas há observacoes no dataset
-                const obsExibir = frase
-                    || (card.dataset.observacoes
-                        ? card.dataset.observacoes.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,120)
-                        : '');
-                card.querySelector('.card-body').innerHTML =
-                    `<p class="card-address">${cardData.endereco || ''}</p>` +
-                    (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-                    (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
+
+                // CORREÇÃO: lê direto do objeto cardData em memória (nunca do dataset)
+                // evita race condition onde o IntersectionObserver dispara antes do
+                // dataset ser totalmente populado pelo child_changed do Firebase.
+                const obsBruta    = cardData.observacoes || '';
+                const statusAtual = cardData.status  || '';
+                const inicioAtual = cardData.inicio  || '';
+
+                const fraseTratada = Semaforo._fraseTecnica(obsBruta, statusAtual, inicioAtual);
+                const obsExibir    = fraseTratada || obsBruta
+                    .replace(/NORMALIZADOS\s*✅/gi, '')
+                    .replace(/\*/g, '')
+                    .trim()
+                    .slice(0, 100);
+
+                const bodyEl = card.querySelector('.card-body');
+                if (bodyEl) {
+                    bodyEl.innerHTML =
+                        `<p class="card-address">${cardData.endereco || ''}</p>` +
+                        (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+                        (cardData.equipe ? `<p class="card-equipe">Equipe: ${cardData.equipe}${cardData.viatura ? ` · VT ${cardData.viatura}` : ''}</p>` : '');
+                }
             });
             return card;
         },
