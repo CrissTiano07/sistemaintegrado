@@ -3544,104 +3544,23 @@
 
 
     // ══════════════════════════════════════════════════════════════════
-    // NitViradaDia — Garante que o último relatório do dia anterior
-    // seja carregado ao iniciar novo plantão, evitando estado vazio.
-    //
-    // Funcionamento:
-    //   1. Ao inicializar, compara a data de referência dos cards
-    //      ativos no Firebase com a data atual (hoje).
-    //   2. Se TODOS os cards ativos são de dia anterior E não há
-    //      nenhum card do dia de hoje → exibe aviso ao operador
-    //      pedindo para colar o primeiro relatório do dia.
-    //   3. Se o painel está VAZIO e existe um snapshot salvo do
-    //      último relatório bruto em localStorage → oferece reprocessar
-    //      automaticamente sem necessidade de nova colagem.
-    //   4. Salva automaticamente o texto bruto a cada processamento
-    //      bem-sucedido em localStorage (chave: nit-ultimo-relatorio).
-    // ══════════════════════════════════════════════════════════════════
-    const NitViradaDia = {
-
-        STORAGE_KEY: 'nit-ultimo-relatorio-v1',
-
-        // Chamado após inicializarApp — aguarda Firebase sincronizar (1s)
-        inicializar() {
-            setTimeout(() => this._avaliar(), 1200);
-            this._interceptarProcessamento();
-        },
-
-        // Salva o relatório bruto sempre que processado com sucesso
-        _interceptarProcessamento() {
-            const btnProcessar = document.getElementById('btn-processar');
-            if (!btnProcessar) return;
-            btnProcessar.addEventListener('click', () => {
-                const input = document.getElementById('relatorio-bruto-input');
-                if (!input) return;
-                const texto = input.value.trim();
-                if (texto.length < 20) return;
-                try {
-                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
-                        texto,
-                        ts: Date.now(),
-                        data: new Date().toLocaleDateString('pt-BR'),
-                    }));
-                } catch (e) { /* storage cheio — ignorar */ }
-            }, true); // capture: antes do handler original
-        },
-
-        _avaliar() {
-            const hoje = new Date().toLocaleDateString('pt-BR'); // dd/mm/yyyy
-            const cards = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
-            const painelVazio = cards.length === 0;
-
-            if (painelVazio) {
-                this._tentarRestaurar(hoje);
-                return;
+// NitViradaDia — versão compatível com NitProcessamento
+// Apenas delega a verificação para o módulo principal.
+// Não restaura relatórios automaticamente — isso agora é feito
+// pelo NitProcessamento com base em metadados e orientação ao operador.
+// ══════════════════════════════════════════════════════════════════
+const NitViradaDia = {
+    inicializar() {
+        // Aguarda DOM e Firebase sincronizarem, então verifica lacuna noturna
+        setTimeout(() => {
+            if (typeof NitProcessamento !== 'undefined') {
+                NitProcessamento.verificar();
+            } else {
+                console.warn('[NitViradaDia] NitProcessamento não encontrado.');
             }
-
-            // Verificar se todos os cards ativos são de dia anterior
-            const datasAtivos = cards
-                .filter(el => !el.closest('#coluna-normalizados'))
-                .map(el => el.dataset.datareferencia)
-                .filter(Boolean);
-
-            if (datasAtivos.length === 0) return;
-
-            const todasAnteriores = datasAtivos.every(d => d !== hoje);
-            if (todasAnteriores) {
-                const dataAnt = datasAtivos[0];
-                showToast(
-                    `Pendencias do dia ${dataAnt} ativas. Cole o primeiro relatorio de hoje para iniciar o plantao.`,
-                    'warning',
-                    8000
-                );
-            }
-        },
-
-        _tentarRestaurar(hoje) {
-            const raw = localStorage.getItem(this.STORAGE_KEY);
-            if (!raw) return;
-            let salvo;
-            try { salvo = JSON.parse(raw); } catch (e) { return; }
-            if (!salvo?.texto || !salvo?.data) return;
-
-            // Só oferece restaurar se o relatório salvo for de ontem ou hoje
-            const tsMs   = salvo.ts || 0;
-            const idadeH = (Date.now() - tsMs) / 3600000;
-            if (idadeH > 30) return; // mais de 30h — muito antigo, ignorar
-
-            // Preencher a textarea e exibir aviso
-            const input = document.getElementById('relatorio-bruto-input');
-            if (input) {
-                input.value = salvo.texto;
-                showToast(
-                    `Ultimo relatorio de ${salvo.data} restaurado. Revise e clique em Processar para iniciar o dia.`,
-                    'info',
-                    10000
-                );
-            }
-        },
-    };
-
+        }, 1800);
+    },
+};
 
     // ═══════════════════════════════════════════════════════════════════════
     // NIT PROCESSAMENTO — rastreabilidade e verificação de turno
