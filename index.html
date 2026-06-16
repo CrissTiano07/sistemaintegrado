@@ -1893,6 +1893,113 @@
         abrirModal(modal);
     }
 
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NIT LOGGER — logging estruturado do parser
+    // Cada processamento recebe um ID único; logs consultáveis via console
+    // e armazenados em localStorage para replay/debug.
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitLogger = {
+        _KEY: 'nit-parser-logs-v1',
+        _MAX: 50, // máximo de sessões armazenadas
+
+        // Gera ID único para cada processamento
+        novaSessionId() {
+            return `nit_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+        },
+
+        // Persiste sessão de processamento
+        salvar(sessionId, { texto, eventos, logs, erros, dataReferencia }) {
+            try {
+                const stored = this._carregar();
+                stored.unshift({
+                    sessionId,
+                    ts:             new Date().toISOString(),
+                    dataReferencia,
+                    totalEventos:   eventos.length,
+                    totalErros:     erros.length,
+                    hashTexto:      this._hash(texto),
+                    textoTamanho:   texto.length,
+                    // Guarda texto completo para replay (até 50KB)
+                    textoRaw:       texto.length < 50000 ? texto : '[TRUNCADO]',
+                    logs,
+                    erros,
+                    resumo: eventos.map(e => ({
+                        codigo:   e.codigo,
+                        eventoId: e.eventoId,
+                        status:   e.status,
+                        inicio:   e.inicio,
+                        fim:      e.fim,
+                    })),
+                });
+                if (stored.length > this._MAX) stored.length = this._MAX;
+                localStorage.setItem(this._KEY, JSON.stringify(stored));
+            } catch(e) {
+                console.warn('[NitLogger] Falha ao salvar log:', e.message);
+            }
+        },
+
+        // Carrega todas as sessões
+        _carregar() {
+            try { return JSON.parse(localStorage.getItem(this._KEY) || '[]'); }
+            catch { return []; }
+        },
+
+        // Hash simples para identificar relatórios únicos
+        _hash(str) {
+            let h = 0;
+            for (let i = 0; i < Math.min(str.length, 200); i++) {
+                h = ((h << 5) - h) + str.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h).toString(16);
+        },
+
+        // Lista sessões no console (debug)
+        listar() {
+            const logs = this._carregar();
+            console.table(logs.map(l => ({
+                sessionId:     l.sessionId,
+                ts:            l.ts,
+                data:          l.dataReferencia,
+                eventos:       l.totalEventos,
+                erros:         l.totalErros,
+                hash:          l.hashTexto,
+            })));
+            return logs;
+        },
+
+        // Recupera texto de uma sessão para replay
+        replay(sessionId) {
+            const logs = this._carregar();
+            const sess = logs.find(l => l.sessionId === sessionId);
+            if (!sess) { console.warn('[NitLogger] Sessão não encontrada:', sessionId); return null; }
+            console.log('[NitLogger] Texto da sessão:', sess.textoRaw);
+            return sess.textoRaw;
+        },
+
+        // Captura erro com contexto
+        capturarErro(sessionId, contexto, erro) {
+            console.error(`[NIT ERROR] session=${sessionId}`, contexto, erro);
+            // Envia para backend (fire-and-forget)
+            if (window.NIT_API_URL) {
+                fetch(`${window.NIT_API_URL}/api/v1/log-error`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId,
+                        ts:        new Date().toISOString(),
+                        contexto,
+                        erro:      erro?.message || String(erro),
+                        stack:     erro?.stack   || '',
+                        userAgent: navigator.userAgent,
+                    }),
+                }).catch(() => {}); // silencia falha de rede
+            }
+        },
+    };
+    window.NitLogger = NitLogger;
+
     // ═════════════════════════════════════════════════════════════════════════
     // SEMAFORO
     // ═════════════════════════════════════════════════════════════════════════
@@ -1915,13 +2022,16 @@
         },
 
         statusFromSecao(secao, card) {
-            // Fim preenchido → sempre NORMALIZADO (fix: ENTRE/PGV não sobrepõe)
-            if (card.fim && card.fim.trim()) return 'NORMALIZADO';
+            // Ordem de prioridade — documentação NIT v2.0:
+            // 1. Seção NORMALIZADOS (cabeçalho do relatório)
             if (secao === 'NORMALIZADO') return 'NORMALIZADO';
+            // 2. Campo Fim preenchido
+            if (card.fim && card.fim.trim()) return 'NORMALIZADO';
+            // 3. PGV ou Entre no endereço (sem exceções, obs não altera)
             const end = (card.endereco || '').toLowerCase();
-            const obs = (card.observacoes || '').toLowerCase();
-            if (end.includes('pgv') || end.startsWith('entre')) return 'SEM_NECESSIDADE';
-            if (/cruzamento\s+(funcionando|normal|ok)/.test(obs))  return 'SEM_NECESSIDADE';
+            if (end.includes('pgv'))   return 'SEM_NECESSIDADE';
+            if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';
+            // 4. Fallback
             return 'PENDENTE';
         },
 
@@ -2020,16 +2130,7 @@
                         const equipe     = dados.equipe      || el.dataset.equipe      || '';
                         const viatura    = dados.viatura     || el.dataset.viatura     || '';
                         const frase      = Semaforo._fraseTecnica(obs, status, inicio);
-                        const obsExibir = frase 
-                            || Semaforo._fraseTecnica(
-                                obsBruta
-                                    .replace(/NORMALIZADOS\s*✅/gi, '')
-                                    .replace(/PENDENTES\s*❌/gi,    '')
-                                    .replace(/\*/g, '')
-                                    .trim(),
-                                statusAtual,
-                                inicioAtual,
-                            );
+                        const obsExibir  = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
                         bodyEl.innerHTML =
                             `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
                             (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
