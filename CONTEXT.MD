@@ -112,12 +112,12 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 
 | # | Tarefa | Descrição | Status |
 |---|--------|-----------|--------|
-| 1 | **NitUltimoProcessamento** | Salvar metadados no Firebase + localStorage após cada processamento | ⬜ Pendente |
-| 2 | **Modal de virada de dia** | Exibir modal se último processamento < 23:30 do dia anterior | ⬜ Pendente |
-| 3 | **NitViradaDia atualizado** | Salvar relatórios por dia (não sobrescrever), retenção de 7 dias | ⬜ Pendente |
-| 4 | **Auditoria** | Registrar ação do operador no modal (processou_pendente / fechou_modal) | ⬜ Pendente |
-| 5 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
-
+| 1 | **NitUltimoProcessamento** | Registrar metadados do último processamento (data, hora, operador, turno) no Firebase | ⬜ Pendente |
+| 2 | **Modal de verificação** | Exibir modal com info do último processamento + instrução para verificar WhatsApp | ⬜ Pendente |
+| 3 | **Botão "Processar pendente"** | Foca na textarea para operador colar o relatório NÃO processado | ⬜ Pendente |
+| 4 | **Botão "Já verifiquei"** | Operador confirma que não há relatório pendente | ⬜ Pendente |
+| 5 | **Auditoria** | Registrar ação do operador (processou_pendente / fechou_modal) | ⬜ Pendente |
+| 6 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
 ---
 
 ## 🧪 7. Como Testar
