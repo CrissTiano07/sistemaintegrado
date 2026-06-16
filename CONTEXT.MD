@@ -210,11 +210,31 @@ Data	O que mudou
 16/06/2026	Corrigido includes('entre') → \bentre\b
 16/06/2026	Versão estável restaurada (login funcionando)
 16/06/2026	Criado este CONTEXT.md para gestão de conhecimento
-Pronto para usar com qualquer assistente. 🚀
 
 text
 
 ---
+
+## 🔒 11. Limites de Infraestrutura (Gratuitos)
+
+### Firebase (Plano Spark)
+| Recurso | Limite | Estratégia do NIT |
+|---------|--------|-------------------|
+| Armazenamento | 1 GB | ❌ **NÃO salvar texto completo de relatórios** — apenas metadados |
+| Download | 10 GB/mês | Usar cache local (localStorage) para reduzir consultas |
+| Upload | 10 GB/mês | Gravar apenas cards e metadados (pequenos) |
+
+### Railway (Plano Hobby)
+| Recurso | Limite | Estratégia do NIT |
+|---------|--------|-------------------|
+| Horas/mês | 500h | Manter deploy ativo com health check a cada 10 min para evitar sleep |
+| Memória | 512 MB | Backend leve, sem processamento pesado |
+| Sleep | Inatividade | O deploy pode "dormir"; primeira requisição pode demorar ~2s |
+
+### O que NÃO fazer
+- ❌ Salvar texto completo de relatórios no Firebase
+- ❌ Fazer consultas pesadas ou frequentes no Firebase
+- ❌ Manter conexões abertas desnecessariamente
 
 ## 🚀 COMO USAR AGORA
 
