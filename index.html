@@ -2054,7 +2054,7 @@
             // 3. PGV ou Entre no endereço (sem exceções, obs não altera)
             const end = (card.endereco || '').toLowerCase();
             if (end.includes('pgv'))   return 'SEM_NECESSIDADE';
-            if /\bentre\b/i.test(endereco) return 'SEM_NECESSIDADE';
+            if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';  // ← CORRETO
             // 4. Fallback
             return 'PENDENTE';
         },
