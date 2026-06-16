@@ -2030,7 +2030,7 @@
             // 3. PGV ou Entre no endereço (sem exceções, obs não altera)
             const end = (card.endereco || '').toLowerCase();
             if (end.includes('pgv'))   return 'SEM_NECESSIDADE';
-            if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';
+            if (end.includes('entre')) return 'SEM_NECESSIDADE';
             // 4. Fallback
             return 'PENDENTE';
         },
@@ -3517,225 +3517,108 @@
     }
 
 
-    // ═════════════════════════════════════════════════════════════════════════
-// NitUltimoProcessamento — registra e verifica lacunas de processamento
-// Firebase é fonte primária; localStorage é cache.
-// ═════════════════════════════════════════════════════════════════════════
-const NitUltimoProcessamento = {
-    _KEY_LOCAL: 'nit-ultimo-proc-v1',
-    _KEY_REL:   'nit-relatorios-v1',
-    _RETENCAO_DIAS: 7,
+    // ══════════════════════════════════════════════════════════════════
+    // NitViradaDia — Garante que o último relatório do dia anterior
+    // seja carregado ao iniciar novo plantão, evitando estado vazio.
+    //
+    // Funcionamento:
+    //   1. Ao inicializar, compara a data de referência dos cards
+    //      ativos no Firebase com a data atual (hoje).
+    //   2. Se TODOS os cards ativos são de dia anterior E não há
+    //      nenhum card do dia de hoje → exibe aviso ao operador
+    //      pedindo para colar o primeiro relatório do dia.
+    //   3. Se o painel está VAZIO e existe um snapshot salvo do
+    //      último relatório bruto em localStorage → oferece reprocessar
+    //      automaticamente sem necessidade de nova colagem.
+    //   4. Salva automaticamente o texto bruto a cada processamento
+    //      bem-sucedido em localStorage (chave: nit-ultimo-relatorio).
+    // ══════════════════════════════════════════════════════════════════
+    const NitViradaDia = {
 
-    // Chamado ao final de cada processamento bem-sucedido
-    registrar(dataReferencia, totalEventos, textoRelatorio) {
-        const agora = new Date();
-        const meta  = {
-            dataReferencia,
-            horario:     agora.toLocaleTimeString('pt-BR'),
-            operador:    NitLogin.operador || 'anon',
-            turno:       NitLogin.turno    || '',
-            totalEventos,
-            timestamp:   agora.getTime(),
-            hashTexto:   NitLogger._hash(textoRelatorio),
-        };
+        STORAGE_KEY: 'nit-ultimo-relatorio-v1',
 
-        // Firebase — fonte primária
-        NitFirebase.exec((db, ref, update) =>
-            update(ref(db, 'meta/ultimoProcessamento'), meta)
-        );
+        // Chamado após inicializarApp — aguarda Firebase sincronizar (1s)
+        inicializar() {
+            setTimeout(() => this._avaliar(), 1200);
+            this._interceptarProcessamento();
+        },
 
-        // localStorage — cache
-        try { localStorage.setItem(this._KEY_LOCAL, JSON.stringify(meta)); } catch(e) {}
+        // Salva o relatório bruto sempre que processado com sucesso
+        _interceptarProcessamento() {
+            const btnProcessar = document.getElementById('btn-processar');
+            if (!btnProcessar) return;
+            btnProcessar.addEventListener('click', () => {
+                const input = document.getElementById('relatorio-bruto-input');
+                if (!input) return;
+                const texto = input.value.trim();
+                if (texto.length < 20) return;
+                try {
+                    localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+                        texto,
+                        ts: Date.now(),
+                        data: new Date().toLocaleDateString('pt-BR'),
+                    }));
+                } catch (e) { /* storage cheio — ignorar */ }
+            }, true); // capture: antes do handler original
+        },
 
-        // Salva texto no Firebase (só hash + ref no localStorage)
-        this._salvarTexto(textoRelatorio, meta.hashTexto, dataReferencia, meta.timestamp);
-    },
+        _avaliar() {
+            const hoje = new Date().toLocaleDateString('pt-BR'); // dd/mm/yyyy
+            const cards = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
+            const painelVazio = cards.length === 0;
 
-    _salvarTexto(texto, hash, dataRef, ts) {
-        // Texto completo no Firebase
-        NitFirebase.exec((db, ref, update) =>
-            update(ref(db, `relatorios/${hash}`), { texto, ts, dataReferencia: dataRef })
-        );
-
-        // localStorage: índice por data (sem texto)
-        try {
-            const idx = JSON.parse(localStorage.getItem(this._KEY_REL) || '{}');
-            if (!idx[dataRef]) idx[dataRef] = [];
-            // Evita duplicata pelo hash
-            if (!idx[dataRef].find(r => r.hash === hash)) {
-                idx[dataRef].push({ hash, ts });
+            if (painelVazio) {
+                this._tentarRestaurar(hoje);
+                return;
             }
-            // Retenção: remove dias com mais de _RETENCAO_DIAS dias
-            const corte = Date.now() - this._RETENCAO_DIAS * 86400000;
-            for (const dia of Object.keys(idx)) {
-                idx[dia] = idx[dia].filter(r => r.ts > corte);
-                if (!idx[dia].length) delete idx[dia];
+
+            // Verificar se todos os cards ativos são de dia anterior
+            const datasAtivos = cards
+                .filter(el => !el.closest('#coluna-normalizados'))
+                .map(el => el.dataset.datareferencia)
+                .filter(Boolean);
+
+            if (datasAtivos.length === 0) return;
+
+            const todasAnteriores = datasAtivos.every(d => d !== hoje);
+            if (todasAnteriores) {
+                const dataAnt = datasAtivos[0];
+                showToast(
+                    `Pendencias do dia ${dataAnt} ativas. Cole o primeiro relatorio de hoje para iniciar o plantao.`,
+                    'warning',
+                    8000
+                );
             }
-            localStorage.setItem(this._KEY_REL, JSON.stringify(idx));
-        } catch(e) {}
-    },
+        },
 
-    // Retorna metadados do último processamento (Firebase → localStorage → null)
-    async obter() {
-        try {
-            if (NitFirebase.db) {
-                const snap = await NitFirebase.db.ref('meta/ultimoProcessamento').get();
-                if (snap.exists()) return snap.val();
-            }
-        } catch(e) {}
-        try {
-            const raw = localStorage.getItem(this._KEY_LOCAL);
-            if (raw) return JSON.parse(raw);
-        } catch(e) {}
-        return null;
-    },
+        _tentarRestaurar(hoje) {
+            const raw = localStorage.getItem(this.STORAGE_KEY);
+            if (!raw) return;
+            let salvo;
+            try { salvo = JSON.parse(raw); } catch (e) { return; }
+            if (!salvo?.texto || !salvo?.data) return;
 
-    // Verifica se há lacuna e exibe modal se necessário
-    async verificar() {
-        const ultimo = await this.obter();
-        if (!ultimo?.timestamp) return; // nunca processou
+            // Só oferece restaurar se o relatório salvo for de ontem ou hoje
+            const tsMs   = salvo.ts || 0;
+            const idadeH = (Date.now() - tsMs) / 3600000;
+            if (idadeH > 30) return; // mais de 30h — muito antigo, ignorar
 
-        const agora    = new Date();
-        const tsUltimo = new Date(ultimo.timestamp);
-        const hoje     = agora.toLocaleDateString('pt-BR');
-        const diaUlt   = tsUltimo.toLocaleDateString('pt-BR');
-
-        // Sem lacuna: último processamento foi hoje
-        if (diaUlt === hoje) return;
-
-        // Verifica se há lacuna (último antes das 23:30 do dia anterior)
-        const horaUlt = tsUltimo.getHours();
-        const minUlt  = tsUltimo.getMinutes();
-        const temLacuna = horaUlt < 23 || (horaUlt === 23 && minUlt < 30);
-        if (!temLacuna) return;
-
-        this._exibirModal(ultimo);
-    },
-
-    _exibirModal(ultimo) {
-        const horaFmt   = new Date(ultimo.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const diaFmt    = new Date(ultimo.timestamp).toLocaleDateString('pt-BR');
-
-        // Cria modal dinamicamente se não existir
-        let modal = document.getElementById('modal-virada-dia');
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id        = 'modal-virada-dia';
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-container" style="max-width:460px;">
-                    <div class="modal-header" style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:20px;">🌅</span>
-                        <span>Verificação de Turno</span>
-                    </div>
-                    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
-                        <div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px;">
-                            <div style="font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Último processamento registrado</div>
-                            <div id="virada-info" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;"></div>
-                        </div>
-                        <div id="virada-instrucao" style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;padding:10px 12px;background:rgba(234,179,8,0.06);border:1px solid rgba(234,179,8,0.2);border-radius:var(--radius-sm);"></div>
-                    </div>
-                    <div class="modal-footer" style="gap:10px;">
-                        <button id="btn-virada-processar" class="btn btn-primario" style="flex:1;">
-                            <i class="fas fa-paste"></i> Processar relatório pendente
-                        </button>
-                        <button id="btn-virada-ok" class="btn btn-secundario" style="flex:1;">
-                            Já verifiquei
-                        </button>
-                    </div>
-                </div>`;
-            document.body.appendChild(modal);
-        }
-
-        // Preenche dados
-        const infoEl = document.getElementById('virada-info');
-        if (infoEl) {
-            infoEl.innerHTML = [
-                ['Data',     diaFmt],
-                ['Horário',  horaFmt],
-                ['Operador', ultimo.operador || '—'],
-                ['Turno',    ultimo.turno    || '—'],
-            ].map(([l, v]) => `
-                <div>
-                    <div style="font-size:10px;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.4px;">${l}</div>
-                    <div style="font-weight:600;color:var(--color-text-primary);margin-top:2px;">${v}</div>
-                </div>`).join('');
-        }
-
-        const instrEl = document.getElementById('virada-instrucao');
-        if (instrEl) {
-            instrEl.innerHTML = `⚠️ <strong>Se houver relatório postado no WhatsApp após as ${horaFmt} e antes das 23:59 de ${diaFmt},</strong> cole e processe antes de iniciar o plantão de hoje.`;
-        }
-
-        // Botões
-        const _registrarAuditoria = (acao) => {
-            NitFirebase.exec((db, ref, update, push) =>
-                push(ref(db, 'auditoria/virada'), {
-                    acao,
-                    ultimoProcessamento: ultimo,
-                    operador:  NitLogin.operador || 'anon',
-                    turno:     NitLogin.turno    || '',
-                    timestamp: Date.now(),
-                })
-            );
-        };
-
-        document.getElementById('btn-virada-processar')?.addEventListener('click', () => {
-            fecharModal(modal);
-            _registrarAuditoria('processou_pendente');
-            // Expande sidebar e foca na textarea
-            NitSidebar.expandir();
-            setTimeout(() => {
-                const ta = document.getElementById('relatorio-bruto-input');
-                if (ta) { ta.focus(); ta.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-            }, 300);
-        }, { once: true });
-
-        document.getElementById('btn-virada-ok')?.addEventListener('click', () => {
-            fecharModal(modal);
-            _registrarAuditoria('fechou_modal');
-        }, { once: true });
-
-        modal.addEventListener('click', e => {
-            if (e.target === modal) {
-                fecharModal(modal);
-                _registrarAuditoria('fechou_modal');
-            }
-        }, { once: true });
-
-        abrirModal(modal);
-    },
-};
-window.NitUltimoProcessamento = NitUltimoProcessamento;
-
-// ══════════════════════════════════════════════════════════════════
-// NitViradaDia — versão atualizada
-// Salva por dia (sem sobrescrever), delega metadados ao NitUltimoProcessamento
-// ══════════════════════════════════════════════════════════════════
-const NitViradaDia = {
-    inicializar() {
-        this._interceptarProcessamento();
-        // Verificação com delay para Firebase sincronizar
-        setTimeout(() => NitUltimoProcessamento.verificar(), 1800);
-    },
-
-    _interceptarProcessamento() {
-        const btn = document.getElementById('btn-processar');
-        if (!btn) return;
-        btn.addEventListener('click', () => {
+            // Preencher a textarea e exibir aviso
             const input = document.getElementById('relatorio-bruto-input');
-            if (!input) return;
-            const texto = input.value.trim();
-            if (texto.length < 20) return;
-            // Atraso para pegar total de eventos após o processamento
-            requestAnimationFrame(() => {
-                const total = document.querySelectorAll('#tab-semaforo .kanban-card').length;
-                const dataRef = Semaforo.extrairDataReferencia(texto.split('\n'));
-                NitUltimoProcessamento.registrar(dataRef, total, texto);
-            });
-        }, true); // capture: antes do handler original
-    },
-};
+            if (input) {
+                input.value = salvo.texto;
+                showToast(
+                    `Ultimo relatorio de ${salvo.data} restaurado. Revise e clique em Processar para iniciar o dia.`,
+                    'info',
+                    10000
+                );
+            }
+        },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
+    });
 
 
         // ── Placeholder overlay do círculo ───────────────────────────────
