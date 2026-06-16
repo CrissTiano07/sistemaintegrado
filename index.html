@@ -1558,6 +1558,28 @@
     </div>
 
     <!-- TOAST / UNDO ───────────────────────────────────────────────────── -->
+
+    <!-- MODAL VIRADA DE DIA ──────────────────────────────────────────────────── -->
+    <div id="modal-virada-dia" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-virada-titulo">
+        <div class="modal-container" style="max-width:480px;">
+            <div class="modal-header" id="modal-virada-titulo" style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:20px;">🌅</span>
+                <span>Verificação de Turno</span>
+            </div>
+            <div class="modal-body" style="padding:24px 20px;">
+                <div id="modal-virada-corpo"></div>
+            </div>
+            <div class="modal-footer" style="gap:10px;">
+                <button id="btn-virada-processar" class="btn btn-primario">
+                    <i class="fas fa-paste"></i> Processar relatório pendente
+                </button>
+                <button id="btn-virada-ok" class="btn btn-secundario">
+                    <i class="fas fa-check"></i> Já verifiquei
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
     <div id="undo-toast" class="undo-toast" role="status" aria-live="polite">
         <div class="undo-toast-row">
@@ -1672,6 +1694,8 @@
             showToast(`Bem-vindo, ${nome}!`, 'success');
             registrarAcao(`Login: ${nome} — ${turno}.`);
             NitDateFilter.inicializar();
+            // ✅ Verifica lacuna de processamento noturno (delay para garantir DOM pronto)
+            setTimeout(() => NitProcessamento.verificar(), 800);
         },
 
         tentarRestaurar() {
@@ -2030,7 +2054,7 @@
             // 3. PGV ou Entre no endereço (sem exceções, obs não altera)
             const end = (card.endereco || '').toLowerCase();
             if (end.includes('pgv'))   return 'SEM_NECESSIDADE';
-            if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';
+            if (end.includes('entre')) return 'SEM_NECESSIDADE';
             // 4. Fallback
             return 'PENDENTE';
         },
@@ -2159,6 +2183,8 @@
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
             NitDateFilter.sincronizar(eventos[0]?.dataReferencia);
             this.atualizarPainel();
+            // ✅ Registra metadados do processamento para rastreabilidade e verificação de turno
+            NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
             DOM.relatorioBrutoInput.value = '';
         },
 
@@ -3615,6 +3641,204 @@
             }
         },
     };
+
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NIT PROCESSAMENTO — rastreabilidade e verificação de turno
+    // Registra metadados de cada processamento e orienta o operador da manhã
+    // sobre relatórios postados na lacuna noturna (21:30 – 05:30).
+    // ═══════════════════════════════════════════════════════════════════════
+    const NitProcessamento = {
+        _KEY_META:  'nit-ultimo-processamento-v1',
+        _KEY_HIST:  'nit-historico-relatorios-v1',
+        _MAX_DIAS:  7, // dias mantidos no histórico
+
+        // ── Hash simples para identificar relatórios ─────────────────────
+        _hash(str) {
+            let h = 0;
+            for (let i = 0; i < Math.min(str.length, 300); i++) {
+                h = ((h << 5) - h) + str.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h).toString(16);
+        },
+
+        // ── Formata DD/MM/YYYY ────────────────────────────────────────────
+        _hojeStr() {
+            const d  = new Date();
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        },
+
+        // ── Registra metadados ao final de cada processamento ────────────
+        registrar(texto, eventos, dataReferencia) {
+            const agora = new Date();
+            const meta = {
+                dataReferencia,
+                data:        this._hojeStr(),
+                horario:     agora.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' }),
+                operador:    NitLogin.operador || 'anon',
+                turno:       NitLogin.turno    || '',
+                totalEventos: eventos.length,
+                timestamp:   agora.getTime(),
+                hashTexto:   this._hash(texto),
+            };
+
+            // Salva o último processamento
+            localStorage.setItem(this._KEY_META, JSON.stringify(meta));
+
+            // Salva histórico por dia (não sobrescreve dias anteriores)
+            try {
+                const hist = JSON.parse(localStorage.getItem(this._KEY_HIST) || '{}');
+                const diaKey = meta.data;
+                if (!hist[diaKey]) hist[diaKey] = [];
+                // Evita duplicata exata (mesmo hash)
+                if (!hist[diaKey].some(r => r.hashTexto === meta.hashTexto)) {
+                    hist[diaKey].push({
+                        ts:          meta.timestamp,
+                        horario:     meta.horario,
+                        operador:    meta.operador,
+                        turno:       meta.turno,
+                        totalEventos: meta.totalEventos,
+                        hashTexto:   meta.hashTexto,
+                        // Texto completo para replay (limitado a 80KB)
+                        textoRaw:    texto.length < 80000 ? texto : '[TRUNCADO]',
+                    });
+                }
+                // Limpa dias antigos (mantém _MAX_DIAS)
+                const dias = Object.keys(hist).sort((a, b) => {
+                    const parse = d => { const [dd,mm,yyyy] = d.split('/'); return new Date(+yyyy,+mm-1,+dd); };
+                    return parse(b) - parse(a);
+                });
+                if (dias.length > this._MAX_DIAS) {
+                    dias.slice(this._MAX_DIAS).forEach(d => delete hist[d]);
+                }
+                localStorage.setItem(this._KEY_HIST, JSON.stringify(hist));
+            } catch(e) {
+                console.warn('[NitProcessamento] Falha ao salvar histórico:', e.message);
+            }
+
+            // Espelha no Firebase para visibilidade multi-operador
+            NitFirebase.exec((db, ref, update) =>
+                update(ref(db, 'meta/ultimoProcessamento'), meta)
+            );
+        },
+
+        // ── Verifica se há lacuna desde o último processamento ───────────
+        verificar() {
+            const raw = localStorage.getItem(this._KEY_META);
+            if (!raw) return; // Primeira vez — sem histórico
+
+            let meta;
+            try { meta = JSON.parse(raw); } catch { return; }
+
+            const agora    = new Date();
+            const hoje     = this._hojeStr();
+            const ontem    = (() => {
+                const d = new Date(agora); d.setDate(d.getDate() - 1);
+                return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+            })();
+
+            // Só exibe modal se o último processamento foi ontem
+            if (meta.data !== ontem) return;
+
+            // Extrai hora do último processamento
+            const [hh, mm] = meta.horario.split(':').map(Number);
+            const foiAposLacuna = hh >= 21 || hh < 6; // entre 21h e 06h
+
+            this._exibirModal(meta, foiAposLacuna);
+        },
+
+        // ── Exibe modal orientando o operador da manhã ───────────────────
+        _exibirModal(meta, foiAposLacuna) {
+            const modal = document.getElementById('modal-virada-dia');
+            const corpo = document.getElementById('modal-virada-corpo');
+            const btnOk = document.getElementById('btn-virada-ok');
+            const btnPr = document.getElementById('btn-virada-processar');
+            if (!modal || !corpo) return;
+
+            const lacunaMsg = foiAposLacuna
+                ? `<div style="margin-top:14px;padding:12px 14px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:8px;font-size:13px;line-height:1.6;color:var(--color-warning);">
+                    <i class="fas fa-exclamation-triangle" style="margin-right:6px;"></i>
+                    <strong>Atenção:</strong> O último processamento foi às <strong>${meta.horario}</strong>.
+                    Se houver relatório postado no WhatsApp <strong>após ${meta.horario.slice(0,5)}</strong> e antes de 23:59, cole e processe antes de continuar.
+                  </div>`
+                : `<div style="margin-top:14px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;font-size:13px;color:var(--color-success);">
+                    <i class="fas fa-check-circle" style="margin-right:6px;"></i>
+                    Processamento recente. Nenhuma lacuna detectada.
+                  </div>`;
+
+            corpo.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
+                    <div style="background:var(--color-bg);border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-tertiary);margin-bottom:4px;">Operador</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--color-text-primary);">${meta.operador}</div>
+                    </div>
+                    <div style="background:var(--color-bg);border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-tertiary);margin-bottom:4px;">Turno</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--color-text-primary);">${meta.turno || '—'}</div>
+                    </div>
+                    <div style="background:var(--color-bg);border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-tertiary);margin-bottom:4px;">Data</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--color-text-primary);">${meta.data}</div>
+                    </div>
+                    <div style="background:var(--color-bg);border-radius:8px;padding:12px;">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-tertiary);margin-bottom:4px;">Último processamento</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--color-text-primary);">${meta.horario.slice(0,5)}</div>
+                    </div>
+                    <div style="background:var(--color-bg);border-radius:8px;padding:12px;grid-column:1/-1;">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-tertiary);margin-bottom:4px;">Ocorrências processadas</div>
+                        <div style="font-size:14px;font-weight:600;color:var(--color-text-primary);">${meta.totalEventos} evento(s)</div>
+                    </div>
+                </div>
+                ${lacunaMsg}
+            `;
+
+            // Botão "Já verifiquei"
+            btnOk?.addEventListener('click', () => fecharModal(modal), { once: true });
+
+            // Botão "Processar relatório pendente"
+            btnPr?.addEventListener('click', () => {
+                fecharModal(modal);
+                // Expande sidebar se colapsada e foca na textarea
+                if (typeof NitSidebar !== 'undefined') NitSidebar.expandir();
+                setTimeout(() => {
+                    const ta = document.getElementById('relatorio-bruto-input');
+                    ta?.focus();
+                    ta?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }, { once: true });
+
+            // Fecha ao clicar fora
+            modal.addEventListener('click', e => { if (e.target === modal) fecharModal(modal); }, { once: true });
+
+            abrirModal(modal);
+        },
+
+        // ── Consulta histórico de um dia ──────────────────────────────────
+        historicoDodia(dataStr) {
+            try {
+                const hist = JSON.parse(localStorage.getItem(this._KEY_HIST) || '{}');
+                return hist[dataStr] || [];
+            } catch { return []; }
+        },
+
+        // ── Replay de um processamento anterior ───────────────────────────
+        replay(hashTexto) {
+            try {
+                const hist = JSON.parse(localStorage.getItem(this._KEY_HIST) || '{}');
+                for (const dia of Object.values(hist)) {
+                    const reg = dia.find(r => r.hashTexto === hashTexto);
+                    if (reg) {
+                        console.log('[NitProcessamento] Texto para replay:', reg.textoRaw);
+                        return reg.textoRaw;
+                    }
+                }
+                console.warn('[NitProcessamento] Hash não encontrado:', hashTexto);
+                return null;
+            } catch { return null; }
+        },
+    };
+    window.NitProcessamento = NitProcessamento;
 
     document.addEventListener('DOMContentLoaded', () => {
         inicializarApp().catch(e => console.error('[NIT] Falha crítica:', e));
