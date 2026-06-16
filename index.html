@@ -2020,7 +2020,16 @@
                         const equipe     = dados.equipe      || el.dataset.equipe      || '';
                         const viatura    = dados.viatura     || el.dataset.viatura     || '';
                         const frase      = Semaforo._fraseTecnica(obs, status, inicio);
-                        const obsExibir  = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
+                        const obsExibir = frase 
+                            || Semaforo._fraseTecnica(
+                                obsBruta
+                                    .replace(/NORMALIZADOS\s*✅/gi, '')
+                                    .replace(/PENDENTES\s*❌/gi,    '')
+                                    .replace(/\*/g, '')
+                                    .trim(),
+                                statusAtual,
+                                inicioAtual,
+                            );
                         bodyEl.innerHTML =
                             `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
                             (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
