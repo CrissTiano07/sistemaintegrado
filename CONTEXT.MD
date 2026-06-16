@@ -23,6 +23,27 @@ Relatório Bruto → Parser → Cards → Firebase → Backend → Planilha → 
 | **Planilha** | Google Sheets | ID: `192OVycIIw7kCmo7F3E-bafF6GGSNAYkOT-vgNb_i8jc` |
 | **Dashboard** | Power BI (consome a planilha) | — |
 
+### Backend (já implementado — NÃO criar do zero)
+
+| Componente | Arquivo | Função | Status |
+|------------|---------|--------|--------|
+| Exportação | `routes/export.py` | Endpoint `/api/v1/exportar` + lógica de exportação | ✅ Implementado |
+| Integração Sheets | `services/sheets_integration.py` | Append, update, herança, coluna N | ✅ Implementado |
+| Cron | Railway | Executa exportação a cada 5 minutos | ✅ Configurado |
+| Cursor | Firebase | `/meta/ultimaExportacao/{clienteId}` | ✅ Implementado |
+| Herança | `append_heranca_diaria()` | Nova linha por dia de plantão | ✅ Implementado |
+
+**O que o backend JÁ FAZ:**
+- ✅ Exporta novas ocorrências (append)
+- ✅ Atualiza normalizados (update)
+- ✅ Herança entre dias (`ts_dataReferencia` → `append_heranca_diaria`)
+- ✅ Despacho (coluna N)
+
+**O que NÃO precisa ser criado:**
+- ❌ Novo endpoint `/api/v1/exportar` (já existe)
+- ❌ Novo worker `cron_export.py` (já existe)
+- ❌ Nova Service Account (já configurada)
+
 ---
 
 ## 🧠 3. Regras de Negócio (DEFINITIVAS)
@@ -98,6 +119,9 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | Qualquer lógica com `ts_dataReferencia` | Gatilho da herança |
 | `_payloadFirebase()` | Estrutura dos dados no Firebase |
 | `_montar_linha_nova()` | Backend — mapeamento para planilha |
+| `export.py` | Backend — lógica de exportação |
+| `sheets_integration.py` | Backend — integração com Google Sheets |
+| Cursor no Firebase | `/meta/ultimaExportacao` — gerencia estado |
 
 ### ✅ Permitido:
 
@@ -105,6 +129,8 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 - Modificar UI (CSS, modais)
 - Melhorar logging
 - Adicionar validações
+
+
 
 ---
 
