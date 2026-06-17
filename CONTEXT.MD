@@ -278,8 +278,25 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 
 --------------------------------
 
+## 🔮 13. Funcionalidades Futuras (Roadmap)
+
+### 13.1 Sugestão e Notificação de Equipe
+**Descrição:** O sistema poderá sugerir automaticamente a equipe mais próxima de um card pendente e notificá-la.
+
+**Requisitos futuros:**
+- Cadastro de equipes com localização
+- Integração com sistema de notificações (WhatsApp, SMS, app)
+- Cálculo de distância e tempo de deslocamento
+- Status de disponibilidade das equipes
+
+**Status:** ⬜ Não iniciado — aguardando definição de escopo
+
+
+
+----------------------------------------------------------------------------------------------------
 
 ### 1. Salve o arquivo
+
 
 ```bash
 # No seu repositório local
@@ -289,12 +306,17 @@ touch CONTEXT.md
 git add CONTEXT.md
 git commit -m "docs: adiciona CONTEXT.md para gestão de conhecimento"
 git push origin main
+
+
 2. Use o prompt universal
 Agora, sempre que chamar um assistente, use:
 
 "Leia o arquivo CONTEXT.md na raiz do repositório. Ele contém o contexto completo do sistema NIT. Identifique a próxima tarefa pendente e implemente."
 
+
 3. Mantenha atualizado
+
+
 Após cada implementação, atualize:
 
 Data na seção 1
