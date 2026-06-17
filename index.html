@@ -2060,40 +2060,47 @@
         },
 
         extrairDadosDaLinha(linha) {
-            const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
-            const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
-            const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL'];
-            const tipo = TIPOS.find(t => prefixo.includes(t)) || 'N/I';
+    const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
+    const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
+    const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL'];
+    const tipo = TIPOS.find(t => prefixo.includes(t)) || 'N/I';
 
-            const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/iu;
-            const m = linha.match(re);
-            if (!m) return null;
+    const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
+    const m = linha.match(re);
+    if (!m) return null;
 
-            const resto    = m[4] || '';
-            const inicioM  = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
-            const fimM     = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
-            const _restoObs = (linha.match(/●[^●]*●(.*)$/s)?.[1] || '');
-            const _obsMatch = _restoObs.match(/Obs[.:]?\s*(.+?)(?:\s*\/log.*)?$/is);
-            const obsInline = _obsMatch
-                ? _obsMatch[1].replace(/["*]/g, '').trim()
-                : _restoObs
-                    .replace(/In[ií]cio:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
-                    .replace(/Fim:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
-                    .replace(/["*\t]/g, '')
-                    .replace(/\s+/g, ' ')
-                    .trim();
+    const resto   = m[4] || '';
+    const inicioM = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
+    const fimM    = resto.match(/Fim:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
 
-            return {
-                tipo,
-                codigo:      m[1].trim(),
-                endereco:    m[2].trim().replace(/\s+/g, ' '),
-                problema:    m[3].trim().toUpperCase(),
-                inicio:      inicioM?.[1] ?? '',
-                fim:         fimM?.[1]    ?? '',
-                observacoes: obsInline,
-                equipe: '', viatura: '', pl: '', sub: '',
-            };
-        },
+    // Extrai obs: procura "Obs:" explícito primeiro
+    let obsInline = '';
+    const obsExplicit = resto.match(/\*?Obs[.:*]?\*?[\t ]*(.+?)(?:\/log\b.*)?$/is);
+    if (obsExplicit) {
+        obsInline = obsExplicit[1].replace(/["*]/g, '').replace(/\s+/g, ' ').trim();
+    } else {
+        // Fallback: tudo após as datas de início/fim
+        obsInline = resto
+            .replace(/In[ií]cio:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
+            .replace(/Fim:[\t ]*\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2}/gi, '')
+            .replace(/["*\t]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        // Descarta se for só pontuação ou muito curto sem valor semântico
+        if (/^[.\-–—\s"]+$/.test(obsInline) || obsInline.length < 3) obsInline = '';
+    }
+
+    return {
+        tipo,
+        codigo:      m[1].trim(),
+        endereco:    m[2].trim().replace(/\s+/g, ' '),
+        problema:    m[3].trim().toUpperCase(),
+        inicio:      inicioM?.[1] ?? '',
+        fim:         fimM?.[1]    ?? '',
+        observacoes: obsInline,
+        equipe: '', viatura: '', pl: '', sub: '',
+    };
+},
 
         // ── Firebase listener ─────────────────────────────────────────────
         _kanbanListenerAtivo: false,
@@ -2219,15 +2226,17 @@
                     if (atual) eventos.push(atual);
                     atual = { ...dados, secao, dataReferencia: dataRef };
                 } else if (atual && linha.trim() && !this._ehCabecalho(linha)) {
-                    let limpa = linha.trim()
-                        .replace(/["*]/g, '')
-                        .replace(/\*?Obs:\*?/gi, '')
-                        .replace(/\/log\b.*/i, '')
-                        .replace(/\s+/g, ' ').trim();
-                    if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
-                        atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
-                    }
-                }
+            // Guarda adicional: ignora linhas de cabeçalho de plantão
+            if (/PLANTONISTA|PLANTÃO|TÉCNICOS|CEMOB/i.test(linha)) continue;
+            let limpa = linha.trim()
+                .replace(/["*]/g, '')
+                .replace(/\*?Obs:\*?/gi, '')
+                .replace(/\/log\b.*/i, '')
+                .replace(/\s+/g, ' ').trim();
+            if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
+                atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
+            }
+        }
             }
             if (atual) eventos.push(atual);
             return eventos
