@@ -3672,6 +3672,8 @@ const NitViradaDia = {
 
         // ── Verifica se há lacuna desde o último processamento ───────────
         verificar() {
+            if (this._verificado) return;
+            this._verificado = true;
             const raw = localStorage.getItem(this._KEY_META);
             if (!raw) return; // Primeira vez — sem histórico
 
