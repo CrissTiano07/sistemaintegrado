@@ -89,22 +89,21 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 
 ## 📂 4. Módulos Principais (`index.html`)
 
-| Módulo | Função | Localização no arquivo |
-|--------|--------|------------------------|
-| `NitFirebase` | Conexão e operações com Firebase | Início do script |
-| `NitLogin` | Login do operador (nome + turno) | Após NitFirebase |
-| `NitDateFilter` | Filtro de data no Kanban | Após NitLogin |
-| `NitLogger` | Logging estruturado + replay | Antes de Semaforo |
-| **`NitUltimoProcessamento`** | **Metadados do último processamento** | **A IMPLEMENTAR** |
-| `NitViradaDia` | Transição de dia (versão antiga) | Antes de Semaforo |
-| `Semaforo` | ❤️ **CORAÇÃO DO SISTEMA** — parser, herança, despacho, UI | Central |
-| `NitNormalizar` | Modal de normalização com data/hora | Após Semaforo |
-| `NitCardDetails` | Modal de detalhes do card | Após Semaforo |
-| `NitBuscaGlobal` | Busca global (Ctrl+K) | Após Semaforo |
-| `NitSidebar` | Sidebar colapsável | Após Semaforo |
-| `NitNormalizados` | Coluna normalizados colapsável | Após Semaforo |
-| `NitLazy` | Lazy render de cards | Após Semaforo |
-
+| Módulo | Função | Localização no arquivo | Status |
+|--------|--------|------------------------|--------|
+| `NitFirebase` | Conexão e operações com Firebase | Início do script | ✅ |
+| `NitLogin` | Login do operador (nome + turno) | Após NitFirebase | ✅ |
+| `NitDateFilter` | Filtro de data no Kanban | Após NitLogin | ✅ |
+| `NitLogger` | Logging estruturado + replay | Antes de Semaforo | ✅ |
+| `NitProcessamento` | Metadados do último processamento + verificação de turno | Antes de Semaforo | ✅ |
+| `NitViradaDia` | Versão compatível com NitProcessamento (não restaura relatórios) | Antes de Semaforo | ✅ |
+| `Semaforo` | ❤️ CORAÇÃO DO SISTEMA — parser, herança, despacho, UI | Central | ✅ |
+| `NitNormalizar` | Modal de normalização com data/hora | Após Semaforo | ✅ |
+| `NitCardDetails` | Modal de detalhes do card | Após Semaforo | ✅ |
+| `NitBuscaGlobal` | Busca global (Ctrl+K) | Após Semaforo | ✅ |
+| `NitSidebar` | Sidebar colapsável | Após Semaforo | ✅ |
+| `NitNormalizados` | Coluna normalizados colapsável | Após Semaforo | ✅ |
+| `NitLazy` | Lazy render de cards | Após Semaforo | ✅ |
 ---
 
 ## 🔒 5. O que NÃO PODE SER TOCADO (SEGURANÇA)
@@ -138,14 +137,13 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 
 | # | Tarefa | Descrição | Status |
 |---|--------|-----------|--------|
-| 1 | **Revisão do Parser** | Corrigir `extrairDadosDaLinha()` para capturar observações de forma robusta | ⬜ Pendente |
-| 2 | **Corrigir Relatório Final** | Ajustar `gerarPreviewRelatorio()` para não truncar textos como "INVESTIGANDO" | ⬜ Pendente |
-| 3 | **Observações com Quebra** | Suportar observações em múltiplas linhas | ⬜ Pendente |
-| 4 | **Logging do Parser** | Adicionar logs para rastrear o que foi extraído e o que foi ignorado | ⬜ Pendente |
+| 1 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
+| 2 | **Corrigir INVESTIGANDO no relatório** | Mapear `INVESTIGANDO` → `INVESTIGANDO` (não `INVEST`) | ✅ FEITO |
+| 3 | **Corrigir IMPROCEDENTE no relatório** | Mapear `IMPROCEDENTE` → `IMPROCEDENTE` (não `IMPROC`) | ✅ FEITO |
+| 4 | **Observações vazias** | Revisar `_fraseTecnica()` e `criarElementoCard()` | ⬜ Pendente |
 | 5 | **NitUltimoProcessamento** | Registrar metadados do último processamento no Firebase | ✅ FEITO |
 | 6 | **Modal de verificação** | Exibir modal com info do último processamento | ✅ FEITO |
 | 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
-| 8 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
 
 
 ## 🧪 7. Como Testar
@@ -208,45 +206,42 @@ Entregue:
 Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informações, me pergunte."
 
 📅 10. Últimas Atualizações
-Data	O que mudou
-16/06/2026	Corrigido includes('entre') → \bentre\b
-16/06/2026	Versão estável restaurada (login funcionando)
-16/06/2026	Criado este CONTEXT.md para gestão de conhecimento
-
+| Data | O que mudou |
+|------|-------------|
+| 16/06/2026 | Corrigido `includes('entre')` → `\bentre\b` |
+| 16/06/2026 | Versão estável restaurada (login funcionando) |
+| 16/06/2026 | Criado este `CONTEXT.md` para gestão de conhecimento |
+| 16/06/2026 | Corrigido relatório final: `INVESTIGANDO` e `IMPROCEDENTE` completos |
+| 16/06/2026 | Implementado `NitProcessamento` com modal de verificação de turno |
+| 16/06/2026 | Substituído `NitViradaDia` antigo pela versão compatível com `NitProcessamento` |
 text
 
 ---
+
+
 ## 🐛 12. Problemas Conhecidos (Pendentes de Correção)
 
 ### 12.1 Observações Vazias no Kanban
 **Sintoma:** Ao processar relatórios, a maioria dos cards fica com observação vazia, mesmo quando o relatório contém "Obs:" ou "Observação:".
 
-**Exemplo recente:** Cards 182, 511, 539, 617, 698, 974 — todos sem observação, apenas o card 200 tinha "Apagado devido a furto de caixas."
-
-**Causa provável:** O parser (`extrairDadosDaLinha`) é frágil e não captura observações quando o formato do relatório varia (espaços extras, quebras de linha, formatação diferente).
+**Causa provável:** O parser (`extrairDadosDaLinha`) é frágil e não captura observações quando o formato do relatório varia. Além disso, `_fraseTecnica()` pode retornar vazio silenciosamente.
 
 **Status:** ⬜ Pendente — aguardando revisão do parser.
 
-### 12.2 Relatório Final com Texto Cortado
-**Sintoma:** No relatório final (preview), os tipos de causa aparecem cortados, ex: `INVEST` em vez de `INVESTIGANDO`.
-
-**Exemplo recente:**
-
-479 🚦 AV. CEL. CARVALHO & R. HERMES PARAHYBA 🚦 *INVEST - Desde 01/06 - 07:18 🚦 PISCANTE*
-
-Onde `INVEST` deveria ser `INVESTIGANDO`.
-
-**Causa provável:** A função `gerarPreviewRelatorio()` está truncando o texto ou usando um campo abreviado em vez do texto completo.
-
-**Status:** ⬜ Pendente — aguardando revisão do relatório final.
-
-### 12.3 Observações com Quebra de Linha
+### 12.2 Observações com Quebra de Linha
 **Sintoma:** Observações que ocupam múltiplas linhas no relatório bruto não são capturadas completamente.
 
 **Causa provável:** O parser processa linha por linha e não reconhece que a observação continua na linha seguinte.
 
 **Status:** ⬜ Pendente — aguardando revisão do parser.
 
+### 12.3 ✅ Relatório Final com Texto Cortado — RESOLVIDO
+**Sintoma:** No relatório final, `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
+
+**Solução:** Substituído o mapeamento no `gerarPreviewRelatorio()` para usar mapa explícito com os nomes completos.
+
+**Status:** ✅ RESOLVIDO em 16/06/2026
+--------------------------------
 
 
 ### 1. Salve o arquivo
