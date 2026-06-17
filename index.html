@@ -2642,14 +2642,20 @@
             const data  = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
             const fmt = card => {
-                const tipo  = (card.dataset.tipo || '').toUpperCase();
-                let abrev   = 'N/I';
-                if (tipo.includes('FALHA'))  abrev = 'FALHA';
-                else if (tipo.includes('ENEL'))   abrev = 'ENEL';
-                else if (tipo.includes('INVEST')) abrev = 'INVEST';
-                else if (tipo.includes('FURTO'))  abrev = 'FURTO';
-                else if (tipo.includes('IMPROC')) abrev = 'IMPROC';
-                else if (tipo) abrev = tipo.slice(0, 8);
+                const tipo = (card.dataset.tipo || '').toUpperCase();
+    
+                // Mapeamento — apenas tipos longos são abreviados
+                const mapa = {
+                    'FALHA DE EQUIPAMENTO': 'FALHA',
+                    'INVESTIGANDO': 'INVESTIGANDO',
+                    'ROMPIMENTO': 'ROMPIMENTO',
+                    'ACIDENTE': 'ACIDENTE',
+                    'IMPROCEDENTE': 'IMPROCEDENTE',  // ← COMPLETO
+                    'FURTO': 'FURTO',
+                    'ENEL': 'ENEL',
+                };
+                const abrev = mapa[tipo] || tipo;
+    
                 let desde = '';
                 const mts = (card.dataset.inicio || '').match(/(\d{2})\/(\d{2})(?:\/\d+)?\s+(\d{2}:\d{2})/);
                 if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
