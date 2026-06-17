@@ -1,4 +1,4 @@
-# NIT — Contexto Técnico (Última atualização: 16/06/2026)
+# NIT — Contexto Técnico (Última atualização: 17/06/2026)
 
 extrairDadosDaLinha — Extração de Observações (CORRETO)
 
@@ -151,6 +151,8 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 5 | **NitUltimoProcessamento** | Registrar metadados do último processamento no Firebase | ✅ FEITO |
 | 6 | **Modal de verificação** | Exibir modal com info do último processamento | ✅ FEITO |
 | 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
+| 8 | **totalPend incluir VL e AMC** | Contar cards em VL e AMC como pendentes no relatório final | ✅ FEITO |
+| 9 | **_renderCardBody com fallback** | Buscar observação em `card.dataset` como fallback | ✅ FEITO |
 
 
 ## 🧪 7. Como Testar
@@ -211,6 +213,7 @@ Entregue:
 Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informações, me pergunte."
 
 📅 10. Últimas Atualizações
+
 | Data | O que mudou |
 |------|-------------|
 | 16/06/2026 | Corrigido `includes('entre')` → `\bentre\b` |
@@ -220,6 +223,8 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 | 16/06/2026 | Implementado `NitProcessamento` com modal de verificação de turno |
 | 16/06/2026 | Substituído `NitViradaDia` antigo pela versão compatível com `NitProcessamento` |
 | 16/06/2026 | Corrigido parser: observações vazias (fallback para `Obs:` explícito + guardas multiline) |
+| 16/06/2026 | Corrigido `totalPend` no relatório final para incluir VL e AMC como pendentes |
+| 16/06/2026 | Corrigido `_renderCardBody` com fallback para `card.dataset.observacoes` |
 
 ---
 
@@ -227,30 +232,47 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 ## 🐛 12. Problemas Conhecidos (RESOLVIDOS)
 
 ### 12.1 ✅ Observações Vazias no Kanban — RESOLVIDO
-**Sintoma:** Ao processar relatórios, a maioria dos cards ficava com observação vazia, mesmo quando o relatório continha "Obs:" ou "Observação:".
+**Sintoma:** Ao processar relatórios, a maioria dos cards ficava com observação vazia.
 
-**Causa:** O regex `_obsMatch` falhava quando não havia `Obs:` explícito, e o fallback removia datas mas podia ficar vazio.
+**Causa:** O regex `_obsMatch` falhava quando não havia `Obs:` explícito.
 
 **Solução:** 
-1. Melhorado o `extrairDadosDaLinha()` para capturar `Obs:` com variações (`*Obs:`, `Obs.`, `Obs*`)
+1. Melhorado o `extrairDadosDaLinha()` para capturar `Obs:` com variações
 2. Fallback aprimorado para remover datas e descartar conteúdo sem valor semântico
-3. Adicionada guarda em `_parsearRelatorio()` para ignorar metadados de plantão (`PLANTONISTA`, `PLANTÃO`, `TÉCNICOS`, `CEMOB`)
+3. Adicionada guarda em `_parsearRelatorio()` para ignorar metadados de plantão
+4. Adicionado fallback em `_renderCardBody` para buscar observação no `dataset`
 
 **Status:** ✅ RESOLVIDO em 16/06/2026
 
 ### 12.2 ✅ Observações com Quebra de Linha — RESOLVIDO
-**Sintoma:** Observações que ocupavam múltiplas linhas no relatório bruto não eram capturadas completamente.
+**Sintoma:** Observações em múltiplas linhas não eram capturadas.
 
-**Causa:** O acúmulo de linhas já funcionava, mas capturava metadados do plantão.
-
-**Solução:** Adicionada guarda no `_parsearRelatorio()` para ignorar linhas com `PLANTONISTA`, `PLANTÃO`, `TÉCNICOS`, `CEMOB`.
+**Solução:** Adicionada guarda no `_parsearRelatorio()` para ignorar metadados do plantão.
 
 **Status:** ✅ RESOLVIDO em 16/06/2026
 
 ### 12.3 ✅ Relatório Final com Texto Cortado — RESOLVIDO
-**Sintoma:** No relatório final, `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
+**Sintoma:** `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
 
-**Solução:** Substituído o mapeamento no `gerarPreviewRelatorio()` para usar mapa explícito com os nomes completos.
+**Solução:** Substituído o mapeamento no `gerarPreviewRelatorio()`.
+
+**Status:** ✅ RESOLVIDO em 16/06/2026
+
+### 12.4 ✅ Contagem de Pendentes no Relatório — RESOLVIDO
+**Sintoma:** O relatório final subestimava o número de pendentes.
+
+**Causa:** `totalPend = espera.length + sn.length` (não incluía VL e AMC).
+
+**Solução:** Corrigido para `totalPend = espera.length + sn.length + vl.length + amc.length`.
+
+**Status:** ✅ RESOLVIDO em 16/06/2026
+
+### 12.5 ✅ Observações Perdidas em child_changed — RESOLVIDO
+**Sintoma:** Cards atualizados via Firebase perdiam a observação.
+
+**Causa:** `_renderCardBody` usava apenas `cardData.observacoes`, sem fallback.
+
+**Solução:** Adicionado fallback para `card.dataset.observacoes` no `_renderCardBody`.
 
 **Status:** ✅ RESOLVIDO em 16/06/2026
 
