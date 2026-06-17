@@ -277,6 +277,15 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 
 **Status:** ✅ RESOLVIDO em 16/06/2026
 
+### 12.6 ✅ Dupla Chamada do Modal de Verificação — RESOLVIDO
+**Sintoma:** O modal de verificação de turno aparecia duas vezes.
+
+**Causa:** `NitLogin.confirmar()` e `NitViradaDia.inicializar()` chamavam `NitProcessamento.verificar()` com delays diferentes.
+
+**Solução:** Adicionado `_verificado` no `NitProcessamento` para garantir execução única.
+
+**Status:** ✅ RESOLVIDO em 16/06/2026
+
 --------------------------------
 
 ## 🔮 13. Funcionalidades Futuras (Roadmap)
