@@ -153,7 +153,7 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
 | 8 | **totalPend incluir VL e AMC** | Contar cards em VL e AMC como pendentes no relatório final | ✅ FEITO |
 | 9 | **_renderCardBody com fallback** | Buscar observação em `card.dataset` como fallback | ✅ FEITO |
-
+| 10 | **_verificado no NitProcessamento** | Evitar dupla chamada do modal de verificação | ✅ FEITO |
 
 ## 🧪 7. Como Testar
 
@@ -225,7 +225,8 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 | 16/06/2026 | Corrigido parser: observações vazias (fallback para `Obs:` explícito + guardas multiline) |
 | 16/06/2026 | Corrigido `totalPend` no relatório final para incluir VL e AMC como pendentes |
 | 16/06/2026 | Corrigido `_renderCardBody` com fallback para `card.dataset.observacoes` |
-
+| 16/06/2026 | Adicionado `_verificado` no `NitProcessamento` para evitar dupla chamada do modal |
+| 16/06/2026 | Melhoria de legibilidade: fundo dos cards e contraste das observações |
 ---
 
 
