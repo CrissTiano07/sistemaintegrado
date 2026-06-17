@@ -140,7 +140,7 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 1 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
 | 2 | **Corrigir INVESTIGANDO no relatório** | Mapear `INVESTIGANDO` → `INVESTIGANDO` (não `INVEST`) | ✅ FEITO |
 | 3 | **Corrigir IMPROCEDENTE no relatório** | Mapear `IMPROCEDENTE` → `IMPROCEDENTE` (não `IMPROC`) | ✅ FEITO |
-| 4 | **Observações vazias** | Revisar `_fraseTecnica()` e `criarElementoCard()` | ⬜ Pendente |
+| 4 | **Observações vazias** | Revisar `_fraseTecnica()` e `criarElementoCard()` | ⬜ Pendente | ✅ FEITO |
 | 5 | **NitUltimoProcessamento** | Registrar metadados do último processamento no Firebase | ✅ FEITO |
 | 6 | **Modal de verificação** | Exibir modal com info do último processamento | ✅ FEITO |
 | 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
@@ -226,14 +226,14 @@ text
 
 **Causa provável:** O parser (`extrairDadosDaLinha`) é frágil e não captura observações quando o formato do relatório varia. Além disso, `_fraseTecnica()` pode retornar vazio silenciosamente.
 
-**Status:** ⬜ Pendente — aguardando revisão do parser.
+**Status:** ✅ RESOLVIDO em 16/06/2026.
 
 ### 12.2 Observações com Quebra de Linha
 **Sintoma:** Observações que ocupam múltiplas linhas no relatório bruto não são capturadas completamente.
 
 **Causa provável:** O parser processa linha por linha e não reconhece que a observação continua na linha seguinte.
 
-**Status:** ⬜ Pendente — aguardando revisão do parser.
+**Status:** ✅ RESOLVIDO em 16/06/2026.
 
 ### 12.3 ✅ Relatório Final com Texto Cortado — RESOLVIDO
 **Sintoma:** No relatório final, `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
