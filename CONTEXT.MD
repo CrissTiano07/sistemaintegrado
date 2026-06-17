@@ -1,5 +1,12 @@
 # NIT — Contexto Técnico (Última atualização: 16/06/2026)
 
+extrairDadosDaLinha — Extração de Observações (CORRETO)
+
+// Versão corrigida — captura observações mesmo sem "Obs:" explícito
+// Usa fallback robusto e descarta conteúdo sem valor semântico
+// Localização: index.html → Semaforo.extrairDadosDaLinha()
+
+
 ## 📌 1. O que é o NIT
 
 Sistema de **gestão operacional de trânsito** para agentes que operam cruzamentos com semáforos inoperantes.
@@ -140,7 +147,7 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 1 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
 | 2 | **Corrigir INVESTIGANDO no relatório** | Mapear `INVESTIGANDO` → `INVESTIGANDO` (não `INVEST`) | ✅ FEITO |
 | 3 | **Corrigir IMPROCEDENTE no relatório** | Mapear `IMPROCEDENTE` → `IMPROCEDENTE` (não `IMPROC`) | ✅ FEITO |
-| 4 | **Observações vazias** | Revisar `_fraseTecnica()` e `criarElementoCard()` | ⬜ Pendente | ✅ FEITO |
+| 4 | **Observações vazias** | Revisar `_fraseTecnica()` e `criarElementoCard()` | ✅ FEITO |
 | 5 | **NitUltimoProcessamento** | Registrar metadados do último processamento no Firebase | ✅ FEITO |
 | 6 | **Modal de verificação** | Exibir modal com info do último processamento | ✅ FEITO |
 | 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
@@ -172,24 +179,22 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 
 ---
 
-## 📌 8. Código de Referência — statusFromSecao (CORRETO)
+
+## 📌 8. Código de Referência
+
+### statusFromSecao (CORRETO)
 
 ```javascript
 statusFromSecao(secao, card) {
-    // 1. Seção NORMALIZADOS (prioridade máxima)
     if (secao === 'NORMALIZADO') return 'NORMALIZADO';
-    
-    // 2. Campo Fim preenchido
     if (card.fim && card.fim.trim()) return 'NORMALIZADO';
-    
-    // 3. PGV ou Entre no endereço (prioridade 3)
     const end = (card.endereco || '').toLowerCase();
     if (end.includes('pgv')) return 'SEM_NECESSIDADE';
-    if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';  // ← CORRETO
-    
-    // 4. Fallback
+    if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';
     return 'PENDENTE';
 }
+
+
 
 9. Prompt Universal para Assistente
 "Leia o arquivo CONTEXT.md na raiz do repositório. Ele contém o contexto completo do sistema NIT.
@@ -214,26 +219,33 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 | 16/06/2026 | Corrigido relatório final: `INVESTIGANDO` e `IMPROCEDENTE` completos |
 | 16/06/2026 | Implementado `NitProcessamento` com modal de verificação de turno |
 | 16/06/2026 | Substituído `NitViradaDia` antigo pela versão compatível com `NitProcessamento` |
-text
+| 16/06/2026 | Corrigido parser: observações vazias (fallback para `Obs:` explícito + guardas multiline) |
 
 ---
 
 
-## 🐛 12. Problemas Conhecidos (Pendentes de Correção)
+## 🐛 12. Problemas Conhecidos (RESOLVIDOS)
 
-### 12.1 Observações Vazias no Kanban
-**Sintoma:** Ao processar relatórios, a maioria dos cards fica com observação vazia, mesmo quando o relatório contém "Obs:" ou "Observação:".
+### 12.1 ✅ Observações Vazias no Kanban — RESOLVIDO
+**Sintoma:** Ao processar relatórios, a maioria dos cards ficava com observação vazia, mesmo quando o relatório continha "Obs:" ou "Observação:".
 
-**Causa provável:** O parser (`extrairDadosDaLinha`) é frágil e não captura observações quando o formato do relatório varia. Além disso, `_fraseTecnica()` pode retornar vazio silenciosamente.
+**Causa:** O regex `_obsMatch` falhava quando não havia `Obs:` explícito, e o fallback removia datas mas podia ficar vazio.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026.
+**Solução:** 
+1. Melhorado o `extrairDadosDaLinha()` para capturar `Obs:` com variações (`*Obs:`, `Obs.`, `Obs*`)
+2. Fallback aprimorado para remover datas e descartar conteúdo sem valor semântico
+3. Adicionada guarda em `_parsearRelatorio()` para ignorar metadados de plantão (`PLANTONISTA`, `PLANTÃO`, `TÉCNICOS`, `CEMOB`)
 
-### 12.2 Observações com Quebra de Linha
-**Sintoma:** Observações que ocupam múltiplas linhas no relatório bruto não são capturadas completamente.
+**Status:** ✅ RESOLVIDO em 16/06/2026
 
-**Causa provável:** O parser processa linha por linha e não reconhece que a observação continua na linha seguinte.
+### 12.2 ✅ Observações com Quebra de Linha — RESOLVIDO
+**Sintoma:** Observações que ocupavam múltiplas linhas no relatório bruto não eram capturadas completamente.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026.
+**Causa:** O acúmulo de linhas já funcionava, mas capturava metadados do plantão.
+
+**Solução:** Adicionada guarda no `_parsearRelatorio()` para ignorar linhas com `PLANTONISTA`, `PLANTÃO`, `TÉCNICOS`, `CEMOB`.
+
+**Status:** ✅ RESOLVIDO em 16/06/2026
 
 ### 12.3 ✅ Relatório Final com Texto Cortado — RESOLVIDO
 **Sintoma:** No relatório final, `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
@@ -241,6 +253,7 @@ text
 **Solução:** Substituído o mapeamento no `gerarPreviewRelatorio()` para usar mapa explícito com os nomes completos.
 
 **Status:** ✅ RESOLVIDO em 16/06/2026
+
 --------------------------------
 
 
