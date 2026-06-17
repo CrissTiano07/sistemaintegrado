@@ -138,13 +138,15 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 
 | # | Tarefa | Descrição | Status |
 |---|--------|-----------|--------|
-| 1 | **NitUltimoProcessamento** | Registrar metadados do último processamento (data, hora, operador, turno) no Firebase | ⬜ Pendente |
-| 2 | **Modal de verificação** | Exibir modal com info do último processamento + instrução para verificar WhatsApp | ⬜ Pendente |
-| 3 | **Botão "Processar pendente"** | Foca na textarea para operador colar o relatório NÃO processado | ⬜ Pendente |
-| 4 | **Botão "Já verifiquei"** | Operador confirma que não há relatório pendente | ⬜ Pendente |
-| 5 | **Auditoria** | Registrar ação do operador (processou_pendente / fechou_modal) | ⬜ Pendente |
-| 6 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
----
+| 1 | **Revisão do Parser** | Corrigir `extrairDadosDaLinha()` para capturar observações de forma robusta | ⬜ Pendente |
+| 2 | **Corrigir Relatório Final** | Ajustar `gerarPreviewRelatorio()` para não truncar textos como "INVESTIGANDO" | ⬜ Pendente |
+| 3 | **Observações com Quebra** | Suportar observações em múltiplas linhas | ⬜ Pendente |
+| 4 | **Logging do Parser** | Adicionar logs para rastrear o que foi extraído e o que foi ignorado | ⬜ Pendente |
+| 5 | **NitUltimoProcessamento** | Registrar metadados do último processamento no Firebase | ✅ FEITO |
+| 6 | **Modal de verificação** | Exibir modal com info do último processamento | ✅ FEITO |
+| 7 | **Botões do modal** | "Processar pendente" e "Já verifiquei" | ✅ FEITO |
+| 8 | **Corrigir `includes('entre')`** | Substituir por `\bentre\b` em `statusFromSecao` | ✅ FEITO |
+
 
 ## 🧪 7. Como Testar
 
@@ -214,6 +216,36 @@ Data	O que mudou
 text
 
 ---
+## 🐛 12. Problemas Conhecidos (Pendentes de Correção)
+
+### 12.1 Observações Vazias no Kanban
+**Sintoma:** Ao processar relatórios, a maioria dos cards fica com observação vazia, mesmo quando o relatório contém "Obs:" ou "Observação:".
+
+**Exemplo recente:** Cards 182, 511, 539, 617, 698, 974 — todos sem observação, apenas o card 200 tinha "Apagado devido a furto de caixas."
+
+**Causa provável:** O parser (`extrairDadosDaLinha`) é frágil e não captura observações quando o formato do relatório varia (espaços extras, quebras de linha, formatação diferente).
+
+**Status:** ⬜ Pendente — aguardando revisão do parser.
+
+### 12.2 Relatório Final com Texto Cortado
+**Sintoma:** No relatório final (preview), os tipos de causa aparecem cortados, ex: `INVEST` em vez de `INVESTIGANDO`.
+
+**Exemplo recente:**
+
+479 🚦 AV. CEL. CARVALHO & R. HERMES PARAHYBA 🚦 *INVEST - Desde 01/06 - 07:18 🚦 PISCANTE*
+
+Onde `INVEST` deveria ser `INVESTIGANDO`.
+
+**Causa provável:** A função `gerarPreviewRelatorio()` está truncando o texto ou usando um campo abreviado em vez do texto completo.
+
+**Status:** ⬜ Pendente — aguardando revisão do relatório final.
+
+### 12.3 Observações com Quebra de Linha
+**Sintoma:** Observações que ocupam múltiplas linhas no relatório bruto não são capturadas completamente.
+
+**Causa provável:** O parser processa linha por linha e não reconhece que a observação continua na linha seguinte.
+
+**Status:** ⬜ Pendente — aguardando revisão do parser.
 
 
 
