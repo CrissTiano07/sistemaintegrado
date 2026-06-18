@@ -160,6 +160,9 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 14 | **Ordem dos Normalizados** | Últimos normalizados no topo, com data/hora fim no card | ⬜ Pendente |
 | 15 | **Observações deletadas ao normalizar** | Preservar observação após normalização via processar | ⬜ Pendente |
 | 16 | **Legibilidade dos cards** | Aplicar estilo visual da versão anterior (contraste e cores) | ⬜ Pendente |
+| 17 | **Emojis de viatura** | Substituir emojis de viatura por 🚔 no relatório | ⬜ Pendente |
+| 18 | **Emoji para zero pendentes** | Usar ✅ quando não houver pendentes no relatório | ⬜ Pendente |
+| 19 | **Visibilidade dos normalizados** | Destacar/marcar os últimos normalizados para fácil localização | ⬜ Pendente |
 
 
 
@@ -236,6 +239,7 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 | 16/06/2026 | Adicionado `_verificado` no `NitProcessamento` para evitar dupla chamada do modal |
 | 16/06/2026 | Melhoria de legibilidade: fundo dos cards e contraste das observações |
 | 17/06/2026 | Corrigido alerta de pendentes altos no relatório (🚨 para >= 6) |
+| 18/06/2026 | Adicionadas tarefas #17, #18, #19 ao roadmap |
 ---
 
 
@@ -292,6 +296,30 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 **Solução:** Aplicar estilo visual da versão anterior (referência: `nit-nucleo-inteligencia-trafego`).
 
 **Status:** ⬜ Pendente
+### 12.7 ⬜ Emojis de Viatura — PENDENTE
+**Sintoma:** Emojis de viatura atuais não são padronizados.
+
+**Solução:** Substituir por 🚔 no relatório final.
+
+**Status:** ⬜ Pendente
+
+### 12.8 ⬜ Emoji para Zero Pendentes — PENDENTE
+**Sintoma:** Quando não há pendentes, o relatório mostra `⚠️ (0)`.
+
+**Solução:** Usar ✅ quando `totalPend === 0`.
+
+**Status:** ⬜ Pendente
+
+### 12.9 ⬜ Visibilidade dos Normalizados — PENDENTE
+**Sintoma:** Normalizados recentes não são facilmente identificáveis.
+
+**Solução:** Adicionar destaque visual (cor, borda, badge) para os últimos normalizados.
+
+**Status:** ⬜ Pendente
+
+
+
+
 --------------------------------
 
 ## 🔮 13. Funcionalidades Futuras (Roadmap)
