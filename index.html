@@ -2659,7 +2659,17 @@
             const totalNorm   = norm.length;
             const totalAtivos = vl.length + amc.length + espera.length + sn.length;
 
-            const emoji = totalAtivos === 0 ? '🟢🟢' : totalAtivos <= 5 ? '🟡🟡' : '🔴🔴';
+            let emoji, emojiPendentes;
+            if (totalAtivos === 0) {
+                emoji = '🟢🟢';
+                emojiPendentes = '✅';
+            } else if (totalAtivos >= 1 && totalAtivos <= 5) {
+                emoji = '🟡🟡';
+                emojiPendentes = '⚠️';
+            } else {
+                emoji = '🔴🔴';
+                emojiPendentes = '🚨';
+            }
             const hora  = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             const data  = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
@@ -2690,14 +2700,13 @@
 
             const linhas = [
                 `${emoji} *STATUS SEMAFÓRICO* ${emoji}`,
-                `---------- ${hora} - ${data} ----------`,
+                `---------- ${data} - ${hora} ----------`,
                 '',
                 `*Ocorrências (${totalOcorr})*`,
-                `*Pendentes (${totalPend})* ⚠️`,
+                `*Pendentes (${totalPend})* ${emojiPendentes}`,  // ← USANDO emojiPendentes
                 `*Normalizados (${totalNorm})*`,
                 '',
             ];
-
             if (vl.length)  { linhas.push(`🚓🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
             if (amc.length) { linhas.push(`🚓🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
