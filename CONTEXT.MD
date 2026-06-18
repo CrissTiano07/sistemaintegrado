@@ -1,4 +1,4 @@
-# NIT — Contexto Técnico (Última atualização: 17/06/2026)
+# NIT — Contexto Técnico (Última atualização: 18/06/2026)
 
 extrairDadosDaLinha — Extração de Observações (CORRETO)
 
@@ -154,6 +154,14 @@ Qualquer ocorrência que não se encaixe em SEM_NECESSIDADE ou NORMALIZADO.
 | 8 | **totalPend incluir VL e AMC** | Contar cards em VL e AMC como pendentes no relatório final | ✅ FEITO |
 | 9 | **_renderCardBody com fallback** | Buscar observação em `card.dataset` como fallback | ✅ FEITO |
 | 10 | **_verificado no NitProcessamento** | Evitar dupla chamada do modal de verificação | ✅ FEITO |
+| 11 | **Alerta de pendentes altos** | Usar `🚨` quando pendentes >= 6 no relatório | ✅ FEITO |
+| 12 | **Abreviação "PRÓX."** | Adicionar "PRÓX." ao mapeamento do relatório | ⬜ Pendente |
+| 13 | **Coluna O (Tempo de Atendimento)** | Impedir que fórmula seja sobrescrita ao atualizar | ⬜ Pendente |
+| 14 | **Ordem dos Normalizados** | Últimos normalizados no topo, com data/hora fim no card | ⬜ Pendente |
+| 15 | **Observações deletadas ao normalizar** | Preservar observação após normalização via processar | ⬜ Pendente |
+| 16 | **Legibilidade dos cards** | Aplicar estilo visual da versão anterior (contraste e cores) | ⬜ Pendente |
+
+
 
 ## 🧪 7. Como Testar
 
@@ -227,65 +235,63 @@ Se tiver dúvida, consulte o contexto primeiro. Se precisar de mais informaçõe
 | 16/06/2026 | Corrigido `_renderCardBody` com fallback para `card.dataset.observacoes` |
 | 16/06/2026 | Adicionado `_verificado` no `NitProcessamento` para evitar dupla chamada do modal |
 | 16/06/2026 | Melhoria de legibilidade: fundo dos cards e contraste das observações |
+| 17/06/2026 | Corrigido alerta de pendentes altos no relatório (🚨 para >= 6) |
 ---
 
 
-## 🐛 12. Problemas Conhecidos (RESOLVIDOS)
+## 🐛 12. Problemas Conhecidos (Pendentes de Correção)
 
-### 12.1 ✅ Observações Vazias no Kanban — RESOLVIDO
-**Sintoma:** Ao processar relatórios, a maioria dos cards ficava com observação vazia.
+### 12.1 ✅ Alerta de Pendentes Altos — RESOLVIDO
+**Sintoma:** O relatório usava `⚠️` para qualquer quantidade de pendentes.
 
-**Causa:** O regex `_obsMatch` falhava quando não havia `Obs:` explícito.
+**Solução:** Ajustado para usar `🚨` quando pendentes >= 6.
 
-**Solução:** 
-1. Melhorado o `extrairDadosDaLinha()` para capturar `Obs:` com variações
-2. Fallback aprimorado para remover datas e descartar conteúdo sem valor semântico
-3. Adicionada guarda em `_parsearRelatorio()` para ignorar metadados de plantão
-4. Adicionado fallback em `_renderCardBody` para buscar observação no `dataset`
+**Status:** ✅ RESOLVIDO em 17/06/2026
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+### 12.2 ⬜ Abreviação "PRÓX." no Relatório — PENDENTE
+**Sintoma:** "PRÓX." aparece abreviado no relatório.
 
-### 12.2 ✅ Observações com Quebra de Linha — RESOLVIDO
-**Sintoma:** Observações em múltiplas linhas não eram capturadas.
+**Causa:** O mapeamento no `gerarPreviewRelatorio` não inclui "PRÓX.".
 
-**Solução:** Adicionada guarda no `_parsearRelatorio()` para ignorar metadados do plantão.
+**Solução:** Adicionar "PRÓX." ao mapa de abreviações.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+**Status:** ⬜ Pendente
 
-### 12.3 ✅ Relatório Final com Texto Cortado — RESOLVIDO
-**Sintoma:** `INVESTIGANDO` aparecia como `INVEST` e `IMPROCEDENTE` como `IMPROC`.
+### 12.3 ⬜ Coluna O (Tempo de Atendimento) — PENDENTE
+**Sintoma:** A fórmula na coluna O é sobrescrita/removida ao atualizar.
 
-**Solução:** Substituído o mapeamento no `gerarPreviewRelatorio()`.
+**Causa:** O backend está sobrescrevendo a coluna com valor vazio ou não está recalculando.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+**Solução:** Ajustar lógica de atualização para preservar ou recalcular o tempo.
 
-### 12.4 ✅ Contagem de Pendentes no Relatório — RESOLVIDO
-**Sintoma:** O relatório final subestimava o número de pendentes.
+**Status:** ⬜ Pendente
 
-**Causa:** `totalPend = espera.length + sn.length` (não incluía VL e AMC).
+### 12.4 ⬜ Ordem dos Normalizados — PENDENTE
+**Sintoma:** Normalizados não aparecem na ordem correta (últimos no topo).
 
-**Solução:** Corrigido para `totalPend = espera.length + sn.length + vl.length + amc.length`.
+**Causa:** Inserção no DOM não prioriza os mais recentes.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+**Solução:** Inverter ordem de inserção e adicionar data/hora fim no card.
 
-### 12.5 ✅ Observações Perdidas em child_changed — RESOLVIDO
-**Sintoma:** Cards atualizados via Firebase perdiam a observação.
+**Status:** ⬜ Pendente
 
-**Causa:** `_renderCardBody` usava apenas `cardData.observacoes`, sem fallback.
+### 12.5 ⬜ Observações Deletadas ao Normalizar — PENDENTE
+**Sintoma:** A observação é deletada após normalizar via "processar".
 
-**Solução:** Adicionado fallback para `card.dataset.observacoes` no `_renderCardBody`.
+**Causa:** O fluxo de normalização está sobrescrevendo a observação com valor vazio.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+**Solução:** Preservar a observação existente durante a normalização.
 
-### 12.6 ✅ Dupla Chamada do Modal de Verificação — RESOLVIDO
-**Sintoma:** O modal de verificação de turno aparecia duas vezes.
+**Status:** ⬜ Pendente
 
-**Causa:** `NitLogin.confirmar()` e `NitViradaDia.inicializar()` chamavam `NitProcessamento.verificar()` com delays diferentes.
+### 12.6 ⬜ Legibilidade dos Cards — PENDENTE
+**Sintoma:** Baixa legibilidade e contraste nos cards.
 
-**Solução:** Adicionado `_verificado` no `NitProcessamento` para garantir execução única.
+**Causa:** Cores e fundos atuais não são ideais para leitura rápida.
 
-**Status:** ✅ RESOLVIDO em 16/06/2026
+**Solução:** Aplicar estilo visual da versão anterior (referência: `nit-nucleo-inteligencia-trafego`).
 
+**Status:** ⬜ Pendente
 --------------------------------
 
 ## 🔮 13. Funcionalidades Futuras (Roadmap)
