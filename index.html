@@ -1783,56 +1783,56 @@
     };
 
     // ── FILTRO DE DATA ────────────────────────────────────────────────────────
-    const NitDateFilter = {
-        _input: null,
+    // ── FILTRO DE DATA ────────────────────────────────────────────────────────
+const NitDateFilter = {
+    _input: null,
 
-        hoje: () => {
-            const d  = new Date();
-            const dd = String(d.getDate()).padStart(2, '0');
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            return `${dd}/${mm}/${d.getFullYear()}`;
-        },
+    hoje: () => {
+        const d  = new Date();
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        return `${dd}/${mm}/${d.getFullYear()}`;
+    },
 
-        toISO:   ddr => { if (!ddr) return ''; const [dd,mm,yyyy] = ddr.split('/'); return `${yyyy}-${mm}-${dd}`; },
-        fromISO: val => { if (!val) return null; const [yyyy,mm,dd] = val.split('-'); return `${dd}/${mm}/${yyyy}`; },
+    toISO:   ddr => { if (!ddr) return ''; const [dd,mm,yyyy] = ddr.split('/'); return `${yyyy}-${mm}-${dd}`; },
+    fromISO: val => { if (!val) return null; const [yyyy,mm,dd] = val.split('-'); return `${dd}/${mm}/${yyyy}`; },
 
-        inicializar() {
-            this._input = document.getElementById('filtro-data-input');
-            if (!this._input) return;
-            this._input.max = this.toISO(this.hoje());
-            if (!Semaforo._filtroData) {
-                this._input.value    = this.toISO(this.hoje());
-                Semaforo._filtroData = this.hoje();
-            } else {
-                this._input.value = this.toISO(Semaforo._filtroData);
-            }
-            this._input.addEventListener('change', () => {
-                Semaforo._filtroData = this.fromISO(this._input.value);
-                // Aplicar imediatamente, sem esperar debounce
-                document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
-                    c.style.display = (c.dataset.datareferencia === Semaforo._filtroData) ? '' : 'none';
-                });
-                Semaforo.atualizarPainel();
+    inicializar() {
+        this._input = document.getElementById('filtro-data-input');
+        if (!this._input) return;
+        this._input.max = this.toISO(this.hoje());
+        if (!Semaforo._filtroData) {
+            this._input.value    = this.toISO(this.hoje());
+            Semaforo._filtroData = this.hoje();
+        } else {
+            this._input.value = this.toISO(Semaforo._filtroData);
+        }
+        this._input.addEventListener('change', () => {
+            Semaforo._filtroData = this.fromISO(this._input.value);
+            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
+                c.style.display = (c.dataset.datareferencia === Semaforo._filtroData) ? '' : 'none';
             });
+            Semaforo.atualizarPainel();
+        });
+    },  // <-- FECHA inicializar AQUI
 
-        sincronizar(dataReferencia) {
-            if (!this._input || !dataReferencia) return;
-            const iso = this.toISO(dataReferencia);
-            if (iso) { this._input.value = iso; Semaforo._filtroData = dataReferencia; }
-        },
+    sincronizar(dataReferencia) {  // <-- AGORA no nível correto
+        if (!this._input || !dataReferencia) return;
+        const iso = this.toISO(dataReferencia);
+        if (iso) { this._input.value = iso; Semaforo._filtroData = dataReferencia; }
+    },
 
-        ajustarAoDados(dados) {
-            const datas = Object.values(dados).map(c => c.dataReferencia).filter(Boolean);
-            if (!datas.length) return;
-            const parseData = d => { const [dd,mm,yyyy] = d.split('/'); return new Date(+yyyy, +mm-1, +dd); };
-            const recente   = datas.sort((a, b) => parseData(b) - parseData(a))[0];
-            if (Semaforo._filtroData !== recente) {
-                Semaforo._filtroData = recente;
-                if (this._input) this._input.value = this.toISO(recente);
-            }
-        },
-    };
-
+    ajustarAoDados(dados) {  // <-- Também no nível correto
+        const datas = Object.values(dados).map(c => c.dataReferencia).filter(Boolean);
+        if (!datas.length) return;
+        const parseData = d => { const [dd,mm,yyyy] = d.split('/'); return new Date(+yyyy, +mm-1, +dd); };
+        const recente   = datas.sort((a, b) => parseData(b) - parseData(a))[0];
+        if (Semaforo._filtroData !== recente) {
+            Semaforo._filtroData = recente;
+            if (this._input) this._input.value = this.toISO(recente);
+        }
+    },
+};
     // ── ESTADO GLOBAL ─────────────────────────────────────────────────────────
     window.AppState = {
         STORAGE_KEY_SEMAFORO: 'nit-v12-semaforo',
