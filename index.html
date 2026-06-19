@@ -1807,9 +1807,12 @@
             }
             this._input.addEventListener('change', () => {
                 Semaforo._filtroData = this.fromISO(this._input.value);
+                // Aplicar imediatamente, sem esperar debounce
+                document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
+                    c.style.display = (c.dataset.datareferencia === Semaforo._filtroData) ? '' : 'none';
+                });
                 Semaforo.atualizarPainel();
             });
-        },
 
         sincronizar(dataReferencia) {
             if (!this._input || !dataReferencia) return;
@@ -2730,7 +2733,7 @@
                 todos.forEach(c => {
                     const dataBate    = c.dataset.datareferencia === filtro;
                     const normalizado = !!c.closest('#coluna-normalizados');
-                    c.style.display = normalizado ? (dataBate ? '' : 'none') : '';
+                    c.style.display = dataBate ? '' : 'none';
                 });
                 const hoje = todos.filter(c => c.dataset.datareferencia === filtro);
                 exibTotal  = hoje.length;
