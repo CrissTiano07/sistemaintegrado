@@ -599,6 +599,14 @@
     font-size: 11px;
     color: var(--color-text-tertiary);
 }
+
+.card-fim {
+    margin: 4px 0 0;
+    font-size: 10px;
+    color: var(--color-success);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
 .card-address {
     margin: 0 0 4px;
     color: var(--color-text-secondary);
@@ -2191,7 +2199,16 @@
                     el.dataset.eventoid       = eventoId;
                     el.dataset.coluna         = coluna;
                     el.dataset.datareferencia = dados.dataReferencia || '';
-                    container.appendChild(el);
+                    // Normalizar campos de fim no dataset para que ordenarNormalizados() os leia
+                    if (dados.data_fim) el.dataset.data_fim = dados.data_fim;
+                    if (dados.hora_fim) el.dataset.hora_fim = dados.hora_fim;
+                    if (coluna === 'coluna-normalizados') {
+                        container.prepend(el);
+                        // Reordena após inserção — Firebase pode entregar fora de ordem
+                        requestAnimationFrame(() => Semaforo.ordenarNormalizados());
+                    } else {
+                        container.appendChild(el);
+                    }
                     NitDateFilter.ajustarAoDados({ [eventoId]: dados });
                     Semaforo.atualizarPainel();
                 });
@@ -2570,6 +2587,12 @@
                 const equipe      = cardData.equipe  || card.dataset.equipe  || '';
                 const viatura     = cardData.viatura || card.dataset.viatura || '';
                 const endereco    = cardData.endereco|| card.dataset.endereco|| '';
+                // data_fim + hora_fim vêm do Firebase separados; 'fim' é o campo combinado
+                // gravado pelo NitNormalizar.confirmar ("DD/MM/YYYY HH:MM")
+                const dataFim = cardData.data_fim || card.dataset.data_fim || '';
+                const horaFim = cardData.hora_fim || card.dataset.hora_fim || '';
+                const fimComb = cardData.fim      || card.dataset.fim      || '';
+                const fimExib = fimComb || (dataFim ? `${dataFim}${horaFim ? ' ' + horaFim : ''}` : '');
 
                 const frase       = Semaforo._fraseTecnica(obsBruta, statusAtual, inicioAtual);
                 const obsFallback = obsBruta
@@ -2586,9 +2609,9 @@
                 if (bodyEl) {
                     bodyEl.innerHTML =
                         `<p class="card-address">${endereco}</p>` +
-                        (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-                        (equipe    ? `<p class="card-equipe">Equipe: ${equipe}${viatura ? ` · VT ${viatura}` : ''}</p>` : '');
-                    card.classList.remove('lazy-pending');
+                        (obsExibir ? `<p class="card-obs">${obsExibir}</p>`                                      : '') +
+                        (equipe    ? `<p class="card-equipe">Equipe: ${equipe}${viatura ? ` · VT ${viatura}` : ''}</p>` : '') +
+                        (fimExib   ? `<p class="card-fim">✅ ${fimExib}</p>`                                     : '');
                 }
             };
 
@@ -2648,6 +2671,38 @@
             return t;
         },
 
+        // ── Ordenar coluna normalizados (mais recente no topo) ────────────
+        // Converte "DD/MM/YYYY HH:MM" → timestamp para ordenação correta.
+        // localeCompare sozinho NÃO funciona com esse formato de data.
+        _parseFim(str) {
+            if (!str) return 0;
+            // Aceita "DD/MM/YYYY HH:MM" ou "DD/MM/YYYY" ou "HH:MM"
+            const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+            if (!m) return 0;
+            return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+        },
+
+        ordenarNormalizados() {
+            const container = DOM.colunaNormalizados;
+            if (!container) return;
+            const cards = Array.from(container.querySelectorAll('.kanban-card'));
+            if (cards.length < 2) return;
+            cards.sort((a, b) => {
+                // Lê data_fim + hora_fim separados (vindos do Firebase via dataset)
+                // ou o campo combinado 'fim' (gravado pelo NitNormalizar.confirmar)
+                const fimA = a.dataset.fim
+                    || ((a.dataset.data_fim || '') + ' ' + (a.dataset.hora_fim || '')).trim();
+                const fimB = b.dataset.fim
+                    || ((b.dataset.data_fim || '') + ' ' + (b.dataset.hora_fim || '')).trim();
+                return this._parseFim(fimB) - this._parseFim(fimA); // mais recente primeiro
+            });
+            // Reinserir na ordem correta — fragment evita reflow múltiplo
+            const frag = document.createDocumentFragment();
+            cards.forEach(c => frag.appendChild(c));
+            container.appendChild(frag);
+        },
+        
+        
         // ── Painel e relatório ────────────────────────────────────────────
         _painelTimer: null,
         atualizarPainel() {
