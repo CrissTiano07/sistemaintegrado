@@ -1747,6 +1747,7 @@
             turno.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) this.confirmar(); });
             btn.addEventListener('click', () => this.confirmar());
             setTimeout(() => nome.focus(), 100);
+            checar();
         },
 
         confirmar() {
