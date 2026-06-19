@@ -2451,6 +2451,11 @@
                     setTimeout(() => existente.element.classList.remove('card-foi-normalizado'), 2000);
                     this.ultimoLoteNormalizado.push(existente.element.id);
 
+                    // ✅ CORREÇÃO #20: atualizar dataReferencia para a data do plantão atual
+                    if (ev.dataReferencia) {
+                        existente.element.dataset.datareferencia = ev.dataReferencia;
+                    }
+
                     // ✅ fix: usa apenas o fim extraído do relatório; não inventa data/hora
                     const fimPartes = (ev.fim || '').trim().split(' ');
                     const dataFim   = fimPartes[0] || '';
@@ -2464,9 +2469,12 @@
                             data_fim: dataFim,
                             hora_fim: horaFim,
                             ts_norm:  Date.now(),
+                            // ✅ CORREÇÃO #20: atualizar dataReferencia no Firebase também
+                            dataReferencia: ev.dataReferencia,
                         })
                     );
                     atualizados++;
+                    return;
 
                 } else if (!existente.normalizado &&
                            ev.dataReferencia !== existente.element.dataset.datareferencia) {
