@@ -2312,17 +2312,19 @@ const NitDateFilter = {
                     if (atual) eventos.push(atual);
                     atual = { ...dados, secao, dataReferencia: dataRef };
                 } else if (atual && linha.trim() && !this._ehCabecalho(linha)) {
-            // Guarda adicional: ignora linhas de cabeçalho de plantão
-            if (/PLANTONISTA|PLANTÃO|TÉCNICOS|CEMOB/i.test(linha)) continue;
-            let limpa = linha.trim()
-                .replace(/["*]/g, '')
-                .replace(/\*?Obs:\*?/gi, '')
-                .replace(/\/log\b.*/i, '')
-                .replace(/\s+/g, ' ').trim();
-            if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
-                atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
-            }
-        }
+                    // Guarda adicional: ignora linhas de cabeçalho de plantão
+                    if (/PLANTONISTA|PLANTÃO|TÉCNICOS|CEMOB/i.test(linha)) continue;
+                    // ✅ GUARDA #19: ignora linha que é só "Obs:" sem conteúdo útil
+                    if (/^\s*["*]*\s*\*?Obs[.:*]?\*?\s*["*]*\s*$/.test(linha)) continue;
+                    let limpa = linha.trim()
+                        .replace(/["*]/g, '')
+                        .replace(/\*?Obs:\*?/gi, '')
+                        .replace(/\/log\b.*/i, '')
+                        .replace(/\s+/g, ' ').trim();
+                    if (limpa && !/^\d{2}[:/]\d{2}$/.test(limpa) && !/^\d{2}\/\d{2}\/\d{4}$/.test(limpa)) {
+                        atual.observacoes += (atual.observacoes ? ' ' : '') + limpa;
+                    }
+                }
             }
             if (atual) eventos.push(atual);
             return eventos
