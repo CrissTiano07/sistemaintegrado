@@ -2925,6 +2925,15 @@ const NitDateFilter = {
             DOM.despachoSemaforoCardId.value = cardId;
             DOM.despachoSemaforoEquipe.value = card.dataset.equipe  || '';
             DOM.despachoSemaforoVt.value     = card.dataset.viatura || '';
+            // Resetar campos de apoio
+            const chkApoio    = document.getElementById('despacho-tem-apoio');
+            const camposApoio = document.getElementById('grupo-apoio-campos');
+            const apoioEquipe = document.getElementById('despacho-apoio-equipe');
+            const apoioVt     = document.getElementById('despacho-apoio-vt');
+            if (chkApoio)    chkApoio.checked    = false;
+            if (camposApoio) camposApoio.style.display = 'none';
+            if (apoioEquipe) apoioEquipe.value   = '';
+            if (apoioVt)     apoioVt.value        = '';
             document.getElementById('despacho-preview')?.classList.remove('show');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
             if (btnConf) btnConf.innerHTML = 'Confirmar Despacho';
