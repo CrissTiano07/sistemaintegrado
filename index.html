@@ -2938,15 +2938,16 @@ const NitDateFilter = {
             const equipe  = DOM.despachoSemaforoEquipe.value.trim();
             const vt      = DOM.despachoSemaforoVt.value.trim();
             const tipo    = AppState.despachoTipo;
-            if (!equipe) { showToast('Preencha a equipe.', 'warning'); return; }
-
             const preview = document.getElementById('despacho-preview');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
             if (preview && !preview.classList.contains('show')) {
-                const vtInfo = vt ? ` · VT ${vt}` : '';
+                const partes = [];
+                if (equipe) partes.push(equipe);
+                if (vt)     partes.push(`VT ${vt}`);
+                const resumo = partes.length ? ` · ${partes.join(' · ')}` : '';
                 preview.innerHTML = `
                     <div class="despacho-preview-title">Confirmar despacho</div>
-                    <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()} · ${equipe} · VT ${vt || 'N/I'}</div>`;
+                    <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()}${resumo}</div>`;
                 preview.classList.add('show');
                 if (btnConf) btnConf.innerHTML = 'Confirmar';
                 return;
