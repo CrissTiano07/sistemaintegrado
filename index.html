@@ -3556,7 +3556,12 @@ const NitDateFilter = {
             const todos = this._coletarCards();
             const hits  = termo ? todos.filter(c => this._match(c, termo)) : todos.slice(0, 20);
             lista.innerHTML = '';
-            vazio.style.display = hits.length ? 'none' : 'block';
+            vazio.classList.toggle('visivel', !hits.length);
+            if (!hits.length && termo) {
+                vazio.innerHTML = `<i class="fas fa-search" style="font-size:22px;opacity:0.3;"></i><span>Nenhum card encontrado para <strong>"${termo}"</strong></span>`;
+            } else if (!hits.length) {
+                vazio.innerHTML = `<i class="fas fa-inbox" style="font-size:22px;opacity:0.3;"></i><span>Nenhum card no painel.</span>`;
+            }
             this._idx = -1;
             hits.forEach((c, i) => {
                 const colInfo = this._COLUNAS_LABEL[c.colId] || { label: c.colId, cor: '#94A3B8' };
