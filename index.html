@@ -2959,16 +2959,21 @@ const NitDateFilter = {
             const equipe  = DOM.despachoSemaforoEquipe.value.trim();
             const vt      = DOM.despachoSemaforoVt.value.trim();
             const tipo    = AppState.despachoTipo;
+            // Ler equipe de apoio
+            const apoioEquipe = document.getElementById('despacho-apoio-equipe')?.value.trim() || '';
+            const apoioVt     = document.getElementById('despacho-apoio-vt')?.value.trim()     || '';
+            const temApoio    = document.getElementById('despacho-tem-apoio')?.checked && apoioEquipe;
+
             const preview = document.getElementById('despacho-preview');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
             if (preview && !preview.classList.contains('show')) {
-                const partes = [];
-                if (equipe) partes.push(equipe);
-                if (vt)     partes.push(`VT ${vt}`);
-                const resumo = partes.length ? ` · ${partes.join(' · ')}` : '';
+                // Montar linhas do preview
+                const linha1 = [equipe, vt ? `VT ${vt}` : ''].filter(Boolean).join(' · ');
+                const linha2 = temApoio ? [apoioEquipe, apoioVt ? `VT ${apoioVt}` : ''].filter(Boolean).join(' · ') : '';
                 preview.innerHTML = `
                     <div class="despacho-preview-title">Confirmar despacho</div>
-                    <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()}${resumo}</div>`;
+                    <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()}${linha1 ? ` · ${linha1}` : ''}</div>
+                    ${linha2 ? `<div style="font-size:12px;color:var(--color-text-tertiary);margin-top:4px;">Apoio: ${linha2}</div>` : ''}`;
                 preview.classList.add('show');
                 if (btnConf) btnConf.innerHTML = 'Confirmar';
                 return;
@@ -2978,19 +2983,32 @@ const NitDateFilter = {
             const container     = document.querySelector(`#${colunaDestino} .kanban-cards-container`) || document.getElementById(colunaDestino);
             if (container) container.appendChild(card);
 
-            card.dataset.equipe  = equipe;
-            card.dataset.viatura = vt;
+            // Montar strings consolidadas para dataset e Firebase
+            const equipeConcat  = [equipe, temApoio ? apoioEquipe : ''].filter(Boolean).join(' + ');
+            const viaturaConcat = [vt,     temApoio ? apoioVt     : ''].filter(Boolean).join(' + ');
+
+            card.dataset.equipe  = equipeConcat;
+            card.dataset.viatura = viaturaConcat;
             card.dataset.pl      = tipo === 'sn' ? 'sn' : 'atend';
             card.dataset.sub     = tipo;
 
+            // Montar HTML do card com linhas separadas por equipe
+            const linhaP = equipe
+                ? `<span class="card-equipe-linha">${equipe}${vt ? ` · VT ${vt}` : ''}</span>`
+                : '';
+            const linhaA = temApoio
+                ? `<span class="card-equipe-linha card-equipe-apoio">Apoio: ${apoioEquipe}${apoioVt ? ` · VT ${apoioVt}` : ''}</span>`
+                : '';
+            const equipeHTML = (linhaP || linhaA)
+                ? `<p class="card-equipe">${linhaP}${linhaA}</p>`
+                : '';
+
             const cardFooterEquipe = card.querySelector('.card-equipe');
-            const equipeHTML = `<p class="card-equipe">Equipe: ${equipe}${vt ? ` · VT ${vt}` : ''}</p>`;
-            if (cardFooterEquipe) cardFooterEquipe.outerHTML = equipeHTML;
-            else card.querySelector('.card-body')?.insertAdjacentHTML('beforeend', equipeHTML);
+            if (cardFooterEquipe) cardFooterEquipe.outerHTML = equipeHTML || '<p class="card-equipe"></p>';
+            else if (equipeHTML) card.querySelector('.card-body')?.insertAdjacentHTML('beforeend', equipeHTML);
 
             fecharModal(DOM.modalDespachoSemaforo);
-            this._commitDespacho(card, equipe, vt, tipo);
-        },
+            this._commitDespacho(card, equipeConcat, viaturaConcat, tipo);
 
         _commitDespacho(card, equipe, vt, tipo) {
             const cod      = card.dataset.codigo;
