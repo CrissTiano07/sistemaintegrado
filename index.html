@@ -2978,7 +2978,7 @@ const NitDateFilter = {
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, `kanban/${eventoId}`), {
                     coluna, pl: tipo === 'sn' ? 'sn' : 'atend', sub: tipo,
-                    equipe: equipe || '', viatura: vt || 'N/I',
+                    equipe: equipe || '', viatura: vt || '',
                     operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
                     ts_despacho: Date.now(),
                 })
