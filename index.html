@@ -2826,7 +2826,10 @@ const NitDateFilter = {
                 if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
                 if (card.dataset.equipe || card.dataset.viatura) {
-                    t += ` (${card.dataset.equipe || 'N/I'}, VT: ${card.dataset.viatura || 'N/I'})`;
+                    const partes = [];
+                    if (card.dataset.equipe)  partes.push(card.dataset.equipe);
+                    if (card.dataset.viatura) partes.push(`VT: ${card.dataset.viatura}`);
+                    t += ` (${partes.join(', ')})`;
                 }
                 return t;
             };
@@ -2840,17 +2843,19 @@ const NitDateFilter = {
                 `*Normalizados (${totalNorm})*`,
                 '',
             ];
-            if (vl.length)  { linhas.push(`🚓🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
-            if (amc.length) { linhas.push(`🚓🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
+            if (totalAtivos > 0) {
+                if (vl.length)  { linhas.push(`🚓🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
+                if (amc.length) { linhas.push(`🚓🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
-            linhas.push('---');
-            linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
-            linhas.push(`*- Aguardando atendimento:*`);
-            espera.forEach(c => linhas.push(fmt(c)));
+                linhas.push('---');
+                linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
+                linhas.push(`*- Aguardando atendimento:*`);
+                espera.forEach(c => linhas.push(fmt(c)));
 
-            if (sn.length) {
-                linhas.push(`*- Sem necessidade de operação:*`);
-                sn.forEach(c => linhas.push(fmt(c)));
+                if (sn.length) {
+                    linhas.push(`*- Sem necessidade de operação:*`);
+                    sn.forEach(c => linhas.push(fmt(c)));
+                }
             }
 
             if (incluirNorm && norm.length) {
@@ -2934,6 +2939,7 @@ const NitDateFilter = {
             const preview = document.getElementById('despacho-preview');
             const btnConf = document.getElementById('btn-despacho-semaforo-confirmar');
             if (preview && !preview.classList.contains('show')) {
+                const vtInfo = vt ? ` · VT ${vt}` : '';
                 preview.innerHTML = `
                     <div class="despacho-preview-title">Confirmar despacho</div>
                     <div><strong>${card.dataset.codigo}</strong> → ${tipo.toUpperCase()} · ${equipe} · VT ${vt || 'N/I'}</div>`;
