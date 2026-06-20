@@ -2132,6 +2132,9 @@ const NitDateFilter = {
             if (end.includes('pgv'))   return 'SEM_NECESSIDADE';
             if (/\bentre\b/i.test(end)) return 'SEM_NECESSIDADE';  
             if (/\bpr[oó]x\.?\b/i.test(end)) return 'SEM_NECESSIDADE';
+            // Obs indica semáforo veicular já operando — sem necessidade de agente
+            const obs = (card.observacoes || card.dataset?.observacoes || '').toLowerCase();
+            if (/veiculares?\s+funcionando/i.test(obs)) return 'SEM_NECESSIDADE';
             // 4. Fallback
             return 'PENDENTE';
         },
