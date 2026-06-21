@@ -3008,12 +3008,7 @@ const NitDateFilter = {
             DOM.despachoSemaforoCardId.value = cardId;
             DOM.despachoSemaforoEquipe.value = card.dataset.equipe  || '';
             DOM.despachoSemaforoVt.value     = card.dataset.viatura || '';
-            // ✅ Mostrar/ocultar botão Encerrar Operação
-            const tipoAtual = card.dataset.sub || '';
-            const btnEncerrar = document.getElementById('btn-encerrar-operacao');
-            if (btnEncerrar) {
-                btnEncerrar.style.display = tipoAtual ? 'flex' : 'none';
-            }
+            
             // Resetar campos de apoio
             const chkApoio    = document.getElementById('despacho-tem-apoio');
             const camposApoio = document.getElementById('grupo-apoio-campos');
