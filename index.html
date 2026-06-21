@@ -3324,32 +3324,40 @@ const NitDateFilter = {
         },
 
         // ── Init ──────────────────────────────────────────────────────────
-        inicializar() {
-            DOM.btnProcessar.addEventListener('click', this.handleProcessarClick.bind(this));
-            DOM.btnEdicaoSalvar.addEventListener('click', this.handleSalvarEdicaoClick.bind(this));
-            DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
-            //Listener para Encerrar Operação
-            document.getElementById('btn-encerrar-operacao')?.addEventListener(
-                'click',
-                this.handleEncerrarOperacao.bind(this)
-            );
-            DOM.btnVisualizarRelatorio.addEventListener('click', () => {
-                DOM.modalRelatorioTexto.value = this.gerarPreviewRelatorio();
-                abrirModal(DOM.modalRelatorio);
-            });
-            DOM.checkIncluirNormalizados?.addEventListener('change', () => this.gerarPreviewRelatorio());
+        // ── Init ──────────────────────────────────────────────────────────
+inicializar() {
+    DOM.btnProcessar.addEventListener('click', this.handleProcessarClick.bind(this));
+    DOM.btnEdicaoSalvar.addEventListener('click', this.handleSalvarEdicaoClick.bind(this));
+    DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
+    
+    // ✅ Listener para Encerrar Operação (SEM optional chaining)
+    var btnEncerrar = document.getElementById('btn-encerrar-operacao');
+    if (btnEncerrar) {
+        btnEncerrar.addEventListener('click', this.handleEncerrarOperacao.bind(this));
+    }
+    
+    DOM.btnVisualizarRelatorio.addEventListener('click', function() {
+        DOM.modalRelatorioTexto.value = this.gerarPreviewRelatorio();
+        abrirModal(DOM.modalRelatorio);
+    }.bind(this));
+    
+    var checkIncluir = document.getElementById('check-incluir-normalizados');
+    if (checkIncluir) {
+        checkIncluir.addEventListener('change', function() {
+            this.gerarPreviewRelatorio();
+        }.bind(this));
+    }
 
-            const kanbanArea = document.querySelector('#tab-semaforo');
-            kanbanArea.addEventListener('dragstart',  this.handleDragStart.bind(this));
-            kanbanArea.addEventListener('dragend',    this.handleDragEnd.bind(this));
-            kanbanArea.addEventListener('dragover',   this.handleDragOver.bind(this));
-            kanbanArea.addEventListener('dragleave',  this.handleDragLeave.bind(this));
-            kanbanArea.addEventListener('drop',       this.handleDrop.bind(this));
-            kanbanArea.addEventListener('click',      this.handleKanbanBoardClick.bind(this));
+    var kanbanArea = document.querySelector('#tab-semaforo');
+    kanbanArea.addEventListener('dragstart',  this.handleDragStart.bind(this));
+    kanbanArea.addEventListener('dragend',    this.handleDragEnd.bind(this));
+    kanbanArea.addEventListener('dragover',   this.handleDragOver.bind(this));
+    kanbanArea.addEventListener('dragleave',  this.handleDragLeave.bind(this));
+    kanbanArea.addEventListener('drop',       this.handleDrop.bind(this));
+    kanbanArea.addEventListener('click',      this.handleKanbanBoardClick.bind(this));
 
-            this.inicializarListenerFirebase();
-        },
-    };
+    this.inicializarListenerFirebase();
+},
 
     // ═════════════════════════════════════════════════════════════════════════
     // INICIALIZAÇÃO
