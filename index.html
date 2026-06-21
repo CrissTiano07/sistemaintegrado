@@ -616,9 +616,9 @@
     line-height: 1.4;
 }
          
-        .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
+        /*.card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
         .card-body-lazy { min-height: 28px; }
-        .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }
+        .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }*/
         /* ── Botões de card — sistema padronizado ─────────────────── */
         .btn-card-action {
             display: inline-flex;
@@ -1468,7 +1468,7 @@
                         <input type="checkbox" id="despacho-tem-apoio" style="accent-color:var(--color-primary);">
                         <span>+ Adicionar equipe de apoio</span>
                     </label>
-                    <div id="grupo-apoio-campos" style="display:none;margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+                    <div id="grupo-apoio-campos" style="display:none;margin-top:10px;flex-direction:column;gap:8px;">
                         <input type="text" id="despacho-apoio-equipe" placeholder="Equipe de apoio" style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-primary);font-size:13px;font-family:var(--font-family-sans);">
                         <input type="text" id="despacho-apoio-vt" placeholder="VT de apoio (opcional)" style="width:100%;box-sizing:border-box;padding:10px 12px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-primary);font-size:13px;font-family:var(--font-family-sans);">
                     </div>
@@ -2267,7 +2267,7 @@ const NitDateFilter = {
                         bodyEl.innerHTML =
                             `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
                             (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-                            (equipe    ? `<p class="card-equipe">Equipe: ${equipe}${viatura ? ` · VT ${viatura}` : ''}</p>` : '');
+                            (equipe    ? `<p class="card-equipe"><span class="card-equipe-linha">${equipe}${viatura ? ` · VT ${viatura}` : ''}</span></p>` : '');
                         el.classList.remove('lazy-pending');
                     }
 
