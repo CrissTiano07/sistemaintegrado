@@ -2255,6 +2255,9 @@ const NitDateFilter = {
                     // Normalizar campos de fim no dataset para que ordenarNormalizados() os leia
                     if (dados.data_fim) el.dataset.data_fim = dados.data_fim;
                     if (dados.hora_fim) el.dataset.hora_fim = dados.hora_fim;
+                    if (dados.equipeApoio)  el.dataset.equipeApoio  = dados.equipeApoio;
+                    if (dados.viaturaApoio) el.dataset.viaturaApoio = dados.viaturaApoio;
+                    if (dados.tsDespacho)   el.dataset.tsDespacho   = dados.tsDespacho;
                     if (coluna === 'coluna-normalizados') {
                         container.prepend(el);
                         // Reordena após inserção — Firebase pode entregar fora de ordem
@@ -2650,6 +2653,10 @@ const NitDateFilter = {
                 const equipe      = cardData.equipe  || card.dataset.equipe  || '';
                 const viatura     = cardData.viatura || card.dataset.viatura || '';
                 const endereco    = cardData.endereco|| card.dataset.endereco|| '';
+                const tipo        = cardData.sub     || card.dataset.sub     || '';
+                const tsDespacho  = cardData.tsDespacho || card.dataset.tsDespacho || '';
+                const equipeApoio = cardData.equipeApoio || card.dataset.equipeApoio || '';
+                const viaturaApoio = cardData.viaturaApoio || card.dataset.viaturaApoio || '';
                 // data_fim + hora_fim vêm do Firebase separados; 'fim' é o campo combinado
                 // gravado pelo NitNormalizar.confirmar ("DD/MM/YYYY HH:MM")
                 const dataFim = cardData.data_fim || card.dataset.data_fim || '';
@@ -2667,16 +2674,50 @@ const NitDateFilter = {
                 const obsExibir = frase || (obsFallback.length > 120
                     ? obsFallback.slice(0, 120) + '…'
                     : obsFallback);
+                
 
-                const bodyEl = card.querySelector('.card-body');
-                if (bodyEl) {
-                    bodyEl.innerHTML =
-                        `<p class="card-address">${endereco}</p>` +
-                        (obsExibir ? `<p class="card-obs">${obsExibir}</p>`                                      : '') +
-                        (equipe    ? `<p class="card-equipe">Equipe: ${equipe}${viatura ? ` · VT ${viatura}` : ''}</p>` : '') +
-                        (fimExib   ? `<p class="card-fim">✅ ${fimExib}</p>`                                     : '');
-                }
-            };
+                 // Montar HTML de despacho
+    let despachoHTML = '';
+    if (tipo) {
+        const tipoLabel = tipo === 'vl' ? 'VIA LIVRE' :
+                         tipo === 'amc' ? 'AMC' :
+                         tipo === 'sn' ? 'SEM NECESSIDADE' : tipo.toUpperCase();
+        const emojiMap = { 'vl': '🟠', 'amc': '🔵', 'sn': '⚪' };
+        const emoji = emojiMap[tipo] || '🚦';
+        
+        // Equipe principal
+        const linhaP = equipe 
+            ? `<span class="card-equipe-linha">👤 ${equipe}${viatura ? ` · VT ${viatura}` : ''}</span>` 
+            : '';
+        
+        // Equipe de apoio
+        const linhaA = equipeApoio
+            ? `<span class="card-equipe-linha card-equipe-apoio">➕ ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}</span>`
+            : '';
+        
+        const equipeHTML = (linhaP || linhaA) 
+            ? `<p class="card-equipe">${linhaP}${linhaA}</p>` 
+            : '';
+        
+        const tsStr = Semaforo._formatarTimestamp(tsDespacho);
+        const tsHTML = tsStr ? `<p class="card-ts-despacho">📅 ${tsStr}</p>` : '';
+        
+        despachoHTML = `
+            <p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>
+            ${equipeHTML}
+            ${tsHTML}
+        `;
+    }
+
+    const bodyEl = card.querySelector('.card-body');
+    if (bodyEl) {
+        bodyEl.innerHTML = 
+            (despachoHTML || '') +
+            `<p class="card-address">${endereco}</p>` +
+            (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+            (fimExib ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
+    }
+};
 
             // Renderiza imediatamente se NitLazy não estiver disponível,
             // ou registra para render quando o card entrar no viewport.
@@ -2732,6 +2773,12 @@ const NitDateFilter = {
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
 
             return t;
+        },
+
+        _formatarTimestamp(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         },
 
         // ── Ordenar coluna normalizados (mais recente no topo) ────────────
@@ -2876,7 +2923,7 @@ const NitDateFilter = {
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
                 if (card.dataset.equipe || card.dataset.viatura) {
                     const partes = [];
-                    if (card.dataset.equipe)  partes.push(card.dataset.equipe);
+                    //if (card.dataset.equipe)  partes.push(card.dataset.equipe);
                     if (card.dataset.viatura) partes.push(`VT: ${card.dataset.viatura}`);
                     t += ` (${partes.join(', ')})`;
                 }
@@ -2955,9 +3002,21 @@ const NitDateFilter = {
         abrirModalDespacho(cardId) {
             const card = document.getElementById(cardId);
             if (!card) return;
+             // ✅ Mostrar/ocultar botão Encerrar Operação
+            const tipoAtual = card.dataset.sub || '';
+            const btnEncerrar = document.getElementById('btn-encerrar-operacao');
+            if (btnEncerrar) {
+                btnEncerrar.style.display = tipoAtual ? 'flex' : 'none';
+            }
             DOM.despachoSemaforoCardId.value = cardId;
             DOM.despachoSemaforoEquipe.value = card.dataset.equipe  || '';
             DOM.despachoSemaforoVt.value     = card.dataset.viatura || '';
+            // ✅ Mostrar/ocultar botão Encerrar Operação
+            const tipoAtual = card.dataset.sub || '';
+            const btnEncerrar = document.getElementById('btn-encerrar-operacao');
+            if (btnEncerrar) {
+                btnEncerrar.style.display = tipoAtual ? 'flex' : 'none';
+            }
             // Resetar campos de apoio
             const chkApoio    = document.getElementById('despacho-tem-apoio');
             const camposApoio = document.getElementById('grupo-apoio-campos');
@@ -3041,28 +3100,120 @@ const NitDateFilter = {
             else if (equipeHTML) card.querySelector('.card-body')?.insertAdjacentHTML('beforeend', equipeHTML);
 
             fecharModal(DOM.modalDespachoSemaforo);
-            this._commitDespacho(card, equipeConcat, viaturaConcat, tipo);
+            this._commitDespacho(card, equipe, vt, tipo, apoioEquipe, apoioVt);
         },
 
-        _commitDespacho(card, equipe, vt, tipo) {
-            const cod      = card.dataset.codigo;
-            const eventoId = card.dataset.eventoid || cod;
-            const coluna   = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
+        handleEncerrarOperacao() {
+    const cardId = DOM.despachoSemaforoCardId.value;
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    const codigo = card.dataset.codigo;
+    const equipeAtual = card.dataset.equipe || 'equipe';
+    const tipoAtual = card.dataset.sub || '';
+
+    const tipoLabel = tipoAtual === 'vl' ? 'Via Livre' :
+                      tipoAtual === 'amc' ? 'AMC' :
+                      tipoAtual === 'sn' ? 'Sem Necessidade' : tipoAtual;
+
+    nitConfirm(
+        '⏹️ Encerrar Operação',
+        `Deseja encerrar a operação do card <strong>${codigo}</strong>?<br><br>
+         <strong>${tipoLabel}</strong> · Equipe: <strong>${equipeAtual}</strong><br><br>
+         A equipe será liberada e o card voltará para <strong>Aguardando</strong>.`,
+        () => {
+            // 1. Mover card para Aguardando
+            const containerEspera = document.querySelector('#coluna-espera .kanban-cards-container');
+            if (containerEspera) {
+                containerEspera.appendChild(card);
+            }
+            card.dataset.coluna = 'coluna-espera';
+
+            // 2. Limpar dados de despacho (liberar equipes)
+            delete card.dataset.equipe;
+            delete card.dataset.viatura;
+            delete card.dataset.pl;
+            delete card.dataset.sub;
+            delete card.dataset.tsDespacho;
+            delete card.dataset.equipeApoio;
+            delete card.dataset.viaturaApoio;
+
+            // 3. Remover elementos visuais de despacho do card
+            const despachoEls = card.querySelectorAll('.card-despacho-tipo, .card-equipe, .card-ts-despacho');
+            despachoEls.forEach(el => el.remove());
+
+            // 4. Atualizar Firebase
+            const eventoId = card.dataset.eventoid || card.dataset.codigo;
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, `kanban/${eventoId}`), {
-                    coluna, pl: tipo === 'sn' ? 'sn' : 'atend', sub: tipo,
-                    equipe: equipe || '', viatura: vt || '',
-                    operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
-                    ts_despacho: Date.now(),
+                    coluna: 'coluna-espera',
+                    pl: null,
+                    sub: null,
+                    equipe: '',
+                    viatura: '',
+                    equipeApoio: '',
+                    viaturaApoio: '',
+                    tsDespacho: null,
+                    ts_encerramento: Date.now(),
+                    operador: NitLogin.operador || 'anon',
+                    turno: NitLogin.turno || '',
                 })
             );
-            gravarHistoricoFirebase(eventoId, card.dataset.coluna, coluna, tipo, equipe, vt, NitLogin.operador);
-            registrarAcao(`Despacho '${cod}': ${equipe} VT ${vt || 'N/I'} → ${tipo.toUpperCase()}.`);
-            showToast(`${cod} → ${tipo === 'sn' ? 'Sem necess.' : equipe}`, 'success');
-            nitAPIFetch('/api/v1/despacho', { method: 'POST', body: JSON.stringify({ cod, eventoId, eq: equipe, vt, sub: tipo }) })
-                .catch(err => { if (!err.message?.includes('fetch')) console.warn('[NIT] API despacho:', err); });
-        },
 
+            // 5. Registrar histórico
+            gravarHistoricoFirebase(
+                eventoId,
+                card.dataset.coluna || 'desconhecido',
+                'coluna-espera',
+                'ENCERRADO',
+                '',
+                '',
+                NitLogin.operador
+            );
+
+            registrarAcao(`Operação encerrada: '${codigo}'. Equipe ${equipeAtual} liberada.`);
+
+            // 6. Fechar modal e notificar
+            fecharModal(DOM.modalDespachoSemaforo);
+            showToast(`${codigo} — Operação encerrada. Equipe liberada.`, 'info');
+            Semaforo.atualizarPainel();
+        }
+    );
+},
+
+        _commitDespacho(card, equipe, vt, tipo, equipeApoio, vtApoio) {
+    const cod      = card.dataset.codigo;
+    const eventoId = card.dataset.eventoid || cod;
+    const coluna   = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
+    
+    // Dados concatenados para compatibilidade com código existente
+    const equipeConcat  = [equipe, equipeApoio].filter(Boolean).join(' + ');
+    const viaturaConcat = [vt, vtApoio].filter(Boolean).join(' + ');
+    
+    NitFirebase.exec((db, ref, update) =>
+        update(ref(db, `kanban/${eventoId}`), {
+            coluna,
+            pl: tipo === 'sn' ? 'sn' : 'atend',
+            sub: tipo,
+            equipe: equipeConcat,
+            viatura: viaturaConcat,
+            equipeApoio: equipeApoio || '',
+            viaturaApoio: vtApoio || '',
+            tsDespacho: Date.now(),
+            operador: NitLogin.operador || 'anon',
+            turno: NitLogin.turno || '',
+            ts: Date.now(),
+        })
+    );
+    gravarHistoricoFirebase(eventoId, card.dataset.coluna, coluna, tipo, equipeConcat, viaturaConcat, NitLogin.operador);
+    registrarAcao(`Despacho '${cod}': ${equipeConcat} VT ${viaturaConcat || 'N/I'} → ${tipo.toUpperCase()}.`);
+    showToast(`${cod} → ${tipo === 'sn' ? 'Sem necess.' : equipe || 'despachado'}`, 'success');
+    nitAPIFetch('/api/v1/despacho', { method: 'POST', body: JSON.stringify({ cod, eventoId, eq: equipeConcat, vt: viaturaConcat, sub: tipo }) })
+        .catch(err => { if (!err.message?.includes('fetch')) console.warn('[NIT] API despacho:', err); });
+},
+
+
+        
         // ── Normalizar ────────────────────────────────────────────────────
         handleNormalizarClick(card) {
             NitNormalizar.abrir(card);
@@ -3185,6 +3336,11 @@ const NitDateFilter = {
             DOM.btnProcessar.addEventListener('click', this.handleProcessarClick.bind(this));
             DOM.btnEdicaoSalvar.addEventListener('click', this.handleSalvarEdicaoClick.bind(this));
             DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
+            //Listener para Encerrar Operação
+            document.getElementById('btn-encerrar-operacao')?.addEventListener(
+                'click',
+                this.handleEncerrarOperacao.bind(this)
+            );
             DOM.btnVisualizarRelatorio.addEventListener('click', () => {
                 DOM.modalRelatorioTexto.value = this.gerarPreviewRelatorio();
                 abrirModal(DOM.modalRelatorio);
@@ -3427,32 +3583,11 @@ const NitDateFilter = {
             );
         },
 
-        inicializar() {
-            const modal   = document.getElementById('modal-normalizar');
-            const btnConf = document.getElementById('btn-norm-confirmar');
-            const btnCanc = document.getElementById('btn-norm-cancelar');
-            if (!modal) return;
-            btnConf?.addEventListener('click', () => this.confirmar());
-            btnCanc?.addEventListener('click', () => {
-                fecharModal(modal);
-                this._cardAtual  = null;
-                this._origemAtual = null;
-            });
-            modal.addEventListener('click', e => {
-                if (e.target === modal) {
-                    fecharModal(modal);
-                    this._cardAtual  = null;
-                    this._origemAtual = null;
-                }
-            });
-            // Enter no campo hora confirma
-            document.getElementById('norm-hora-fim')?.addEventListener('keydown', e => {
-                if (e.key === 'Enter') this.confirmar();
-            });
-        },
-    };
-    window.NitNormalizar = NitNormalizar;
-
+        // ✅ Listener para Encerrar Operação
+    document.getElementById('btn-encerrar-operacao')?.addEventListener(
+        'click',
+        this.handleEncerrarOperacao.bind(this)
+    );
     // ═════════════════════════════════════════════════════════════════════════
     // SIDEBAR
     // ═════════════════════════════════════════════════════════════════════════
