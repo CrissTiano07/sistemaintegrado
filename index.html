@@ -3323,43 +3323,40 @@ const NitDateFilter = {
             });
         },
 
-        // ── Init ──────────────────────────────────────────────────────────
-        // ── Init ──────────────────────────────────────────────────────────
-inicializar() {
-    DOM.btnProcessar.addEventListener('click', this.handleProcessarClick.bind(this));
-    DOM.btnEdicaoSalvar.addEventListener('click', this.handleSalvarEdicaoClick.bind(this));
-    DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
-    
-    // ✅ Listener para Encerrar Operação (SEM optional chaining)
-    var btnEncerrar = document.getElementById('btn-encerrar-operacao');
-    if (btnEncerrar) {
-        btnEncerrar.addEventListener('click', this.handleEncerrarOperacao.bind(this));
-    }
-    
-    DOM.btnVisualizarRelatorio.addEventListener('click', function() {
-        DOM.modalRelatorioTexto.value = this.gerarPreviewRelatorio();
-        abrirModal(DOM.modalRelatorio);
-    }.bind(this));
-    
-    var checkIncluir = document.getElementById('check-incluir-normalizados');
-    if (checkIncluir) {
-        checkIncluir.addEventListener('change', function() {
-            this.gerarPreviewRelatorio();
+    // ── Init ──────────────────────────────────────────────────────────
+    inicializar: function() {
+        DOM.btnProcessar.addEventListener('click', this.handleProcessarClick.bind(this));
+        DOM.btnEdicaoSalvar.addEventListener('click', this.handleSalvarEdicaoClick.bind(this));
+        DOM.btnDespachoSemaforoConfirmar.addEventListener('click', this.handleSalvarDespachoClick.bind(this));
+        
+        var btnEncerrar = document.getElementById('btn-encerrar-operacao');
+        if (btnEncerrar) {
+            btnEncerrar.addEventListener('click', this.handleEncerrarOperacao.bind(this));
+        }
+        
+        DOM.btnVisualizarRelatorio.addEventListener('click', function() {
+            DOM.modalRelatorioTexto.value = this.gerarPreviewRelatorio();
+            abrirModal(DOM.modalRelatorio);
         }.bind(this));
+        
+        var checkIncluir = document.getElementById('check-incluir-normalizados');
+        if (checkIncluir) {
+            checkIncluir.addEventListener('change', function() {
+                this.gerarPreviewRelatorio();
+            }.bind(this));
+        }
+
+        var kanbanArea = document.querySelector('#tab-semaforo');
+        kanbanArea.addEventListener('dragstart', this.handleDragStart.bind(this));
+        kanbanArea.addEventListener('dragend', this.handleDragEnd.bind(this));
+        kanbanArea.addEventListener('dragover', this.handleDragOver.bind(this));
+        kanbanArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+        kanbanArea.addEventListener('drop', this.handleDrop.bind(this));
+        kanbanArea.addEventListener('click', this.handleKanbanBoardClick.bind(this));
+
+        this.inicializarListenerFirebase();
     }
-
-    var kanbanArea = document.querySelector('#tab-semaforo');
-    kanbanArea.addEventListener('dragstart',  this.handleDragStart.bind(this));
-    kanbanArea.addEventListener('dragend',    this.handleDragEnd.bind(this));
-    kanbanArea.addEventListener('dragover',   this.handleDragOver.bind(this));
-    kanbanArea.addEventListener('dragleave',  this.handleDragLeave.bind(this));
-    kanbanArea.addEventListener('drop',       this.handleDrop.bind(this));
-    kanbanArea.addEventListener('click',      this.handleKanbanBoardClick.bind(this));
-
-         this.inicializarListenerFirebase();
-        },
-    };
-
+};  // ← FECHA O OBJETO SEMAFORO
     // ═════════════════════════════════════════════════════════════════════════
     // INICIALIZAÇÃO
     // ═════════════════════════════════════════════════════════════════════════
@@ -3509,135 +3506,170 @@ inicializar() {
     // ═════════════════════════════════════════════════════════════════════════
     // NORMALIZAR — modal com data/hora fim obrigatórios + undo robusto
     // ═════════════════════════════════════════════════════════════════════════
-    const NitNormalizar = {
-        _cardAtual: null,
-        _origemAtual: null,
+    // ═════════════════════════════════════════════════════════════════════════
+// NORMALIZAR — modal com data/hora fim obrigatórios + undo robusto
+// ═════════════════════════════════════════════════════════════════════════
+const NitNormalizar = {
+    _cardAtual: null,
+    _origemAtual: null,
 
-        abrir(card) {
-            this._cardAtual  = card;
-            this._origemAtual = card.closest('.kanban-column')?.id || 'desconhecido';
+    abrir(card) {
+        this._cardAtual = card;
+        this._origemAtual = card.closest('.kanban-column')?.id || 'desconhecido';
 
-            // Pré-preencher com data/hora atual
-            const agora   = new Date();
-            const dataISO = agora.toISOString().slice(0, 10); // YYYY-MM-DD
-            const horaHM  = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        var agora = new Date();
+        var dataISO = agora.toISOString().slice(0, 10);
+        var horaHM = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            const infoEl = document.getElementById('norm-card-info');
-            if (infoEl) infoEl.textContent = `${card.dataset.codigo} — ${card.dataset.endereco}`;
+        var infoEl = document.getElementById('norm-card-info');
+        if (infoEl) infoEl.textContent = card.dataset.codigo + ' — ' + card.dataset.endereco;
 
-            const dataInput = document.getElementById('norm-data-fim');
-            const horaInput = document.getElementById('norm-hora-fim');
-            const obsInput  = document.getElementById('norm-obs');
-            const erroEl    = document.getElementById('norm-erro');
+        var dataInput = document.getElementById('norm-data-fim');
+        var horaInput = document.getElementById('norm-hora-fim');
+        var obsInput = document.getElementById('norm-obs');
+        var erroEl = document.getElementById('norm-erro');
 
-            // Se o card já tem fim do relatório, usar esse valor
-            if (card.dataset.fim) {
-                const [dataBR, horaCard] = (card.dataset.fim).split(' ');
-                if (dataBR) {
-                    const [dd, mm, yyyy] = dataBR.split('/');
-                    if (dataInput) dataInput.value = `${yyyy}-${mm}-${dd}`;
-                }
-                if (horaCard && horaInput) horaInput.value = horaCard.slice(0, 5);
-            } else {
-                if (dataInput) dataInput.value = dataISO;
-                if (horaInput) horaInput.value = horaHM;
+        if (card.dataset.fim) {
+            var parts = (card.dataset.fim).split(' ');
+            if (parts[0]) {
+                var d = parts[0].split('/');
+                if (dataInput) dataInput.value = d[2] + '-' + d[1] + '-' + d[0];
             }
+            if (parts[1] && horaInput) horaInput.value = parts[1].slice(0, 5);
+        } else {
+            if (dataInput) dataInput.value = dataISO;
+            if (horaInput) horaInput.value = horaHM;
+        }
 
-            if (obsInput)  obsInput.value  = card.dataset.observacoes || '';
-            if (erroEl)    erroEl.style.display = 'none';
+        if (obsInput) obsInput.value = card.dataset.observacoes || '';
+        if (erroEl) erroEl.style.display = 'none';
 
-            document.getElementById('norm-card-id').value = card.id;
-            abrirModal(document.getElementById('modal-normalizar'));
+        document.getElementById('norm-card-id').value = card.id;
+        abrirModal(document.getElementById('modal-normalizar'));
 
-            // Focar hora para confirmação rápida
-            setTimeout(() => horaInput?.focus(), 120);
-        },
+        setTimeout(function() {
+            if (horaInput) horaInput.focus();
+        }, 120);
+    },
 
-        confirmar() {
-            const card   = this._cardAtual;
-            const origem = this._origemAtual;
-            if (!card) return;
+    confirmar() {
+        var card = this._cardAtual;
+        var origem = this._origemAtual;
+        if (!card) return;
 
-            const dataInput = document.getElementById('norm-data-fim');
-            const horaInput = document.getElementById('norm-hora-fim');
-            const obsInput  = document.getElementById('norm-obs');
-            const erroEl    = document.getElementById('norm-erro');
+        var dataInput = document.getElementById('norm-data-fim');
+        var horaInput = document.getElementById('norm-hora-fim');
+        var obsInput = document.getElementById('norm-obs');
+        var erroEl = document.getElementById('norm-erro');
 
-            // Validação obrigatória
-            if (!dataInput?.value || !horaInput?.value) {
-                if (erroEl) {
-                    erroEl.textContent = 'Data e hora de normalização são obrigatórios.';
-                    erroEl.style.display = 'block';
-                }
-                return;
+        if (!dataInput || !dataInput.value || !horaInput || !horaInput.value) {
+            if (erroEl) {
+                erroEl.textContent = 'Data e hora de normalização são obrigatórios.';
+                erroEl.style.display = 'block';
             }
+            return;
+        }
 
-            const [yyyy, mm, dd] = dataInput.value.split('-');
-            const dataFimBR  = `${dd}/${mm}/${yyyy}`;
-            const horaFimHM  = horaInput.value.slice(0, 5);
-            const obsNova    = obsInput?.value.trim() || card.dataset.observacoes || '';
-            const cod        = card.dataset.codigo;
-            const eventoId   = card.dataset.eventoid || cod;
+        var d = dataInput.value.split('-');
+        var dataFimBR = d[2] + '/' + d[1] + '/' + d[0];
+        var horaFimHM = horaInput.value.slice(0, 5);
+        var obsNova = (obsInput && obsInput.value.trim()) || card.dataset.observacoes || '';
+        var cod = card.dataset.codigo;
+        var eventoId = card.dataset.eventoid || cod;
 
-            fecharModal(document.getElementById('modal-normalizar'));
+        fecharModal(document.getElementById('modal-normalizar'));
 
-            // 1. Mover card no DOM imediatamente (otimista)
-            const containerNorm = DOM.colunaNormalizados;
-            containerNorm.prepend(card);
-            card.dataset.coluna = 'coluna-normalizados';
-            card.classList.add('card-foi-normalizado');
-            setTimeout(() => card.classList.remove('card-foi-normalizado'), 2000);
-            Semaforo.atualizarPainel();
+        var containerNorm = DOM.colunaNormalizados;
+        containerNorm.prepend(card);
+        card.dataset.coluna = 'coluna-normalizados';
+        card.classList.add('card-foi-normalizado');
+        setTimeout(function() {
+            card.classList.remove('card-foi-normalizado');
+        }, 2000);
+        Semaforo.atualizarPainel();
 
-            // 2. Undo toast — 5s para desfazer antes de gravar no Firebase
-            mostrarUndoToast(
-                `${cod} normalizado — ${horaFimHM}`,
+        mostrarUndoToast(
+            cod + ' normalizado — ' + horaFimHM,
+            function() {
+                NitFirebase.exec(function(db, ref, update) {
+                    update(ref(db, 'kanban/' + eventoId), {
+                        coluna: 'coluna-normalizados',
+                        status: 'NORMALIZADO',
+                        operador: NitLogin.operador || 'anon',
+                        turno: NitLogin.turno || '',
+                        ts: Date.now(),
+                        data_fim: dataFimBR,
+                        hora_fim: horaFimHM,
+                        observacoes: obsNova,
+                        ts_norm: Date.now()
+                    });
+                });
+                card.dataset.fim = dataFimBR + ' ' + horaFimHM;
+                card.dataset.observacoes = obsNova;
+                gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
+                registrarAcao("'" + cod + "' normalizado — fim: " + dataFimBR + ' ' + horaFimHM + '.');
+                showToast(cod + ' normalizado!', 'success');
+            },
+            function() {
+                var containerOrigem = document.querySelector('#' + origem + ' .kanban-cards-container');
+                if (containerOrigem) containerOrigem.appendChild(card);
+                card.dataset.coluna = origem;
+                NitFirebase.exec(function(db, ref, update) {
+                    update(ref(db, 'kanban/' + eventoId), {
+                        coluna: origem,
+                        status: 'PENDENTE',
+                        operador: NitLogin.operador || 'anon',
+                        ts: Date.now(),
+                        data_fim: null,
+                        hora_fim: null,
+                        ts_norm: null
+                    });
+                });
+                Semaforo.atualizarPainel();
+                showToast(cod + ' restaurado.', 'info');
+            }
+        );
+    },
 
-                // onCommit: grava no Firebase
-                () => {
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${eventoId}`), {
-                            coluna:      'coluna-normalizados',
-                            status:      'NORMALIZADO',
-                            operador:    NitLogin.operador || 'anon',
-                            turno:       NitLogin.turno    || '',
-                            ts:          Date.now(),
-                            data_fim:    dataFimBR,
-                            hora_fim:    horaFimHM,
-                            observacoes: obsNova,
-                            ts_norm:     Date.now(),
-                        })
-                    );
-                    // Atualizar dataset com fim para exibição no modal detalhes
-                    card.dataset.fim         = `${dataFimBR} ${horaFimHM}`;
-                    card.dataset.observacoes = obsNova;
-                    gravarHistoricoFirebase(eventoId, origem, 'NORMALIZADO', null, null, null, NitLogin.operador);
-                    registrarAcao(`'${cod}' normalizado — fim: ${dataFimBR} ${horaFimHM}.`);
-                    showToast(`${cod} normalizado!`, 'success');
-                },
+    inicializar: function() {
+        var modal = document.getElementById('modal-normalizar');
+        var btnConf = document.getElementById('btn-norm-confirmar');
+        var btnCanc = document.getElementById('btn-norm-cancelar');
+        var horaInput = document.getElementById('norm-hora-fim');
 
-                // onUndo: reverter DOM + Firebase
-                () => {
-                    const containerOrigem = document.querySelector(`#${origem} .kanban-cards-container`);
-                    if (containerOrigem) containerOrigem.appendChild(card);
-                    card.dataset.coluna = origem;
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${eventoId}`), {
-                            coluna:   origem,
-                            status:   'PENDENTE',
-                            operador: NitLogin.operador || 'anon',
-                            ts:       Date.now(),
-                            data_fim: null,
-                            hora_fim: null,
-                            ts_norm:  null,
-                        })
-                    );
-                    Semaforo.atualizarPainel();
-                    showToast(`${cod} restaurado.`, 'info');
-                }
-            );
-        },
-        window.NitNormalizar = NitNormalizar;
+        if (!modal) return;
+
+        if (btnConf) {
+            btnConf.addEventListener('click', function() {
+                this.confirmar();
+            }.bind(this));
+        }
+
+        if (btnCanc) {
+            btnCanc.addEventListener('click', function() {
+                fecharModal(modal);
+                this._cardAtual = null;
+                this._origemAtual = null;
+            }.bind(this));
+        }
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                fecharModal(modal);
+                this._cardAtual = null;
+                this._origemAtual = null;
+            }
+        }.bind(this));
+
+        if (horaInput) {
+            horaInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') this.confirmar();
+            }.bind(this));
+        }
+    }
+};
+window.NitNormalizar = NitNormalizar;
+        
 
      
     // ═════════════════════════════════════════════════════════════════════════
