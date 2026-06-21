@@ -2921,11 +2921,8 @@ const NitDateFilter = {
                 const mts = (card.dataset.inicio || '').match(/(\d{2})\/(\d{2})(?:\/\d+)?\s+(\d{2}:\d{2})/);
                 if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
-                if (card.dataset.equipe || card.dataset.viatura) {
-                    const partes = [];
-                    //if (card.dataset.equipe)  partes.push(card.dataset.equipe);
-                    if (card.dataset.viatura) partes.push(`VT: ${card.dataset.viatura}`);
-                    t += ` (${partes.join(', ')})`;
+                if (card.dataset.viatura) {
+                    t += ` (VT: ${card.dataset.viatura})`;
                 }
                 return t;
             };
