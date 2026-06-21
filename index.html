@@ -1468,10 +1468,18 @@
                 <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15"
                     style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
             </div>
-            <div class="modal-footer">
-                <button id="btn-modal-copiar" class="btn btn-primario">Copiar</button>
-                <button id="btn-modal-fechar" class="btn btn-secundario">Fechar</button>
-            </div>
+            <div class="modal-footer" style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario" style="flex:2;min-width:120px;">
+        <i class="fas fa-check"></i> Confirmar Despacho
+    </button>
+    <button id="btn-encerrar-operacao" class="btn" 
+        style="flex:1;min-width:100px;background:rgba(239,68,68,0.12);color:var(--color-danger);border-color:rgba(239,68,68,0.25);display:none;">
+        <i class="fas fa-stop-circle"></i> Encerrar Operação
+    </button>
+    <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario" style="flex:1;min-width:80px;">
+        Cancelar
+    </button>
+</div>
         </div>
     </div>
 
