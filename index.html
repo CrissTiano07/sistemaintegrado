@@ -3357,12 +3357,13 @@ inicializar() {
     kanbanArea.addEventListener('click',      this.handleKanbanBoardClick.bind(this));
 
          this.inicializarListenerFirebase();
-    },
-},
+        },
+    };
+
     // ═════════════════════════════════════════════════════════════════════════
     // INICIALIZAÇÃO
     // ═════════════════════════════════════════════════════════════════════════
-        async function inicializarApp() {
+    async function inicializarApp() {
     queryDOM();
     carregarDadosMestres();
     document.body.setAttribute('data-theme', 'dark');
@@ -3636,6 +3637,7 @@ inicializar() {
                 }
             );
         },
+        window.NitNormalizar = NitNormalizar;
 
      
     // ═════════════════════════════════════════════════════════════════════════
