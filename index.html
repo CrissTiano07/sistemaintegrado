@@ -1272,7 +1272,6 @@
                     </button>
                 </div>
                 <div class="nav-right">
-                    <input type="date" id="filtro-data-input" title="Filtrar por data" class="nav-date-input">
                     <span id="nit-operador-badge" class="nav-operador-badge"></span>
                     <span id="nit-firebase-status" class="nit-status-indicator" title="Status Firebase">
                         <span class="nit-status-dot" style="background-color:var(--color-info);"></span>
@@ -1472,10 +1471,6 @@
     <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario" style="flex:2;min-width:120px;">
         <i class="fas fa-check"></i> Confirmar Despacho
     </button>
-    <button id="btn-encerrar-operacao" class="btn" 
-        style="flex:1;min-width:100px;background:rgba(239,68,68,0.12);color:var(--color-danger);border-color:rgba(239,68,68,0.25);display:none;">
-        <i class="fas fa-stop-circle"></i> Encerrar Operação
-    </button>
     <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario" style="flex:1;min-width:80px;">
         Cancelar
     </button>
@@ -1540,9 +1535,13 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario">Confirmar Despacho</button>
-                <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario">Cancelar</button>
+            <div class="modal-footer" style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario" style="flex:2;min-width:120px;">Confirmar Despacho</button>
+                <button id="btn-encerrar-operacao" class="btn"
+                    style="flex:1;min-width:100px;background:rgba(239,68,68,0.12);color:var(--color-danger);border-color:rgba(239,68,68,0.25);display:none;">
+                    <i class="fas fa-stop-circle"></i> Encerrar Operação
+                </button>
+                <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario" style="flex:1;min-width:80px;">Cancelar</button>
             </div>
         </div>
     </div>
@@ -1812,7 +1811,6 @@
             document.getElementById('nit-login-overlay').classList.add('hidden');
             showToast(`Bem-vindo, ${nome}!`, 'success');
             registrarAcao(`Login: ${nome} — ${turno}.`);
-            NitDateFilter.inicializar();
             // ✅ Verifica lacuna de processamento noturno (delay para garantir DOM pronto)
             setTimeout(() => NitProcessamento.verificar(), 800);
         },
@@ -1830,53 +1828,12 @@
 
     // ── FILTRO DE DATA ────────────────────────────────────────────────────────
     // ── FILTRO DE DATA ────────────────────────────────────────────────────────
-const NitDateFilter = {
-    _input: null,
-
+const NitData = {
     hoje: () => {
         const d  = new Date();
         const dd = String(d.getDate()).padStart(2, '0');
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         return `${dd}/${mm}/${d.getFullYear()}`;
-    },
-
-    toISO:   ddr => { if (!ddr) return ''; const [dd,mm,yyyy] = ddr.split('/'); return `${yyyy}-${mm}-${dd}`; },
-    fromISO: val => { if (!val) return null; const [yyyy,mm,dd] = val.split('-'); return `${dd}/${mm}/${yyyy}`; },
-
-    inicializar() {
-        this._input = document.getElementById('filtro-data-input');
-        if (!this._input) return;
-        this._input.max = this.toISO(this.hoje());
-        if (!Semaforo._filtroData) {
-            this._input.value    = this.toISO(this.hoje());
-            Semaforo._filtroData = this.hoje();
-        } else {
-            this._input.value = this.toISO(Semaforo._filtroData);
-        }
-        this._input.addEventListener('change', () => {
-            Semaforo._filtroData = this.fromISO(this._input.value);
-            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
-                c.style.display = (c.dataset.datareferencia === Semaforo._filtroData) ? '' : 'none';
-            });
-            Semaforo.atualizarPainel();
-        });
-    },  // <-- FECHA inicializar AQUI
-
-    sincronizar(dataReferencia) {  // <-- AGORA no nível correto
-        if (!this._input || !dataReferencia) return;
-        const iso = this.toISO(dataReferencia);
-        if (iso) { this._input.value = iso; Semaforo._filtroData = dataReferencia; }
-    },
-
-    ajustarAoDados(dados) {  // <-- Também no nível correto
-        const datas = Object.values(dados).map(c => c.dataReferencia).filter(Boolean);
-        if (!datas.length) return;
-        const parseData = d => { const [dd,mm,yyyy] = d.split('/'); return new Date(+yyyy, +mm-1, +dd); };
-        const recente   = datas.sort((a, b) => parseData(b) - parseData(a))[0];
-        if (Semaforo._filtroData !== recente) {
-            Semaforo._filtroData = recente;
-            if (this._input) this._input.value = this.toISO(recente);
-        }
     },
 };
     // ── ESTADO GLOBAL ─────────────────────────────────────────────────────────
@@ -2151,7 +2108,6 @@ const NitDateFilter = {
     // ═════════════════════════════════════════════════════════════════════════
     const Semaforo = {
         ultimoLoteNormalizado: [],
-        _filtroData: null,
 
         // ── Helpers ───────────────────────────────────────────────────────
         gerarEventoId(codigo, inicio) {
@@ -2164,7 +2120,7 @@ const NitDateFilter = {
                 const m = l.match(/(\d{2}\/\d{2}\/\d{4})/);
                 if (m) return m[1];
             }
-            return NitDateFilter.hoje();
+            return NitData.hoje();
         },
 
         statusFromSecao(secao, card) {
@@ -2265,7 +2221,6 @@ const NitDateFilter = {
                     } else {
                         container.appendChild(el);
                     }
-                    NitDateFilter.ajustarAoDados({ [eventoId]: dados });
                     Semaforo.atualizarPainel();
                 });
 
@@ -2326,7 +2281,6 @@ const NitDateFilter = {
             if (!eventos.length) { showToast('Nenhuma ocorrência encontrada.', 'warning'); return; }
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
-            NitDateFilter.sincronizar(eventos[0]?.dataReferencia);
             this.atualizarPainel();
             // ✅ Registra metadados do processamento para rastreabilidade e verificação de turno
             NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
@@ -2833,25 +2787,10 @@ const NitDateFilter = {
             const totalNorm  = total.normalizados;
             const totalPend  = totalGeral - totalNorm;
 
-            const filtro = this._filtroData;
-            let exibTotal = totalGeral, exibNorm = totalNorm, exibPend = totalPend;
-            if (filtro) {
-                const todos = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card'));
-                todos.forEach(c => {
-                    const dataBate    = c.dataset.datareferencia === filtro;
-                    const normalizado = !!c.closest('#coluna-normalizados');
-                    c.style.display = dataBate ? '' : 'none';
-                });
-                const hoje = todos.filter(c => c.dataset.datareferencia === filtro);
-                exibTotal  = hoje.length;
-                exibNorm   = hoje.filter(c => c.closest('#coluna-normalizados')).length;
-                exibPend   = exibTotal - exibNorm;
-            }
-
-            DOM.displayTotal.textContent        = exibTotal;
-            DOM.displayNormalizados.textContent = exibNorm;
-            DOM.displayPendentes.textContent    = exibPend;
-            DOM.countNormalizados.textContent   = filtro ? exibNorm : totalNorm;
+            DOM.displayTotal.textContent        = totalGeral;
+            DOM.displayNormalizados.textContent = totalNorm;
+            DOM.displayPendentes.textContent    = totalPend;
+            DOM.countNormalizados.textContent   = totalNorm;
 
             document.getElementById('count-espera') && (document.getElementById('count-espera').textContent = total.espera);
             [['vl', total.vl], ['amc', total.amc], ['sem-necessidade', total.semNecessidade]].forEach(([id, v]) => {
@@ -2864,12 +2803,11 @@ const NitDateFilter = {
 
         gerarPreviewRelatorio() {
             const incluirNorm = DOM.checkIncluirNormalizados?.checked;
-            const filtroData  = this._filtroData || null;
+            const filtroData  = NitData.hoje();
 
-            // Filtra por data de referência ativa — evita acumulado de plantões anteriores
+            // Filtra por data de referência do plantão atual — evita acumulado de plantões anteriores
             const cards = id => {
                 const todos = Array.from(document.querySelectorAll(`#${id} .kanban-card`));
-                if (!filtroData) return todos;
                 return todos.filter(c => c.dataset.datareferencia === filtroData);
             };
 
@@ -2879,7 +2817,6 @@ const NitDateFilter = {
             const amc    = cards('coluna-amc');
             const norm   = (() => {
                 const todos = Array.from(DOM.colunaNormalizados.querySelectorAll('.kanban-card'));
-                if (!filtroData) return todos;
                 return todos.filter(c => c.dataset.datareferencia === filtroData);
             })();
 
@@ -3308,7 +3245,6 @@ const NitDateFilter = {
                 document.querySelectorAll('#tab-semaforo .kanban-cards-container').forEach(c => c.innerHTML = '');
                 if (DOM.relatorioFinalPreview) DOM.relatorioFinalPreview.value = '';
                 AppState.cardIdCounter = AppState.totalOcorrenciasCriadas = 0;
-                this._filtroData = null;
                 localStorage.removeItem(AppState.STORAGE_KEY_SEMAFORO);
                 NitFirebase.exec((db, ref, update) => {
                     ref(db, 'kanban').remove();
