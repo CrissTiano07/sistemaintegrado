@@ -3362,7 +3362,7 @@ inicializar() {
     // ═════════════════════════════════════════════════════════════════════════
     // INICIALIZAÇÃO
     // ═════════════════════════════════════════════════════════════════════════
-    async function inicializarApp() {
+        async function inicializarApp() {
         queryDOM();
         carregarDadosMestres();
         document.body.setAttribute('data-theme', 'dark');
@@ -3376,48 +3376,87 @@ inicializar() {
 
         setupModal(DOM.modalRelatorio,        DOM.btnModalFechar);
         setupModal(DOM.modalEdicao,           DOM.btnEdicaoCancelar);
-        setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, () => {
-            document.getElementById('despacho-preview')?.classList.remove('show');
-            const b = document.getElementById('btn-despacho-semaforo-confirmar');
+        setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, function() {
+            var preview = document.getElementById('despacho-preview');
+            if (preview) preview.classList.remove('show');
+            var b = document.getElementById('btn-despacho-semaforo-confirmar');
             if (b) b.innerHTML = 'Confirmar Despacho';
         });
-        DOM.tabButtons.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        
+        var tabButtons = DOM.tabButtons;
+        for (var i = 0; i < tabButtons.length; i++) {
+            (function(btn) {
+                btn.addEventListener('click', function() {
+                    switchTab(btn.dataset.tab);
+                });
+            })(tabButtons[i]);
+        }
 
         // Modal confirmação genérico
-        const mc  = document.getElementById('modal-confirmar-generico');
-        const ok  = document.getElementById('btn-confirmar-generico-ok');
-        const can = document.getElementById('btn-confirmar-generico-cancel');
-        ok?.addEventListener('click',  () => { fecharModal(mc); _confirmCb?.(); _confirmCb = null; });
-        can?.addEventListener('click', () => { fecharModal(mc); _confirmCb = null; });
-        mc?.addEventListener('click',  e => { if (e.target === mc) { fecharModal(mc); _confirmCb = null; } });
+        var mc = document.getElementById('modal-confirmar-generico');
+        var ok = document.getElementById('btn-confirmar-generico-ok');
+        var can = document.getElementById('btn-confirmar-generico-cancel');
+        if (ok) {
+            ok.addEventListener('click', function() {
+                fecharModal(mc);
+                if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+            });
+        }
+        if (can) {
+            can.addEventListener('click', function() {
+                fecharModal(mc);
+                _confirmCb = null;
+            });
+        }
+        if (mc) {
+            mc.addEventListener('click', function(e) {
+                if (e.target === mc) {
+                    fecharModal(mc);
+                    _confirmCb = null;
+                }
+            });
+        }
 
         // Copiar relatório
-        DOM.btnModalCopiar?.addEventListener('click', () => {
-            const txt = DOM.modalRelatorioTexto?.value || '';
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(txt)
-                    .then(() => { fecharModal(DOM.modalRelatorio); showToast('Relatório copiado!', 'success'); })
-                    .catch(() => Semaforo._clipboardFallback(txt));
-            } else {
-                Semaforo._clipboardFallback(txt);
-                fecharModal(DOM.modalRelatorio);
-            }
-        });
+        var btnCopiar = DOM.btnModalCopiar;
+        if (btnCopiar) {
+            btnCopiar.addEventListener('click', function() {
+                var txt = DOM.modalRelatorioTexto ? DOM.modalRelatorioTexto.value : '';
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(txt)
+                        .then(function() {
+                            fecharModal(DOM.modalRelatorio);
+                            showToast('Relatório copiado!', 'success');
+                        })
+                        .catch(function() {
+                            Semaforo._clipboardFallback(txt);
+                        });
+                } else {
+                    Semaforo._clipboardFallback(txt);
+                    fecharModal(DOM.modalRelatorio);
+                }
+            });
+        }
 
         // Histórico
-        const btnH = document.getElementById('btn-ver-historico');
-        const modH = document.getElementById('modal-historico');
-        const bodH = document.getElementById('historico-body');
+        var btnH = document.getElementById('btn-ver-historico');
+        var modH = document.getElementById('modal-historico');
+        var bodH = document.getElementById('historico-body');
         if (btnH && modH) {
-            btnH.addEventListener('click', () => {
-                const logs = JSON.parse(localStorage.getItem('historicoDeAcoes_v1') || '[]');
-                bodH.innerHTML = logs.length
-                    ? logs.map(l =>
-                        `<div style="display:flex;padding:10px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">
-                            <span style="color:var(--color-text-tertiary);min-width:160px;flex-shrink:0;">${l.timestamp}</span>
-                            <span style="margin-left:16px;">${l.mensagem}</span>
-                        </div>`).join('')
-                    : '<p>Nenhuma ação registrada.</p>';
+            btnH.addEventListener('click', function() {
+                var logs = JSON.parse(localStorage.getItem('historicoDeAcoes_v1') || '[]');
+                if (logs.length) {
+                    var html = '';
+                    for (var j = 0; j < logs.length; j++) {
+                        html += '<div style="display:flex;padding:10px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">' +
+                            '<span style="color:var(--color-text-tertiary);min-width:160px;flex-shrink:0;">' + logs[j].timestamp + '</span>' +
+                            '<span style="margin-left:16px;">' + logs[j].mensagem + '</span>' +
+                            '</div>';
+                    }
+                    bodH.innerHTML = html;
+                } else {
+                    bodH.innerHTML = '<p>Nenhuma ação registrada.</p>';
+                }
                 abrirModal(modH);
             });
             setupModal(modH, document.getElementById('btn-historico-fechar'));
@@ -3431,26 +3470,41 @@ inicializar() {
         NitNormalizar.inicializar();
         NitNormalizados.inicializar();
         inicializarBuscasPorColuna();
+        
         // Toggle campos de apoio no modal de despacho
-        document.getElementById('despacho-tem-apoio')?.addEventListener('change', function() {
-            const campos = document.getElementById('grupo-apoio-campos');
-            if (campos) campos.style.display = this.checked ? 'flex' : 'none';
-            if (!this.checked) {
-                document.getElementById('despacho-apoio-equipe').value = '';
-                document.getElementById('despacho-apoio-vt').value     = '';
-            }
-        });
+        var temApoioCheck = document.getElementById('despacho-tem-apoio');
+        if (temApoioCheck) {
+            temApoioCheck.addEventListener('change', function() {
+                var campos = document.getElementById('grupo-apoio-campos');
+                if (campos) {
+                    campos.style.display = this.checked ? 'flex' : 'none';
+                }
+                if (!this.checked) {
+                    var apoioEquipe = document.getElementById('despacho-apoio-equipe');
+                    var apoioVt = document.getElementById('despacho-apoio-vt');
+                    if (apoioEquipe) apoioEquipe.value = '';
+                    if (apoioVt) apoioVt.value = '';
+                }
+            });
+        }
+        
         NitViradaDia.inicializar();
     }
 
     function switchTab(tabId) {
         if (!document.getElementById(tabId)) return;
-        DOM.tabContents.forEach(c => c.classList.remove('active'));
-        DOM.tabButtons.forEach(b  => b.classList.remove('active'));
+        var contents = DOM.tabContents;
+        for (var i = 0; i < contents.length; i++) {
+            contents[i].classList.remove('active');
+        }
+        var buttons = DOM.tabButtons;
+        for (var j = 0; j < buttons.length; j++) {
+            buttons[j].classList.remove('active');
+        }
         document.getElementById(tabId).classList.add('active');
-        document.querySelector(`.tab-button[data-tab="${tabId}"]`)?.classList.add('active');
+        var activeBtn = document.querySelector('.tab-button[data-tab="' + tabId + '"]');
+        if (activeBtn) activeBtn.classList.add('active');
     }
-
     // ═════════════════════════════════════════════════════════════════════════
     // NORMALIZAR — modal com data/hora fim obrigatórios + undo robusto
     // ═════════════════════════════════════════════════════════════════════════
