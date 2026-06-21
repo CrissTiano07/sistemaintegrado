@@ -3363,133 +3363,133 @@ inicializar() {
     // INICIALIZAÇÃO
     // ═════════════════════════════════════════════════════════════════════════
         async function inicializarApp() {
-        queryDOM();
-        carregarDadosMestres();
-        document.body.setAttribute('data-theme', 'dark');
+    queryDOM();
+    carregarDadosMestres();
+    document.body.setAttribute('data-theme', 'dark');
 
-        await NitFirebase._init();
-        Semaforo.inicializar();
-        switchTab('tab-semaforo');
+    await NitFirebase._init();
+    Semaforo.inicializar();
+    switchTab('tab-semaforo');
 
-        NitLogin.inicializar();
-        NitLogin.tentarRestaurar() || true;
+    NitLogin.inicializar();
+    NitLogin.tentarRestaurar() || true;
 
-        setupModal(DOM.modalRelatorio,        DOM.btnModalFechar);
-        setupModal(DOM.modalEdicao,           DOM.btnEdicaoCancelar);
-        setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, function() {
-            var preview = document.getElementById('despacho-preview');
-            if (preview) preview.classList.remove('show');
-            var b = document.getElementById('btn-despacho-semaforo-confirmar');
-            if (b) b.innerHTML = 'Confirmar Despacho';
-        });
-        
-        var tabButtons = DOM.tabButtons;
-        for (var i = 0; i < tabButtons.length; i++) {
-            (function(btn) {
-                btn.addEventListener('click', function() {
-                    switchTab(btn.dataset.tab);
-                });
-            })(tabButtons[i]);
-        }
+    setupModal(DOM.modalRelatorio, DOM.btnModalFechar);
+    setupModal(DOM.modalEdicao, DOM.btnEdicaoCancelar);
+    setupModal(DOM.modalDespachoSemaforo, DOM.btnDespachoSemaforoCancelar, function() {
+        var preview = document.getElementById('despacho-preview');
+        if (preview) preview.classList.remove('show');
+        var b = document.getElementById('btn-despacho-semaforo-confirmar');
+        if (b) b.innerHTML = 'Confirmar Despacho';
+    });
 
-        // Modal confirmação genérico
-        var mc = document.getElementById('modal-confirmar-generico');
-        var ok = document.getElementById('btn-confirmar-generico-ok');
-        var can = document.getElementById('btn-confirmar-generico-cancel');
-        if (ok) {
-            ok.addEventListener('click', function() {
-                fecharModal(mc);
-                if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+    var tabButtons = DOM.tabButtons;
+    for (var i = 0; i < tabButtons.length; i++) {
+        (function(btn) {
+            btn.addEventListener('click', function() {
+                switchTab(btn.dataset.tab);
             });
-        }
-        if (can) {
-            can.addEventListener('click', function() {
+        })(tabButtons[i]);
+    }
+
+    // Modal confirmação genérico
+    var mc = document.getElementById('modal-confirmar-generico');
+    var ok = document.getElementById('btn-confirmar-generico-ok');
+    var can = document.getElementById('btn-confirmar-generico-cancel');
+    if (ok) {
+        ok.addEventListener('click', function() {
+            fecharModal(mc);
+            if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+        });
+    }
+    if (can) {
+        can.addEventListener('click', function() {
+            fecharModal(mc);
+            _confirmCb = null;
+        });
+    }
+    if (mc) {
+        mc.addEventListener('click', function(e) {
+            if (e.target === mc) {
                 fecharModal(mc);
                 _confirmCb = null;
-            });
-        }
-        if (mc) {
-            mc.addEventListener('click', function(e) {
-                if (e.target === mc) {
-                    fecharModal(mc);
-                    _confirmCb = null;
-                }
-            });
-        }
-
-        // Copiar relatório
-        var btnCopiar = DOM.btnModalCopiar;
-        if (btnCopiar) {
-            btnCopiar.addEventListener('click', function() {
-                var txt = DOM.modalRelatorioTexto ? DOM.modalRelatorioTexto.value : '';
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(txt)
-                        .then(function() {
-                            fecharModal(DOM.modalRelatorio);
-                            showToast('Relatório copiado!', 'success');
-                        })
-                        .catch(function() {
-                            Semaforo._clipboardFallback(txt);
-                        });
-                } else {
-                    Semaforo._clipboardFallback(txt);
-                    fecharModal(DOM.modalRelatorio);
-                }
-            });
-        }
-
-        // Histórico
-        var btnH = document.getElementById('btn-ver-historico');
-        var modH = document.getElementById('modal-historico');
-        var bodH = document.getElementById('historico-body');
-        if (btnH && modH) {
-            btnH.addEventListener('click', function() {
-                var logs = JSON.parse(localStorage.getItem('historicoDeAcoes_v1') || '[]');
-                if (logs.length) {
-                    var html = '';
-                    for (var j = 0; j < logs.length; j++) {
-                        html += '<div style="display:flex;padding:10px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">' +
-                            '<span style="color:var(--color-text-tertiary);min-width:160px;flex-shrink:0;">' + logs[j].timestamp + '</span>' +
-                            '<span style="margin-left:16px;">' + logs[j].mensagem + '</span>' +
-                            '</div>';
-                    }
-                    bodH.innerHTML = html;
-                } else {
-                    bodH.innerHTML = '<p>Nenhuma ação registrada.</p>';
-                }
-                abrirModal(modH);
-            });
-            setupModal(modH, document.getElementById('btn-historico-fechar'));
-        }
-
-        NitCardDetails.inicializar();
-        NitBuscaGlobal.inicializar();
-        NitLogout.inicializar();
-        NitLazy.inicializar();
-        NitSidebar.inicializar();
-        NitNormalizar.inicializar();
-        NitNormalizados.inicializar();
-        inicializarBuscasPorColuna();
-        
-        // Toggle campos de apoio no modal de despacho
-        var temApoioCheck = document.getElementById('despacho-tem-apoio');
-        if (temApoioCheck) {
-            temApoioCheck.addEventListener('change', function() {
-                var campos = document.getElementById('grupo-apoio-campos');
-                if (campos) {
-                    campos.style.display = this.checked ? 'flex' : 'none';
-                }
-                if (!this.checked) {
-                    var apoioEquipe = document.getElementById('despacho-apoio-equipe');
-                    var apoioVt = document.getElementById('despacho-apoio-vt');
-                    if (apoioEquipe) apoioEquipe.value = '';
-                    if (apoioVt) apoioVt.value = '';
-                }
-            });
-        }
-        
-        NitViradaDia.inicializar();
+            }
+        });
     }
+
+    // Copiar relatório
+    var btnCopiar = DOM.btnModalCopiar;
+    if (btnCopiar) {
+        btnCopiar.addEventListener('click', function() {
+            var txt = DOM.modalRelatorioTexto ? DOM.modalRelatorioTexto.value : '';
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(txt)
+                    .then(function() {
+                        fecharModal(DOM.modalRelatorio);
+                        showToast('Relatório copiado!', 'success');
+                    })
+                    .catch(function() {
+                        Semaforo._clipboardFallback(txt);
+                    });
+            } else {
+                Semaforo._clipboardFallback(txt);
+                fecharModal(DOM.modalRelatorio);
+            }
+        });
+    }
+
+    // Histórico
+    var btnH = document.getElementById('btn-ver-historico');
+    var modH = document.getElementById('modal-historico');
+    var bodH = document.getElementById('historico-body');
+    if (btnH && modH) {
+        btnH.addEventListener('click', function() {
+            var logs = JSON.parse(localStorage.getItem('historicoDeAcoes_v1') || '[]');
+            if (logs.length) {
+                var html = '';
+                for (var j = 0; j < logs.length; j++) {
+                    html += '<div style="display:flex;padding:10px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:6px;margin-bottom:8px;">' +
+                        '<span style="color:var(--color-text-tertiary);min-width:160px;flex-shrink:0;">' + logs[j].timestamp + '</span>' +
+                        '<span style="margin-left:16px;">' + logs[j].mensagem + '</span>' +
+                        '</div>';
+                }
+                bodH.innerHTML = html;
+            } else {
+                bodH.innerHTML = '<p>Nenhuma ação registrada.</p>';
+            }
+            abrirModal(modH);
+        });
+        setupModal(modH, document.getElementById('btn-historico-fechar'));
+    }
+
+    NitCardDetails.inicializar();
+    NitBuscaGlobal.inicializar();
+    NitLogout.inicializar();
+    NitLazy.inicializar();
+    NitSidebar.inicializar();
+    NitNormalizar.inicializar();
+    NitNormalizados.inicializar();
+    inicializarBuscasPorColuna();
+
+    // Toggle campos de apoio no modal de despacho
+    var temApoioCheck = document.getElementById('despacho-tem-apoio');
+    if (temApoioCheck) {
+        temApoioCheck.addEventListener('change', function() {
+            var campos = document.getElementById('grupo-apoio-campos');
+            if (campos) {
+                campos.style.display = this.checked ? 'flex' : 'none';
+            }
+            if (!this.checked) {
+                var apoioEquipe = document.getElementById('despacho-apoio-equipe');
+                var apoioVt = document.getElementById('despacho-apoio-vt');
+                if (apoioEquipe) apoioEquipe.value = '';
+                if (apoioVt) apoioVt.value = '';
+            }
+        });
+    }
+
+    NitViradaDia.inicializar();
+}
 
     function switchTab(tabId) {
         if (!document.getElementById(tabId)) return;
