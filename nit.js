@@ -527,11 +527,14 @@ const NitData = {
                                        || document.getElementById(novaColuna);
                         if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-                    // Sincroniza dataset com dados Firebase
+                    // Firebase child_changed entrega o estado COMPLETO do nó.
+                    // Campos ausentes em dados foram deletados do Firebase → limpar dataset.
                     const campos = ['equipe','viatura','pl','sub','status','observacoes',
                                     'inicio','endereco','tsDespacho','equipeApoio','viaturaApoio',
                                     'data_fim','hora_fim','fim','coluna'];
-                    campos.forEach(k => { if (dados[k] !== undefined) el.dataset[k] = dados[k]; });
+                    campos.forEach(k => {
+                        el.dataset[k] = (dados[k] != null) ? dados[k] : '';
+                    });
 
                     // Rerenderiza usando o método compartilhado
                     const bodyEl = el.querySelector('.card-body');
@@ -900,7 +903,8 @@ const NitData = {
                     data_fim:     cardData.data_fim     || card.dataset.data_fim     || '',
                     hora_fim:     cardData.hora_fim     || card.dataset.hora_fim     || '',
                     fim:          cardData.fim          || card.dataset.fim          || '',
-                    coluna:       cardData.coluna       || card.dataset.coluna       || '',
+                    // coluna lida do dataset em tempo de render (pode ter mudado desde cardData)
+                    coluna:       card.dataset.coluna   || cardData.coluna           || '',
                 });
             };
 
@@ -969,8 +973,8 @@ const NitData = {
             const equipe     = d.equipe      || '';
             const viatura    = d.viatura     || '';
             const endereco   = d.endereco    || '';
-            const tipo       = d.sub         || '';
-            const tsDespacho = d.tsDespacho  || '';
+            const tipo       = (d.sub && d.sub !== 'null') ? d.sub : '';
+            const tsDespacho = (d.tsDespacho && d.tsDespacho !== 'null') ? d.tsDespacho : '';
             const equipeApoio  = d.equipeApoio  || '';
             const viaturaApoio = d.viaturaApoio || '';
             const fimExib    = d.fim || (d.data_fim ? `${d.data_fim}${d.hora_fim ? ' ' + d.hora_fim : ''}` : '');
