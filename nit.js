@@ -527,36 +527,18 @@ const NitData = {
                                        || document.getElementById(novaColuna);
                         if (container) { container.appendChild(el); el.dataset.coluna = novaColuna; }
                     }
-                    if (dados.equipe      !== undefined) el.dataset.equipe      = dados.equipe;
-                    if (dados.viatura     !== undefined) el.dataset.viatura     = dados.viatura;
-                    if (dados.pl          !== undefined) el.dataset.pl          = dados.pl;
-                    if (dados.sub         !== undefined) el.dataset.sub         = dados.sub;
-                    if (dados.status      !== undefined) el.dataset.status      = dados.status;
-                    if (dados.observacoes !== undefined) el.dataset.observacoes = dados.observacoes;
+                    // Sincroniza dataset com dados Firebase
+                    const campos = ['equipe','viatura','pl','sub','status','observacoes',
+                                    'inicio','endereco','tsDespacho','equipeApoio','viaturaApoio',
+                                    'data_fim','hora_fim','fim','coluna'];
+                    campos.forEach(k => { if (dados[k] !== undefined) el.dataset[k] = dados[k]; });
 
-                    // ✅ fix: rerenderiza o card-body com dados frescos do Firebase
+                    // Rerenderiza usando o método compartilhado
                     const bodyEl = el.querySelector('.card-body');
                     if (bodyEl) {
-                        const obs      = dados.observacoes || el.dataset.observacoes || '';
-                        const status   = dados.status      || el.dataset.status      || '';
-                        const inicio   = dados.inicio      || el.dataset.inicio      || '';
-                        const equipe   = dados.equipe      || el.dataset.equipe      || '';
-                        const viatura  = dados.viatura     || el.dataset.viatura     || '';
-                        const coluna   = dados.coluna      || el.dataset.coluna      || '';
-                        const frase    = Semaforo._fraseTecnica(obs, status, inicio);
-                        const obsExibir = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
-                        const isNorm   = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
-                        const inicioExib = (!isNorm && inicio)
-                            ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
-                            : '';
-                        bodyEl.innerHTML =
-                            `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
-                            (obsExibir  ? `<p class="card-obs">${obsExibir}</p>` : '') +
-                            inicioExib +
-                            (equipe     ? `<p class="card-equipe"><span class="card-equipe-linha">${equipe}${viatura ? ` · VT ${viatura}` : ''}</span></p>` : '');
+                        bodyEl.innerHTML = Semaforo._buildBodyHTML(el.dataset);
                         el.classList.remove('lazy-pending');
                     }
-
                     Semaforo.atualizarPainel();
                 });
 
@@ -899,95 +881,28 @@ const NitData = {
                     <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
                 </div>`;
 
-            // ✅ fix: renderiza o body imediatamente com dados em memória
+            // ✅ renderiza o body imediatamente com dados em memória
             // NitLazy continua observando para cards fora do viewport,
             // mas cards visíveis recebem conteúdo sem depender do IntersectionObserver.
             const _renderCardBody = () => {
-                // Lê de cardData em memória; cai para dataset como fallback
-                // (cards vindos do Firebase via child_added podem chegar antes
-                //  do dataset ser populado completamente)
-                const obsBruta    = cardData.observacoes || card.dataset.observacoes || '';
-                const statusAtual = cardData.status  || card.dataset.status  || '';
-                const inicioAtual = cardData.inicio  || card.dataset.inicio  || '';
-                const equipe      = cardData.equipe  || card.dataset.equipe  || '';
-                const viatura     = cardData.viatura || card.dataset.viatura || '';
-                const endereco    = cardData.endereco|| card.dataset.endereco|| '';
-                const tipo        = cardData.sub     || card.dataset.sub     || '';
-                const tsDespacho  = cardData.tsDespacho || card.dataset.tsDespacho || '';
-                const equipeApoio = cardData.equipeApoio || card.dataset.equipeApoio || '';
-                const viaturaApoio = cardData.viaturaApoio || card.dataset.viaturaApoio || '';
-                // data_fim + hora_fim vêm do Firebase separados; 'fim' é o campo combinado
-                // gravado pelo NitNormalizar.confirmar ("DD/MM/YYYY HH:MM")
-                const dataFim = cardData.data_fim || card.dataset.data_fim || '';
-                const horaFim = cardData.hora_fim || card.dataset.hora_fim || '';
-                const fimComb = cardData.fim      || card.dataset.fim      || '';
-                const fimExib = fimComb || (dataFim ? `${dataFim}${horaFim ? ' ' + horaFim : ''}` : '');
-
-                const frase       = Semaforo._fraseTecnica(obsBruta, statusAtual, inicioAtual);
-                const obsFallback = obsBruta
-                    .replace(/NORMALIZADOS\s*✅/gi, '')
-                    .replace(/PENDENTES\s*❌/gi, '')
-                    .replace(/\*/g, '')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-                const obsExibir = frase || (obsFallback.length > 120
-                    ? obsFallback.slice(0, 120) + '…'
-                    : obsFallback);
-                
-
-                 // Montar HTML de despacho
-    let despachoHTML = '';
-    if (tipo) {
-        const tipoLabel = tipo === 'vl' ? 'VIA LIVRE' :
-                         tipo === 'amc' ? 'AMC' :
-                         tipo === 'sn' ? 'SEM NECESSIDADE' : tipo.toUpperCase();
-        const emojiMap = { 'vl': '🟠', 'amc': '🔵', 'sn': '⚪' };
-        const emoji = emojiMap[tipo] || '🚦';
-        
-        // Equipe principal
-        const linhaP = equipe 
-            ? `<span class="card-equipe-linha">👤 ${equipe}${viatura ? ` · VT ${viatura}` : ''}</span>` 
-            : '';
-        
-        // Equipe de apoio — só exibe se não for substring do campo principal
-        const apoioRedundante = equipeApoio &&
-            equipe.toLowerCase().includes(equipeApoio.toLowerCase()) &&
-            viatura.toLowerCase().includes(viaturaApoio.toLowerCase());
-        const linhaA = (equipeApoio && !apoioRedundante)
-            ? `<span class="card-equipe-linha card-equipe-apoio">➕ ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}</span>`
-            : '';
-        
-        const equipeHTML = (linhaP || linhaA) 
-            ? `<p class="card-equipe">${linhaP}${linhaA}</p>` 
-            : '';
-        
-        const tsStr = Semaforo._formatarTimestamp(tsDespacho);
-        const tsHTML = tsStr ? `<p class="card-ts-despacho">📅 ${tsStr}</p>` : '';
-        
-        despachoHTML = `
-            <p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>
-            ${equipeHTML}
-            ${tsHTML}
-        `;
-    }
-
-    const bodyEl = card.querySelector('.card-body');
-    if (bodyEl) {
-        // Início — exibe apenas em cards não normalizados
-        const coluna = cardData.coluna || card.dataset.coluna || '';
-        const isNorm = coluna === 'coluna-normalizados' || statusAtual === 'NORMALIZADO';
-        const inicioExib = (!isNorm && inicioAtual)
-            ? `<p class="card-inicio">⏳ ${inicioAtual.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
-            : '';
-
-        bodyEl.innerHTML = 
-            (despachoHTML || '') +
-            `<p class="card-address">${endereco}</p>` +
-            (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-            inicioExib +
-            (fimExib ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
-    }
-};
+                const bodyEl = card.querySelector('.card-body');
+                if (bodyEl) bodyEl.innerHTML = Semaforo._buildBodyHTML({
+                    observacoes:  cardData.observacoes  || card.dataset.observacoes  || '',
+                    status:       cardData.status       || card.dataset.status       || '',
+                    inicio:       cardData.inicio       || card.dataset.inicio       || '',
+                    equipe:       cardData.equipe       || card.dataset.equipe       || '',
+                    viatura:      cardData.viatura      || card.dataset.viatura      || '',
+                    endereco:     cardData.endereco     || card.dataset.endereco     || '',
+                    sub:          cardData.sub          || card.dataset.sub          || '',
+                    tsDespacho:   cardData.tsDespacho   || card.dataset.tsDespacho   || '',
+                    equipeApoio:  cardData.equipeApoio  || card.dataset.equipeApoio  || '',
+                    viaturaApoio: cardData.viaturaApoio || card.dataset.viaturaApoio || '',
+                    data_fim:     cardData.data_fim     || card.dataset.data_fim     || '',
+                    hora_fim:     cardData.hora_fim     || card.dataset.hora_fim     || '',
+                    fim:          cardData.fim          || card.dataset.fim          || '',
+                    coluna:       cardData.coluna       || card.dataset.coluna       || '',
+                });
+            };
 
             // Renderiza imediatamente se NitLazy não estiver disponível,
             // ou registra para render quando o card entrar no viewport.
@@ -1043,6 +958,65 @@ const NitData = {
             t = t.replace(/(\d{2}\/\d{2})\/\d{4}(\s+\d{2}:\d{2})/g, '$1$2');
 
             return t;
+        },
+
+        // ── Construção do HTML do body do card (método compartilhado) ───
+        // Usado por _renderCardBody e child_changed — fonte única de verdade.
+        _buildBodyHTML(d) {
+            const obs        = d.observacoes || '';
+            const status     = d.status      || '';
+            const inicio     = d.inicio      || '';
+            const equipe     = d.equipe      || '';
+            const viatura    = d.viatura     || '';
+            const endereco   = d.endereco    || '';
+            const tipo       = d.sub         || '';
+            const tsDespacho = d.tsDespacho  || '';
+            const equipeApoio  = d.equipeApoio  || '';
+            const viaturaApoio = d.viaturaApoio || '';
+            const fimExib    = d.fim || (d.data_fim ? `${d.data_fim}${d.hora_fim ? ' ' + d.hora_fim : ''}` : '');
+            const coluna     = d.coluna || '';
+
+            // Observação limpa
+            const frase = Semaforo._fraseTecnica(obs, status, inicio);
+            const obsFallback = obs
+                .replace(/NORMALIZADOS\s*✅/gi, '')
+                .replace(/PENDENTES\s*❌/gi, '')
+                .replace(/\*/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const obsExibir = frase || (obsFallback.length > 120 ? obsFallback.slice(0, 120) + '…' : obsFallback);
+
+            // Bloco de despacho
+            let despachoHTML = '';
+            if (tipo) {
+                const tipoLabel = { vl: 'VIA LIVRE', amc: 'AMC', sn: 'SEM NECESSIDADE' }[tipo] || tipo.toUpperCase();
+                const emoji     = { vl: '🟠', amc: '🔵', sn: '⚪' }[tipo] || '🚦';
+                const linhaP    = equipe
+                    ? `<span class="card-equipe-linha">👤 ${equipe}${viatura ? ` · VT ${viatura}` : ''}</span>`
+                    : '';
+                const apoioRedundante = equipeApoio
+                    && equipe.toLowerCase().includes(equipeApoio.toLowerCase())
+                    && viatura.toLowerCase().includes(viaturaApoio.toLowerCase());
+                const linhaA = (equipeApoio && !apoioRedundante)
+                    ? `<span class="card-equipe-linha card-equipe-apoio">➕ ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}</span>`
+                    : '';
+                const equipeHTML = (linhaP || linhaA) ? `<p class="card-equipe">${linhaP}${linhaA}</p>` : '';
+                const tsStr  = Semaforo._formatarTimestamp(tsDespacho);
+                const tsHTML = tsStr ? `<p class="card-ts-despacho">📅 ${tsStr}</p>` : '';
+                despachoHTML = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>${equipeHTML}${tsHTML}`;
+            }
+
+            // ⏳ Início — apenas em cards não normalizados e sem despacho
+            const isNorm     = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
+            const inicioExib = (!isNorm && !tipo && inicio)
+                ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
+                : '';
+
+            return despachoHTML
+                + `<p class="card-address">${endereco}</p>`
+                + (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '')
+                + inicioExib
+                + (fimExib  ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
         },
 
         _formatarTimestamp(ts) {
