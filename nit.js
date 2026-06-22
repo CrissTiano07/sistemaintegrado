@@ -958,7 +958,8 @@ const NitData = {
 
     if (bodyEl) {
         // Início — exibe apenas em cards não normalizados
-        const isNorm = statusAtual === 'NORMALIZADO';
+        const coluna = cardData.coluna || card.dataset.coluna || '';
+        const isNorm = coluna === 'coluna-normalizados' || statusAtual === 'NORMALIZADO';
         const inicioExib = (!isNorm && inicioAtual)
             ? `<p class="card-inicio">⏳ ${inicioAtual.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
             : '';
