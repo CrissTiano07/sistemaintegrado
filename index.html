@@ -1467,14 +1467,10 @@
                 <textarea id="modal-relatorio-texto" class="mono-font" readonly rows="15"
                     style="width:100%;border:none;resize:none;background:var(--color-bg);color:var(--color-text-primary);font-size:13px;line-height:1.6;padding:8px;"></textarea>
             </div>
-            <div class="modal-footer" style="display:flex;gap:8px;flex-wrap:wrap;">
-    <button id="btn-despacho-semaforo-confirmar" class="btn btn-primario" style="flex:2;min-width:120px;">
-        <i class="fas fa-check"></i> Confirmar Despacho
-    </button>
-    <button id="btn-despacho-semaforo-cancelar" class="btn btn-secundario" style="flex:1;min-width:80px;">
-        Cancelar
-    </button>
-</div>
+            <div class="modal-footer">
+                <button id="btn-modal-copiar" class="btn btn-primario">Copiar</button>
+                <button id="btn-modal-fechar" class="btn btn-secundario">Fechar</button>
+            </div>
         </div>
     </div>
 
@@ -2775,13 +2771,25 @@ const NitData = {
         },
 
         _atualizarPainelAgora() {
-            const n = sel => document.querySelectorAll(sel).length;
+            const hoje = NitData.hoje();
+
+            // B3 — filtro visual: oculta cards de dias anteriores
+            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
+                c.style.display = c.dataset.datareferencia === hoje ? '' : 'none';
+            });
+
+            // B2 — contadores filtrados por data atual
+            const n = sel =>
+                Array.from(document.querySelectorAll(sel))
+                     .filter(c => c.dataset.datareferencia === hoje).length;
+
             const total = {
                 espera:         n('#coluna-espera .kanban-card'),
                 semNecessidade: n('#coluna-sem-necessidade .kanban-card'),
                 vl:             n('#coluna-vl .kanban-card'),
                 amc:            n('#coluna-amc .kanban-card'),
-                normalizados:   DOM.colunaNormalizados.querySelectorAll('.kanban-card').length,
+                normalizados:   Array.from(DOM.colunaNormalizados.querySelectorAll('.kanban-card'))
+                                    .filter(c => c.dataset.datareferencia === hoje).length,
             };
             const totalGeral = Object.values(total).reduce((a, b) => a + b, 0);
             const totalNorm  = total.normalizados;
@@ -3952,10 +3960,12 @@ window.NitNormalizar = NitNormalizar;
             const colunaId = input.dataset.coluna;
             if (!colunaId) return;
             input.addEventListener('input', () => {
-                const q         = input.value.toLowerCase();
+                const q       = input.value.toLowerCase();
+                const hoje    = NitData.hoje();
                 const container = document.querySelector(`#${colunaId} .kanban-cards-container`);
                 if (!container) return;
                 container.querySelectorAll('.kanban-card').forEach(c => {
+                    if (c.dataset.datareferencia !== hoje) { c.style.display = 'none'; return; }
                     const match = (c.dataset.codigo   || '').toLowerCase().includes(q)
                                || (c.dataset.endereco || '').toLowerCase().includes(q)
                                || (c.dataset.problema || '').toLowerCase().includes(q);
