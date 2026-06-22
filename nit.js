@@ -535,20 +535,25 @@ const NitData = {
                     if (dados.observacoes !== undefined) el.dataset.observacoes = dados.observacoes;
 
                     // ✅ fix: rerenderiza o card-body com dados frescos do Firebase
-                    // garante que observações, equipe e status apareçam após child_changed
                     const bodyEl = el.querySelector('.card-body');
                     if (bodyEl) {
-                        const obs        = dados.observacoes || el.dataset.observacoes || '';
-                        const status     = dados.status      || el.dataset.status      || '';
-                        const inicio     = dados.inicio      || el.dataset.inicio      || '';
-                        const equipe     = dados.equipe      || el.dataset.equipe      || '';
-                        const viatura    = dados.viatura     || el.dataset.viatura     || '';
-                        const frase      = Semaforo._fraseTecnica(obs, status, inicio);
-                        const obsExibir  = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
+                        const obs      = dados.observacoes || el.dataset.observacoes || '';
+                        const status   = dados.status      || el.dataset.status      || '';
+                        const inicio   = dados.inicio      || el.dataset.inicio      || '';
+                        const equipe   = dados.equipe      || el.dataset.equipe      || '';
+                        const viatura  = dados.viatura     || el.dataset.viatura     || '';
+                        const coluna   = dados.coluna      || el.dataset.coluna      || '';
+                        const frase    = Semaforo._fraseTecnica(obs, status, inicio);
+                        const obsExibir = frase || obs.replace(/NORMALIZADOS\s*✅/gi,'').replace(/\*/g,'').trim().slice(0,100);
+                        const isNorm   = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
+                        const inicioExib = (!isNorm && inicio)
+                            ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
+                            : '';
                         bodyEl.innerHTML =
                             `<p class="card-address">${dados.endereco || el.dataset.endereco || ''}</p>` +
-                            (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
-                            (equipe    ? `<p class="card-equipe"><span class="card-equipe-linha">${equipe}${viatura ? ` · VT ${viatura}` : ''}</span></p>` : '');
+                            (obsExibir  ? `<p class="card-obs">${obsExibir}</p>` : '') +
+                            inicioExib +
+                            (equipe     ? `<p class="card-equipe"><span class="card-equipe-linha">${equipe}${viatura ? ` · VT ${viatura}` : ''}</span></p>` : '');
                         el.classList.remove('lazy-pending');
                     }
 
@@ -966,6 +971,7 @@ const NitData = {
         `;
     }
 
+    const bodyEl = card.querySelector('.card-body');
     if (bodyEl) {
         // Início — exibe apenas em cards não normalizados
         const coluna = cardData.coluna || card.dataset.coluna || '';
