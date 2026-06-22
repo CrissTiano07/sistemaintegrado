@@ -1164,7 +1164,16 @@ const NitData = {
                 if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
                 if (card.dataset.viatura) {
-                    t += ` (VT: ${card.dataset.viatura})`;
+                    const viaturaApoio = card.dataset.viaturaApoio || '';
+                    if (viaturaApoio) {
+                        // Múltiplas viaturas — formata como "VTs: 199, 221"
+                        const vts = [card.dataset.viatura, viaturaApoio]
+                            .join(', ')
+                            .replace(/\s*\+\s*/g, ', '); // normaliza "199 + 221" → "199, 221"
+                        t += ` (VTs: ${vts})`;
+                    } else {
+                        t += ` (VT: ${card.dataset.viatura})`;
+                    }
                 }
                 return t;
             };
