@@ -586,6 +586,14 @@
     letter-spacing: 0.2px;
 }
 
+.card-inicio {
+    margin: 4px 0 0;
+    font-size: 10px;
+    color: var(--color-aguardando);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
 .card-address {
     margin: 0 0 4px;
     color: var(--color-text-secondary);
