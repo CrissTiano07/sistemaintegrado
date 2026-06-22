@@ -1166,10 +1166,13 @@ const NitData = {
                 if (card.dataset.viatura) {
                     const viaturaApoio = card.dataset.viaturaApoio || '';
                     if (viaturaApoio) {
-                        // Múltiplas viaturas — formata como "VTs: 199, 221"
                         const vts = [card.dataset.viatura, viaturaApoio]
                             .join(', ')
-                            .replace(/\s*\+\s*/g, ', '); // normaliza "199 + 221" → "199, 221"
+                            .replace(/\s*\+\s*/g, ', ');
+                        t += ` (VTs: ${vts})`;
+                    } else if (card.dataset.viatura.includes('+')) {
+                        // Viaturas concatenadas no mesmo campo — normaliza "199 + 200" → "VTs: 199, 200"
+                        const vts = card.dataset.viatura.replace(/\s*\+\s*/g, ', ');
                         t += ` (VTs: ${vts})`;
                     } else {
                         t += ` (VT: ${card.dataset.viatura})`;
