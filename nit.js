@@ -743,7 +743,17 @@ const NitData = {
                     return;
                 }
 
-                // Card já existe no DOM
+                // Card já existe no DOM — atualiza observações se o relatório trouxer dado novo
+                if (ev.observacoes && ev.observacoes !== existente.element.dataset.observacoes) {
+                    existente.element.dataset.observacoes = ev.observacoes;
+                    NitFirebase.exec((db, ref, update) =>
+                        update(ref(db, `kanban/${ev.eventoId}`), {
+                            observacoes: ev.observacoes,
+                            ts: Date.now(),
+                        })
+                    );
+                }
+
                 if (!existente.normalizado && status === 'NORMALIZADO') {
                     DOM.colunaNormalizados.prepend(existente.element);
                     existente.element.classList.add('card-foi-normalizado');
