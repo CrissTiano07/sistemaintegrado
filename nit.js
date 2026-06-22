@@ -956,12 +956,18 @@ const NitData = {
         `;
     }
 
-    const bodyEl = card.querySelector('.card-body');
     if (bodyEl) {
+        // Início — exibe apenas em cards não normalizados
+        const isNorm = statusAtual === 'NORMALIZADO';
+        const inicioExib = (!isNorm && inicioAtual)
+            ? `<p class="card-inicio">⏳ ${inicioAtual.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
+            : '';
+
         bodyEl.innerHTML = 
             (despachoHTML || '') +
             `<p class="card-address">${endereco}</p>` +
             (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '') +
+            inicioExib +
             (fimExib ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
     }
 };
