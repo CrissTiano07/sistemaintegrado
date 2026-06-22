@@ -2640,8 +2640,11 @@ const NitData = {
             ? `<span class="card-equipe-linha">👤 ${equipe}${viatura ? ` · VT ${viatura}` : ''}</span>` 
             : '';
         
-        // Equipe de apoio
-        const linhaA = equipeApoio
+        // Equipe de apoio — só exibe se não for substring do campo principal
+        const apoioRedundante = equipeApoio &&
+            equipe.toLowerCase().includes(equipeApoio.toLowerCase()) &&
+            viatura.toLowerCase().includes(viaturaApoio.toLowerCase());
+        const linhaA = (equipeApoio && !apoioRedundante)
             ? `<span class="card-equipe-linha card-equipe-apoio">➕ ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}</span>`
             : '';
         
@@ -2728,7 +2731,7 @@ const NitData = {
         _formatarTimestamp(ts) {
             if (!ts) return '';
             const d = new Date(ts);
-            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         },
 
         // ── Ordenar coluna normalizados (mais recente no topo) ────────────
