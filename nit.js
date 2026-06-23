@@ -967,20 +967,21 @@ const NitData = {
         // ── Construção do HTML do body do card (método compartilhado) ───
         // Usado por _renderCardBody e child_changed — fonte única de verdade.
         _buildBodyHTML(d) {
-            const obs        = d.observacoes || '';
-            const status     = d.status      || '';
-            const inicio     = d.inicio      || '';
-            const equipe     = d.equipe      || '';
-            const viatura    = d.viatura     || '';
-            const endereco   = d.endereco    || '';
-            const tipo       = (d.sub && d.sub !== 'null') ? d.sub : '';
-            const tsDespacho = (d.tsDespacho && d.tsDespacho !== 'null') ? d.tsDespacho : '';
+            const obs          = d.observacoes  || '';
+            const status       = d.status       || '';
+            const inicio       = d.inicio       || '';
+            const equipe       = d.equipe       || '';
+            const viatura      = d.viatura      || '';
+            const endereco     = d.endereco     || '';
+            const tipo         = (d.sub && d.sub !== 'null') ? d.sub : '';
+            const tsDespacho   = (d.tsDespacho  && d.tsDespacho !== 'null') ? d.tsDespacho : '';
             const equipeApoio  = d.equipeApoio  || '';
             const viaturaApoio = d.viaturaApoio || '';
-            const fimExib    = d.fim || (d.data_fim ? `${d.data_fim}${d.hora_fim ? ' ' + d.hora_fim : ''}` : '');
-            const coluna     = d.coluna || '';
+            const fimExib      = d.fim || (d.data_fim ? `${d.data_fim}${d.hora_fim ? ' ' + d.hora_fim : ''}` : '');
+            const coluna       = d.coluna || '';
+            const isNorm       = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
 
-            // Observação limpa
+            // ── Observação ────────────────────────────────────────────────
             const frase = Semaforo._fraseTecnica(obs, status, inicio);
             const obsFallback = obs
                 .replace(/NORMALIZADOS\s*✅/gi, '')
@@ -990,19 +991,15 @@ const NitData = {
                 .trim();
             const obsExibir = frase || (obsFallback.length > 120 ? obsFallback.slice(0, 120) + '…' : obsFallback);
 
-            // Bloco de despacho
-            let despachoHTML = '';
+            // ── Bloco de despacho ─────────────────────────────────────────
+            let despachoBlock = '';
             if (tipo) {
                 const tipoLabel = { vl: 'VIA LIVRE', amc: 'AMC', sn: 'SEM NECESSIDADE' }[tipo] || tipo.toUpperCase();
                 const emoji     = { vl: '🟠', amc: '🔵', sn: '⚪' }[tipo] || '🚦';
 
-                // Equipe primária: remove apoio da string concatenada
-                const equipeP   = equipeApoio
-                    ? (equipe.split(/\s*\+\s*/)[0] || equipe).trim()
-                    : equipe;
-                const viaturaP  = viaturaApoio
-                    ? (viatura.split(/\s*\+\s*/)[0] || viatura).trim()
-                    : viatura;
+                // Equipe primária: extrai da concatenação quando há apoio
+                const equipeP  = equipeApoio ? (equipe.split(/\s*\+\s*/)[0]  || equipe).trim()  : equipe;
+                const viaturaP = viaturaApoio ? (viatura.split(/\s*\+\s*/)[0] || viatura).trim() : viatura;
 
                 const linhaP = equipeP
                     ? `<span class="card-equipe-linha">${viaturaP ? `VT: ${viaturaP}` : ''} Equipe: ${equipeP}</span>`
@@ -1010,23 +1007,30 @@ const NitData = {
                 const linhaA = equipeApoio
                     ? `<span class="card-equipe-linha card-equipe-apoio">${viaturaApoio ? `VT: ${viaturaApoio}` : ''} Equipe: ${equipeApoio}</span>`
                     : '';
+
                 const equipeHTML = (linhaP || linhaA) ? `<p class="card-equipe">${linhaP}${linhaA}</p>` : '';
-                const tsStr  = Semaforo._formatarTimestamp(tsDespacho);
-                const tsHTML = tsStr ? `<p class="card-ts-despacho">📅 ${tsStr}</p>` : '';
-                despachoHTML = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>${equipeHTML}${tsHTML}`;
+                const tsStr      = Semaforo._formatarTimestamp(tsDespacho);
+                const tsHTML     = tsStr ? `<p class="card-ts-despacho">${tsStr}</p>` : '';
+
+                despachoBlock = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>${equipeHTML}${tsHTML}`;
             }
 
-            // ⏳ Início — apenas em cards não normalizados e sem despacho
-            const isNorm     = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
+            // ── ⏳ Início: pendentes sem despacho ─────────────────────────
             const inicioExib = (!isNorm && !tipo && inicio)
                 ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
                 : '';
 
-            return despachoHTML
-                + `<p class="card-address">${endereco}</p>`
-                + (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '')
+            // ── Hierarquia do body ────────────────────────────────────────
+            // 1. Endereço    — informação primária de localização, sempre no topo
+            // 2. Início      — tempo de espera (pendente sem despacho)
+            // 3. Despacho    — tipo + equipe + hora de início da operação
+            // 4. Observação  — contexto adicional
+            // 5. Fim         — resolução (normalizado)
+            return `<p class="card-address">${endereco}</p>`
                 + inicioExib
-                + (fimExib  ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
+                + despachoBlock
+                + (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '')
+                + (fimExib   ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
         },
 
         _formatarTimestamp(ts) {
