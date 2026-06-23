@@ -995,14 +995,20 @@ const NitData = {
             if (tipo) {
                 const tipoLabel = { vl: 'VIA LIVRE', amc: 'AMC', sn: 'SEM NECESSIDADE' }[tipo] || tipo.toUpperCase();
                 const emoji     = { vl: '🟠', amc: '🔵', sn: '⚪' }[tipo] || '🚦';
-                const linhaP    = equipe
-                    ? `<span class="card-equipe-linha">👤 ${equipe}${viatura ? ` · VT ${viatura}` : ''}</span>`
+
+                // Equipe primária: remove apoio da string concatenada
+                const equipeP   = equipeApoio
+                    ? (equipe.split(/\s*\+\s*/)[0] || equipe).trim()
+                    : equipe;
+                const viaturaP  = viaturaApoio
+                    ? (viatura.split(/\s*\+\s*/)[0] || viatura).trim()
+                    : viatura;
+
+                const linhaP = equipeP
+                    ? `<span class="card-equipe-linha">${viaturaP ? `VT: ${viaturaP}` : ''} Equipe: ${equipeP}</span>`
                     : '';
-                const apoioRedundante = equipeApoio
-                    && equipe.toLowerCase().includes(equipeApoio.toLowerCase())
-                    && viatura.toLowerCase().includes(viaturaApoio.toLowerCase());
-                const linhaA = (equipeApoio && !apoioRedundante)
-                    ? `<span class="card-equipe-linha card-equipe-apoio">➕ ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}</span>`
+                const linhaA = equipeApoio
+                    ? `<span class="card-equipe-linha card-equipe-apoio">${viaturaApoio ? `VT: ${viaturaApoio}` : ''} Equipe: ${equipeApoio}</span>`
                     : '';
                 const equipeHTML = (linhaP || linhaA) ? `<p class="card-equipe">${linhaP}${linhaA}</p>` : '';
                 const tsStr  = Semaforo._formatarTimestamp(tsDespacho);
@@ -1024,9 +1030,12 @@ const NitData = {
         },
 
         _formatarTimestamp(ts) {
-            if (!ts) return '';
-            const d = new Date(ts);
-            return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            if (!ts || ts === 'null') return '';
+            const n = Number(ts);
+            if (!n || isNaN(n)) return '';
+            const d = new Date(n);
+            if (isNaN(d.getTime())) return '';
+            return '⏱ ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         },
 
         // ── Ordenar coluna normalizados (mais recente no topo) ────────────
@@ -1165,18 +1174,15 @@ const NitData = {
                 if (mts) desde = ` - Desde ${mts[1]}/${mts[2]} - ${mts[3]}`;
                 let t = `${card.dataset.codigo} 🚦 ${card.dataset.endereco} ● *${abrev}${desde} • ${card.dataset.problema}*`;
                 if (card.dataset.viatura) {
-                    const viaturaApoio = card.dataset.viaturaApoio || '';
-                    if (viaturaApoio) {
-                        const vts = [card.dataset.viatura, viaturaApoio]
-                            .join(', ')
-                            .replace(/\s*\+\s*/g, ', ');
-                        t += ` (VTs: ${vts})`;
-                    } else if (card.dataset.viatura.includes('+')) {
-                        // Viaturas concatenadas no mesmo campo — normaliza "199 + 200" → "VTs: 199, 200"
-                        const vts = card.dataset.viatura.replace(/\s*\+\s*/g, ', ');
-                        t += ` (VTs: ${vts})`;
+                    const via   = card.dataset.viatura;
+                    const apoio = card.dataset.viaturaApoio || '';
+                    if (via.includes('+')) {
+                        // Já concatenado em handleSalvarDespachoClick — normaliza "145 + 214" → "VTs: 145, 214"
+                        t += ` (VTs: ${via.replace(/\s*\+\s*/g, ', ')})`;
+                    } else if (apoio && apoio !== via) {
+                        t += ` (VTs: ${via}, ${apoio})`;
                     } else {
-                        t += ` (VT: ${card.dataset.viatura})`;
+                        t += ` (VT: ${via})`;
                     }
                 }
                 return t;
@@ -1318,9 +1324,12 @@ const NitData = {
                 return;
             }
 
-            const colunaDestino = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
-            const container     = document.querySelector(`#${colunaDestino} .kanban-cards-container`) || document.getElementById(colunaDestino);
+            // Coluna: dropdown tem prioridade; fallback = coluna do tipo da operação principal
+            const colunaDropdown = document.getElementById('despacho-mover-coluna')?.value || '';
+            const colunaDestino  = colunaDropdown || (tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`);
+            const container      = document.querySelector(`#${colunaDestino} .kanban-cards-container`) || document.getElementById(colunaDestino);
             if (container) container.appendChild(card);
+            card.dataset.coluna = colunaDestino;
 
             // Montar strings consolidadas para dataset e Firebase
             const equipeConcat  = [equipe, temApoio ? apoioEquipe : ''].filter(Boolean).join(' + ');
@@ -1431,7 +1440,8 @@ const NitData = {
         _commitDespacho(card, equipe, vt, tipo, equipeApoio, vtApoio) {
     const cod      = card.dataset.codigo;
     const eventoId = card.dataset.eventoid || cod;
-    const coluna   = tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`;
+    // Coluna já foi definida por handleSalvarDespachoClick antes de chamar _commitDespacho
+    const coluna   = card.dataset.coluna || (tipo === 'sn' ? 'coluna-sem-necessidade' : `coluna-${tipo}`);
     
     // Dados concatenados para compatibilidade com código existente
     const equipeConcat  = [equipe, equipeApoio].filter(Boolean).join(' + ');
