@@ -535,9 +535,62 @@
         .card-header strong { font-size: 15px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.2px; }
         .card-status-tag { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); white-space: nowrap; }
         .card-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.4; }
-        .card-address { margin: 0 0 4px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
-        .card-obs {
-    margin: 4px 0 0;
+
+/* ── Card body — hierarquia: endereço → estado → obs → resolução ── */
+
+/* 1. Endereço — sempre primeiro, referência principal */
+.card-address {
+    margin: 0 0 5px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* 2a. ⏳ Início — pendentes sem despacho */
+.card-inicio {
+    display: inline-block;
+    margin: 0 0 4px;
+    font-size: 10px;
+    color: var(--color-aguardando);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* 2b. Despacho — tipo de operação */
+.card-despacho-tipo {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 3px;
+    letter-spacing: 0.3px;
+}
+
+/* Equipe(s) despachada(s) */
+.card-equipe {
+    margin: 0 0 2px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+.card-equipe-linha {
+    display: block;
+}
+.card-equipe-apoio {
+    color: var(--color-text-tertiary);
+    font-size: 10.5px;
+}
+
+/* Hora de início da operação */
+.card-ts-despacho {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    margin: 0 0 4px;
+    opacity: 0.8;
+}
+
+/* 3. Observação — contexto adicional */
+.card-obs {
+    margin: 2px 0 0;
     font-size: 11px;
     color: var(--color-text-secondary);
     line-height: 1.4;
@@ -545,39 +598,8 @@
     border-left: 2px solid var(--color-border2);
     padding-left: 6px;
 }
-/* ===== DESPACHO — CARD ===== */
-.card-despacho-tipo {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 4px 0 2px;
-    letter-spacing: 0.3px;
-}
 
-.card-ts-despacho {
-    font-size: 10px;
-    color: var(--color-text-tertiary);
-    margin: 2px 0 0;
-    opacity: 0.7;
-}
-
-.card-equipe {
-    margin: 2px 0 0;
-    font-size: 11px;
-    color: var(--color-text-tertiary);
-    line-height: 1.5;
-}
-
-.card-equipe-linha {
-    display: block;
-}
-
-.card-equipe-apoio {
-    color: var(--color-text-tertiary);
-    opacity: 0.8;
-    font-size: 10px;
-}
-
+/* 4. ✅ Fim — resolução (normalizados) */
 .card-fim {
     margin: 4px 0 0;
     font-size: 10px;
@@ -585,21 +607,6 @@
     font-weight: 600;
     letter-spacing: 0.2px;
 }
-
-.card-inicio {
-    margin: 4px 0 0;
-    font-size: 10px;
-    color: var(--color-aguardando);
-    font-weight: 600;
-    letter-spacing: 0.2px;
-}
-
-.card-address {
-    margin: 0 0 4px;
-    color: var(--color-text-secondary);
-    font-size: 12px;
-    line-height: 1.4;
-}         
         /*.card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
         .card-body-lazy { min-height: 28px; }
         .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }*/
