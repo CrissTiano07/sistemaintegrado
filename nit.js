@@ -727,7 +727,13 @@ const NitData = {
                     // Card com eventoId novo — pode ser reincidência legítima
                     // (mesmo SCN, início diferente = dois eventos distintos no mesmo dia)
                     // A tag ↺ REINC sinaliza ao operador que o cruzamento quebrou mais de uma vez.
-                    ev.reincidente = codigosMap.has(ev.codigo);
+                    // Reincidente: mesmo código E mesma dataReferencia (mesmo plantão)
+                    // Não marca como reincidente ocorrências de dias anteriores
+                    const previousEids = codigosMap.get(ev.codigo) || [];
+                    ev.reincidente = previousEids.some(eid => {
+                        const existing = mapaAtual.get(eid);
+                        return existing && existing.element.dataset.datareferencia === ev.dataReferencia;
+                    });
                     this.criarNovoCard(ev, status);
                     criados++;
                     return;
@@ -1020,6 +1026,11 @@ const NitData = {
                 ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
                 : '';
 
+            // Normalizado sem fim gravado → mostra início como referência (opaco)
+            const inicioRef = (isNorm && !fimExib && inicio)
+                ? `<p class="card-inicio" style="opacity:0.5">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
+                : '';
+
             // ── Hierarquia do body ────────────────────────────────────────
             // 1. Endereço    — informação primária de localização, sempre no topo
             // 2. Início      — tempo de espera (pendente sem despacho)
@@ -1028,6 +1039,7 @@ const NitData = {
             // 5. Fim         — resolução (normalizado)
             return `<p class="card-address">${endereco}</p>`
                 + inicioExib
+                + inicioRef
                 + despachoBlock
                 + (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '')
                 + (fimExib   ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
@@ -1088,6 +1100,9 @@ const NitData = {
             document.querySelectorAll('#tab-semaforo .kanban-card').forEach(c => {
                 c.style.display = c.dataset.datareferencia === hoje ? '' : 'none';
             });
+
+            // Reordena normalizados a cada atualização de painel
+            this.ordenarNormalizados();
 
             // B2 — contadores filtrados por data atual
             const n = sel =>
