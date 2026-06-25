@@ -413,6 +413,24 @@ const NitData = {
             return NitData.hoje();
         },
 
+        extrairPlantonista(linhas) {
+            // Captura uma ou mais linhas de PLANTONISTA no cabeçalho.
+            // Formato esperado: "*PLANTONISTA*\tNome Sobrenome"
+            // Suporta múltiplos plantonistas na mesma linha (separados por / ou ,)
+            // ou em múltiplas linhas PLANTONISTA consecutivas.
+            const nomes = [];
+            for (const l of linhas) {
+                const m = l.match(/\*?PLANTONISTA\*?\s*[\t:]\s*(.+)/i);
+                if (m) {
+                    const nome = m[1].replace(/\*/g, '').replace(/\t.*/g, '').trim();
+                    if (nome) nomes.push(nome);
+                }
+                // Para quando chega na primeira linha de ocorrência (🚦)
+                if (nomes.length && l.includes('🚦')) break;
+            }
+            return nomes.join(' / ');
+        },
+
         statusFromSecao(secao, card) {
             // Ordem de prioridade — documentação NIT v2.0:
             // 1. Seção NORMALIZADOS (cabeçalho do relatório)
@@ -584,8 +602,9 @@ const NitData = {
         },
 
         _parsearRelatorio(texto) {
-            const linhas  = texto.split('\n');
-            const dataRef = this.extrairDataReferencia(linhas);
+            const linhas      = texto.split('\n');
+            const dataRef     = this.extrairDataReferencia(linhas);
+            const plantonista = this.extrairPlantonista(linhas);
             const eventos = [];
             let atual     = null;
             let secao     = 'PENDENTE';
@@ -596,7 +615,7 @@ const NitData = {
                 const dados = this.extrairDadosDaLinha(linha);
                 if (dados) {
                     if (atual) eventos.push(atual);
-                    atual = { ...dados, secao, dataReferencia: dataRef };
+                    atual = { ...dados, secao, dataReferencia: dataRef, plantonista };
                 } else if (atual && linha.trim() && !this._ehCabecalho(linha)) {
                     // Guarda adicional: ignora linhas de cabeçalho de plantão
                     if (/PLANTONISTA|PLANTÃO|TÉCNICOS|CEMOB/i.test(linha)) continue;
@@ -837,6 +856,7 @@ const NitData = {
                 pl:             ev.pl      || '',
                 sub:            ev.sub     || '',
                 reincidente:    ev.reincidente || false,
+                plantonista:    ev.plantonista || '',
                 operador:       NitLogin.operador || 'anon',
                 turno:          NitLogin.turno    || '',
                 ts:             Date.now(),
