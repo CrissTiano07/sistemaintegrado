@@ -70,52 +70,128 @@
     const NitLogin = {
         operador: null,
         turno:    null,
+        uid:      null,
+        email:    null,
 
-        inicializar() {
-            const nome   = document.getElementById('login-nome');
-            const turno  = document.getElementById('login-turno');
-            const btn    = document.getElementById('btn-login-entrar');
-            const checar = () => { btn.disabled = !(nome.value.trim().length >= 2 && turno.value); };
-            nome.addEventListener('input', checar);
-            turno.addEventListener('change', checar);
-            nome.addEventListener('keydown',  e => { if (e.key === 'Enter') turno.focus(); });
-            turno.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) this.confirmar(); });
-            btn.addEventListener('click', () => this.confirmar());
-            setTimeout(() => nome.focus(), 100);
-            checar();
+        // ── Converte email para chave Firebase (. e @ → |) ──────────────
+        _emailParaChave(email) {
+            return email.replace(/\./g, '|').replace(/@/g, '|');
         },
 
-        confirmar() {
-            const nome  = document.getElementById('login-nome').value.trim();
-            const turno = document.getElementById('login-turno').value;
-            if (!nome || !turno) return;
-            this.operador = nome;
-            this.turno    = turno;
+        // ── Verifica se email está na whitelist /usuarios_autorizados ────
+        async _verificarAutorizacao(user) {
+            const chave = this._emailParaChave(user.email);
+            const snap  = await firebase.database()
+                .ref(`usuarios_autorizados/${chave}`)
+                .get();
+
+            if (!snap.exists() || snap.val().ativo === false) {
+                await firebase.auth().signOut();
+                this._setStatus('Acesso não autorizado. Procure o administrador.');
+                document.getElementById('btn-login-google').disabled = false;
+                return false;
+            }
+
+            const dados = snap.val();
+            this.operador = dados.nome || user.displayName || user.email;
+            this.turno    = dados.turno || '';
+            this.uid      = user.uid;
+            this.email    = user.email;
+            return true;
+        },
+
+        // ── Exibe mensagem de status na tela de login ────────────────────
+        _setStatus(msg) {
+            const el = document.getElementById('nit-login-status');
+            if (el) el.textContent = msg;
+        },
+
+        // ── Inicializa listener de auth + botão Google ───────────────────
+        inicializar() {
+            const btn = document.getElementById('btn-login-google');
+            if (btn) {
+                btn.addEventListener('click', () => this.entrarComGoogle());
+            }
+
+            // Monitora estado de autenticação (restaura sessão automaticamente)
+            firebase.auth().onAuthStateChanged(async user => {
+                if (user) {
+                    this._setStatus('Verificando acesso...');
+                    const autorizado = await this._verificarAutorizacao(user);
+                    if (autorizado) this._concluirLogin();
+                } else {
+                    // Sem sessão — garante overlay visível
+                    const overlay = document.getElementById('nit-login-overlay');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+            });
+        },
+
+        // ── Abre popup Google Auth ────────────────────────────────────────
+        async entrarComGoogle() {
+            const btn = document.getElementById('btn-login-google');
+            if (btn) btn.disabled = true;
+            this._setStatus('Abrindo autenticação Google...');
+
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                await firebase.auth().signInWithPopup(provider);
+                // onAuthStateChanged cuida do restante
+            } catch (err) {
+                const msg = err.code === 'auth/popup-closed-by-user'
+                    ? 'Login cancelado.'
+                    : err.code === 'auth/popup-blocked'
+                    ? 'Popup bloqueado. Permita popups para este site.'
+                    : 'Erro ao conectar com Google. Tente novamente.';
+                this._setStatus(msg);
+                if (btn) btn.disabled = false;
+            }
+        },
+
+        // ── Conclui login após verificação bem-sucedida ───────────────────
+        _concluirLogin() {
+            // Atualiza badge do operador
             const badge = document.getElementById('nit-operador-badge');
-            if (badge) { badge.textContent = `${nome} · ${turno}`; badge.style.display = ''; }
-            sessionStorage.setItem('nit-operador', nome);
-            sessionStorage.setItem('nit-turno',    turno);
+            if (badge) {
+                const label = this.turno ? `${this.operador} · ${this.turno}` : this.operador;
+                badge.textContent = label;
+                badge.style.display = 'inline-flex';
+            }
+
+            // Grava sessão no Firebase para auditoria
             NitFirebase.exec((db, ref, update) =>
-                update(ref(db, 'meta/sessao'), { operador: nome, turno, entradaTs: Date.now() })
+                update(ref(db, 'meta/sessao'), {
+                    operador: this.operador,
+                    email:    this.email,
+                    turno:    this.turno,
+                    entradaTs: Date.now(),
+                })
             );
+
+            // Esconde overlay e inicializa o sistema
             document.getElementById('nit-login-overlay').classList.add('hidden');
-            showToast(`Bem-vindo, ${nome}!`, 'success');
-            registrarAcao(`Login: ${nome} — ${turno}.`);
-            // ✅ Verifica lacuna de processamento noturno (delay para garantir DOM pronto)
+            showToast(`Bem-vindo, ${this.operador}!`, 'success');
+            registrarAcao(`Login: ${this.operador} (${this.email}) — ${this.turno}.`);
             setTimeout(() => NitProcessamento.verificar(), 800);
         },
 
-        tentarRestaurar() {
-            const nome  = sessionStorage.getItem('nit-operador');
-            const turno = sessionStorage.getItem('nit-turno');
-            if (!nome || !turno) return false;
-            document.getElementById('login-nome').value  = nome;
-            document.getElementById('login-turno').value = turno;
-            this.confirmar();
-            return true;
+        // ── Logout ────────────────────────────────────────────────────────
+        async sair() {
+            await firebase.auth().signOut();
+            this.operador = null;
+            this.turno    = null;
+            this.uid      = null;
+            this.email    = null;
+            sessionStorage.clear();
+            location.reload();
         },
-    };
 
+        // ── Compatibilidade — tentarRestaurar agora é no-op ──────────────
+        // Firebase Auth restaura sessão automaticamente via onAuthStateChanged
+        tentarRestaurar() { return false; },
+        confirmar()       { },
+    };
     // ── FILTRO DE DATA ────────────────────────────────────────────────────────
     // ── FILTRO DE DATA ────────────────────────────────────────────────────────
 const NitData = {
@@ -1673,7 +1749,8 @@ const NitData = {
     switchTab('tab-semaforo');
 
     NitLogin.inicializar();
-    NitLogin.tentarRestaurar() || true;
+    // Firebase Auth restaura sessão automaticamente via onAuthStateChanged
+    // NitLogin.tentarRestaurar() não é mais necessário
 
     setupModal(DOM.modalRelatorio, DOM.btnModalFechar);
     setupModal(DOM.modalEdicao, DOM.btnEdicaoCancelar);
@@ -2238,21 +2315,24 @@ window.NitNormalizar = NitNormalizar;
             const btn = document.getElementById('btn-logout');
             if (!btn) return;
             btn.addEventListener('click', () => this._executar());
-            const _orig = NitLogin.confirmar.bind(NitLogin);
-            NitLogin.confirmar = function() {
-                _orig();
-                btn.style.display = 'flex';
-            };
-            if (sessionStorage.getItem('nit-operador')) btn.style.display = 'flex';
+
+            // Mostra botão de logout assim que há sessão Firebase Auth
+            firebase.auth().onAuthStateChanged(user => {
+                btn.style.display = user ? 'flex' : 'none';
+            });
         },
 
         _executar() {
             nitConfirm(
                 '🚪 Sair do Sistema',
                 `Tem certeza que deseja encerrar a sessão de <strong>${NitLogin.operador || 'operador'}</strong>?`,
-                () => {
-                    const nome = NitLogin.operador;
-                    registrarAcao(`Logout: ${nome} — ${NitLogin.turno || ''}.`);
+                async () => {
+                    registrarAcao(`Logout: ${NitLogin.operador} — ${NitLogin.turno || ''}.`);
+                    await NitLogin.sair();
+                }
+            );
+        },
+    };
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, 'meta/sessao'), { operador: null, turno: null, saidaTs: Date.now() })
                     );
