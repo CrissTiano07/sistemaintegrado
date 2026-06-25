@@ -467,6 +467,8 @@
         #coluna-normalizados.collapsed .kanban-cards-container { display: none; }
 
         /* Header vira trilha vertical: ocupa toda a altura da coluna */
+        .kanban-column-header { cursor: default; }
+        #coluna-normalizados .kanban-column-header { cursor: pointer; }
         #coluna-normalizados.collapsed .kanban-column-header {
             width: 36px;
             min-width: 36px;
