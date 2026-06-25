@@ -2287,14 +2287,12 @@ window.NitNormalizar = NitNormalizar;
 
         inicializar() {
             if (localStorage.getItem(this._KEY) === '1') this._set(true);
-            // Clicar no header inteiro também abre quando colapsado
+            // Clicar no header inteiro: toggle em ambos os sentidos
             document.getElementById('coluna-normalizados')
                 ?.querySelector('.kanban-column-header')
                 ?.addEventListener('click', e => {
-                    const col = document.getElementById('coluna-normalizados');
-                    if (col?.classList.contains('collapsed') && !e.target.closest('#btn-toggle-norm')) {
-                        this._set(false);
-                    }
+                    if (e.target.closest('#btn-toggle-norm')) return;
+                    this.toggle();
                 });
         },
 
