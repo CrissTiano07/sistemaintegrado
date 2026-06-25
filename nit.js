@@ -2333,28 +2333,6 @@ window.NitNormalizar = NitNormalizar;
             );
         },
     };
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, 'meta/sessao'), { operador: null, turno: null, saidaTs: Date.now() })
-                    );
-                    sessionStorage.removeItem('nit-operador');
-                    sessionStorage.removeItem('nit-turno');
-                    NitLogin.operador = null;
-                    NitLogin.turno    = null;
-                    const badge = document.getElementById('nit-operador-badge');
-                    if (badge) { badge.textContent = ''; badge.style.display = 'none'; }
-                    const btn = document.getElementById('btn-logout');
-                    if (btn) btn.style.display = 'none';
-                    const nomeI  = document.getElementById('login-nome');
-                    const turnoI = document.getElementById('login-turno');
-                    if (nomeI)  nomeI.value  = '';
-                    if (turnoI) turnoI.value = '';
-                    document.getElementById('nit-login-overlay')?.classList.remove('hidden');
-                    setTimeout(() => nomeI?.focus(), 120);
-                    showToast(`Sessão encerrada. Até logo, ${nome}!`, 'info');
-                }
-            );
-        },
-    };
 
     // ═════════════════════════════════════════════════════════════════════════
     // BUSCA POR COLUNA
