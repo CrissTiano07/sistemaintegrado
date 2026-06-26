@@ -151,6 +151,10 @@
 
         // ── Conclui login após verificação bem-sucedida ───────────────────
         _concluirLogin() {
+            // Inicia listener Firebase APÓS auth confirmada
+            // Garante que as Security Rules (auth != null) sejam satisfeitas
+            Semaforo.inicializarListenerFirebase();
+
             // Atualiza badge do operador
             const badge = document.getElementById('nit-operador-badge');
             if (badge) {
@@ -593,8 +597,13 @@ const NitData = {
                     el.dataset.coluna         = coluna;
                     el.dataset.datareferencia = dados.dataReferencia || '';
                     // Normalizar campos de fim no dataset para que ordenarNormalizados() os leia
-                    if (dados.data_fim) el.dataset.data_fim = dados.data_fim;
-                    if (dados.hora_fim) el.dataset.hora_fim = dados.hora_fim;
+                    // Sempre define campos de data/hora no dataset (mesmo como '' para evitar
+                    // que leituras futuras recebam undefined ou "null" como string)
+                    const _sd = v => (v && v !== 'null' && v !== 'undefined') ? String(v) : '';
+                    el.dataset.inicio   = _sd(dados.inicio);
+                    el.dataset.data_fim = _sd(dados.data_fim);
+                    el.dataset.hora_fim = _sd(dados.hora_fim);
+                    el.dataset.fim      = _sd(dados.fim);
                     if (dados.equipeApoio)  el.dataset.equipeApoio  = dados.equipeApoio;
                     if (dados.viaturaApoio) el.dataset.viaturaApoio = dados.viaturaApoio;
                     if (dados.tsDespacho)   el.dataset.tsDespacho   = dados.tsDespacho;
@@ -1004,7 +1013,10 @@ const NitData = {
                     viaturaApoio: cardData.viaturaApoio || card.dataset.viaturaApoio || '',
                     data_fim:     cardData.data_fim     || card.dataset.data_fim     || '',
                     hora_fim:     cardData.hora_fim     || card.dataset.hora_fim     || '',
-                    fim:          cardData.fim          || card.dataset.fim          || '',
+                    fim:          cardData.fim          || card.dataset.fim
+                                    // Deriva fim combinado de data_fim+hora_fim quando necessário
+                                    || (cardData.data_fim ? `${cardData.data_fim}${cardData.hora_fim ? ' ' + cardData.hora_fim : ''}` : '')
+                                    || '',
                     // coluna lida do dataset em tempo de render (pode ter mudado desde cardData)
                     coluna:       card.dataset.coluna   || cardData.coluna           || '',
                 });
@@ -1069,17 +1081,23 @@ const NitData = {
         // ── Construção do HTML do body do card (método compartilhado) ───
         // Usado por _renderCardBody e child_changed — fonte única de verdade.
         _buildBodyHTML(d) {
-            const obs          = d.observacoes  || '';
-            const status       = d.status       || '';
-            const inicio       = d.inicio       || '';
-            const equipe       = d.equipe       || '';
-            const viatura      = d.viatura      || '';
-            const endereco     = d.endereco     || '';
+            // Sanitizador — trata undefined, null, "null", "undefined" como vazio
+            const _sv = v => (v && v !== 'null' && v !== 'undefined') ? String(v).trim() : '';
+            const obs          = _sv(d.observacoes);
+            const status       = _sv(d.status);
+            const inicio       = _sv(d.inicio);
+            const equipe       = _sv(d.equipe);
+            const viatura      = _sv(d.viatura);
+            const endereco     = _sv(d.endereco);
             const tipo         = (d.sub && d.sub !== 'null') ? d.sub : '';
             const tsDespacho   = (d.tsDespacho  && d.tsDespacho !== 'null') ? d.tsDespacho : '';
             const equipeApoio  = d.equipeApoio  || '';
             const viaturaApoio = d.viaturaApoio || '';
-            const fimExib      = d.fim || (d.data_fim ? `${d.data_fim}${d.hora_fim ? ' ' + d.hora_fim : ''}` : '');
+            const fimCombinado = _sv(d.fim);
+            const dataFim      = _sv(d.data_fim);
+            const horaFim      = _sv(d.hora_fim);
+            const fimExib      = fimCombinado
+                || (dataFim ? `${dataFim}${horaFim ? ' ' + horaFim : ''}` : '');
             const coluna       = d.coluna || '';
             const isNorm       = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
 
@@ -1732,8 +1750,8 @@ const NitData = {
         kanbanArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
         kanbanArea.addEventListener('drop', this.handleDrop.bind(this));
         kanbanArea.addEventListener('click', this.handleKanbanBoardClick.bind(this));
-
-        this.inicializarListenerFirebase();
+        // listener Firebase iniciado em NitLogin._concluirLogin()
+        // para garantir que auth esteja confirmada antes de ler o banco
     }
 };  // ← FECHA O OBJETO SEMAFORO
     // ═════════════════════════════════════════════════════════════════════════
