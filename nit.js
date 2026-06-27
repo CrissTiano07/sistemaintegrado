@@ -1365,6 +1365,7 @@ const NitData = {
             else if (e.target.closest('.btn-card-action.complete'))      this.handleNormalizarClick(card);
             else if (e.target.closest('.btn-card-action.copy-location')) this.copiarLocalizacao(card);
             else if (e.target.closest('.btn-card-action.details'))       NitCentral.abrir(card);
+            else if (!e.target.closest('.btn-card-action') && !AppState._wasDrag) NitCentral.abrir(card);
         },
 
         copiarLocalizacao(card) {
@@ -1646,6 +1647,7 @@ const NitData = {
         handleDragStart(e) {
             AppState.draggedCard = e.target.closest('.kanban-card');
             if (!AppState.draggedCard) return;
+            AppState._wasDrag = true;                          // flag para suprimir click pós-drag
             AppState.placeholder = document.createElement('div');
             AppState.placeholder.className = 'kanban-card drag-placeholder';
             AppState.placeholder.style.height = `${AppState.draggedCard.offsetHeight}px`;
@@ -1657,6 +1659,8 @@ const NitData = {
             AppState.placeholder?.remove();
             AppState.draggedCard = null;
             AppState.placeholder = null;
+            // Limpa flag com pequeno delay para que o evento click seja absorvido
+            setTimeout(() => { AppState._wasDrag = false; }, 50);
         },
 
         handleDragOver(e) {
@@ -2314,7 +2318,7 @@ window.NitNormalizar = NitNormalizar;
             btnEsc?.addEventListener('click',  () => this.fechar());
             overlay.addEventListener('click', e => { if (e.target === overlay) this.fechar(); });
             document.addEventListener('keydown', e => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); this.abrir(); return; }
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') { e.preventDefault(); this.abrir(); return; }
                 if (e.key === 'Escape' && this._aberto) { e.stopPropagation(); this.fechar(); }
             });
             input.addEventListener('keydown', e => {
@@ -2527,27 +2531,33 @@ const NitCentral = {
     // ── Header ───────────────────────────────────────────────────────
     _renderHeader(card) {
         const sv = this._sv;
+
+        // Zona 1 — identidade do semáforo
         document.getElementById('central-codigo').textContent   = sv(card.dataset.codigo) || '---';
         document.getElementById('central-endereco').textContent = sv(card.dataset.endereco);
+        const tipoLinha = document.getElementById('central-tipo-linha');
+        const tipo = sv(card.dataset.tipo) || sv(card.dataset.problema);
+        if (tipoLinha) {
+            tipoLinha.textContent   = tipo || '';
+            tipoLinha.style.display = tipo ? '' : 'none';
+        }
 
+        // Zona 2 — status operacional (não pertence à identidade do semáforo)
         const statusBadge = document.getElementById('central-status-badge');
         const coluna = sv(card.dataset.coluna);
         const statusMap = {
-            'NORMALIZADO':          { label: '✅ Normalizado', cls: 'badge-norm' },
-            'coluna-vl':            { label: '🟠 Via Livre',   cls: 'badge-vl'  },
-            'coluna-amc':           { label: '🔵 AMC',          cls: 'badge-amc' },
-            'coluna-espera':        { label: '⏳ Aguardando',   cls: 'badge-esp' },
-            'coluna-sem-necessidade': { label: '— Sem Nec.',   cls: 'badge-sn'  },
-            'coluna-normalizados':  { label: '✅ Normalizado',  cls: 'badge-norm'},
+            'NORMALIZADO':            { label: '✅ Normalizado',    cls: 'badge-norm' },
+            'coluna-vl':              { label: '🟠 Via Livre',      cls: 'badge-vl'  },
+            'coluna-amc':             { label: '🔵 AMC em operação', cls: 'badge-amc' },
+            'coluna-espera':          { label: '⏳ Aguardando',      cls: 'badge-esp' },
+            'coluna-sem-necessidade': { label: '— Sem Necessidade', cls: 'badge-sn'  },
+            'coluna-normalizados':    { label: '✅ Normalizado',     cls: 'badge-norm' },
         };
-        const sb = statusMap[sv(card.dataset.status)] || statusMap[coluna] || { label: coluna, cls: '' };
-        statusBadge.textContent = sb.label;
-        statusBadge.className   = `nit-central-badge ${sb.cls}`;
-
-        const tipoBadge = document.getElementById('central-tipo-badge');
-        const tipo = sv(card.dataset.tipo) || sv(card.dataset.problema);
-        tipoBadge.textContent   = tipo || '';
-        tipoBadge.style.display = tipo ? '' : 'none';
+        const sb = statusMap[sv(card.dataset.status)] || statusMap[coluna] || { label: coluna || '—', cls: '' };
+        if (statusBadge) {
+            statusBadge.textContent = sb.label;
+            statusBadge.className   = `nit-central-badge ${sb.cls}`;
+        }
     },
 
     // ── Timers ───────────────────────────────────────────────────────
@@ -2572,7 +2582,14 @@ const NitCentral = {
                                 (h > 8 ? ' sla-critico' : h > 4 ? ' sla-alerta' : ' sla-ok');
                         }
                     }
-                    if (elOp) elOp.textContent = tsOp ? this._formatDelta(now - tsOp) : '--:--';
+                    if (elOp) {
+                        elOp.textContent = tsOp ? this._formatDelta(now - tsOp) : '--:--';
+                        if (tsOp) {
+                            const hOp = (now - tsOp) / 3600000;
+                            elOp.className = 'nit-central-tempo-valor nit-central-tempo-op' +
+                                (hOp > 2 ? ' sla-critico' : hOp > 1 ? ' sla-alerta' : ' sla-ok');
+                        }
+                    }
                 };
                 tick();
                 this._timerSLA = setInterval(tick, 10000);
