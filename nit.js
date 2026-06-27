@@ -1364,7 +1364,7 @@ const NitData = {
             else if (e.target.closest('.btn-card-action.edit'))          this.abrirModalEdicao(card.id);
             else if (e.target.closest('.btn-card-action.complete'))      this.handleNormalizarClick(card);
             else if (e.target.closest('.btn-card-action.copy-location')) this.copiarLocalizacao(card);
-            else if (e.target.closest('.btn-card-action.details'))       NitCardDetails.abrir(card);
+            else if (e.target.closest('.btn-card-action.details'))       NitCentral.abrir(card);
         },
 
         copiarLocalizacao(card) {
@@ -1859,6 +1859,7 @@ const NitData = {
     }
 
     NitCardDetails.inicializar();
+    NitCentral.inicializar();
     NitBuscaGlobal.inicializar();
     NitLogout.inicializar();
     NitLazy.inicializar();
@@ -2408,6 +2409,464 @@ window.NitNormalizar = NitNormalizar;
         });
     }
 
+
+
+    // ══════════════════════════════════════════════════════════════════
+// NitCentral — Central da Ocorrência
+// Modal de gestão operacional com abas: Despacho | Apoio | Rendição | Normalizar
+// Histórico via Firebase push keys (append-only, collision-safe)
+// ══════════════════════════════════════════════════════════════════
+const NitCentral = {
+    _card:         null,
+    _timerSLA:     null,
+    _timerOp:      null,
+    _tipoDespacho: 'vl',
+    _tipoApoio:    'vl',
+    _tipoRendicao: 'vl',
+
+    abrir(card) {
+        if (!card) return;
+        this._card = card;
+        this._tipoDespacho = 'vl';
+        this._tipoApoio    = 'vl';
+        this._tipoRendicao = 'vl';
+        this._renderHeader(card);
+        this._renderHistorico(card);
+        this._determinarAbaInicial(card);
+        this._iniciarTimers(card);
+        abrirModal(document.getElementById('modal-central-ocorrencia'));
+    },
+
+    fechar() {
+        this._pararTimers();
+        fecharModal(document.getElementById('modal-central-ocorrencia'));
+        this._card = null;
+    },
+
+    _sv: v => (v && v !== 'null' && v !== 'undefined') ? String(v).trim() : '',
+
+    // ── Header ───────────────────────────────────────────────────────
+    _renderHeader(card) {
+        const sv = this._sv;
+        document.getElementById('central-codigo').textContent   = sv(card.dataset.codigo) || '---';
+        document.getElementById('central-endereco').textContent = sv(card.dataset.endereco);
+
+        const statusBadge = document.getElementById('central-status-badge');
+        const coluna = sv(card.dataset.coluna);
+        const statusMap = {
+            'NORMALIZADO':          { label: '✅ Normalizado', cls: 'badge-norm' },
+            'coluna-vl':            { label: '🟠 Via Livre',   cls: 'badge-vl'  },
+            'coluna-amc':           { label: '🔵 AMC',          cls: 'badge-amc' },
+            'coluna-espera':        { label: '⏳ Aguardando',   cls: 'badge-esp' },
+            'coluna-sem-necessidade': { label: '— Sem Nec.',   cls: 'badge-sn'  },
+            'coluna-normalizados':  { label: '✅ Normalizado',  cls: 'badge-norm'},
+        };
+        const sb = statusMap[sv(card.dataset.status)] || statusMap[coluna] || { label: coluna, cls: '' };
+        statusBadge.textContent = sb.label;
+        statusBadge.className   = `nit-central-badge ${sb.cls}`;
+
+        const tipoBadge = document.getElementById('central-tipo-badge');
+        const tipo = sv(card.dataset.tipo) || sv(card.dataset.problema);
+        tipoBadge.textContent   = tipo || '';
+        tipoBadge.style.display = tipo ? '' : 'none';
+    },
+
+    // ── Timers ───────────────────────────────────────────────────────
+    _iniciarTimers(card) {
+        this._pararTimers();
+        const sv        = this._sv;
+        const tsInicio  = this._parseBR(sv(card.dataset.inicio));
+        const eventoId  = sv(card.dataset.eventoid) || card.id;
+        const elSLA     = document.getElementById('central-tempo-sla');
+        const elOp      = document.getElementById('central-tempo-op');
+
+        firebase.database().ref(`kanban/${eventoId}/tsFirstDispatch`).get()
+            .then(snap => {
+                const tsOp = snap.exists() ? snap.val() : 0;
+                const tick = () => {
+                    const now = Date.now();
+                    if (elSLA) elSLA.textContent = tsInicio ? this._formatDelta(now - tsInicio) : '--:--';
+                    if (elOp)  elOp.textContent  = tsOp     ? this._formatDelta(now - tsOp)    : '--:--';
+                };
+                tick();
+                this._timerSLA = setInterval(tick, 10000);
+            });
+    },
+
+    _pararTimers() {
+        clearInterval(this._timerSLA);
+        clearInterval(this._timerOp);
+    },
+
+    _parseBR(str) {
+        const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+        return m ? new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]).getTime() : 0;
+    },
+
+    _formatDelta(ms) {
+        if (ms < 0) return '--:--';
+        const s = Math.floor(ms / 1000);
+        const h = Math.floor(s / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        return h > 0 ? `${h}h${String(m).padStart(2,'0')}m` : `${m}min`;
+    },
+
+    // ── Histórico Firebase ────────────────────────────────────────────
+    _renderHistorico(card) {
+        const sv       = this._sv;
+        const eventoId = sv(card.dataset.eventoid) || card.id;
+        const lista    = document.getElementById('central-historico-lista');
+        if (!lista) return;
+        lista.innerHTML = '<div class="nit-central-historico-vazio">Carregando...</div>';
+
+        firebase.database().ref(`kanban/${eventoId}/historico`).get()
+            .then(snap => {
+                if (!snap.exists()) {
+                    const sub = sv(card.dataset.sub);
+                    const eq  = sv(card.dataset.equipe);
+                    if (sub && eq) {
+                        lista.innerHTML = this._renderEventoHTML({
+                            tipo: 'despacho', sub, equipe: eq,
+                            vt: sv(card.dataset.viatura),
+                            ts: parseInt(sv(card.dataset.tsdespacho)) || 0,
+                            operador: '', _legado: true
+                        });
+                    } else {
+                        lista.innerHTML = '<div class="nit-central-historico-vazio">Nenhum registro de operação.</div>';
+                    }
+                    return;
+                }
+                const eventos = Object.values(snap.val()).sort((a,b) => (a.ts||0)-(b.ts||0));
+                lista.innerHTML = eventos.map(ev => this._renderEventoHTML(ev)).join('');
+            })
+            .catch(() => {
+                lista.innerHTML = '<div class="nit-central-historico-vazio">Erro ao carregar histórico.</div>';
+            });
+    },
+
+    _renderEventoHTML(ev) {
+        const tipoMap = {
+            despacho:  { icon: '🚀', label: 'Despacho'  },
+            apoio:     { icon: '➕', label: 'Apoio'     },
+            rendição:  { icon: '🔄', label: 'Rendição'  },
+            encerramento: { icon: '⏹️', label: 'Encerrado' },
+        };
+        const t      = tipoMap[ev.tipo] || { icon: '•', label: ev.tipo };
+        const ts     = ev.ts ? new Date(ev.ts).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '--:--';
+        const sub    = ev.sub === 'vl' ? 'VIA LIVRE' : ev.sub === 'amc' ? 'AMC' : (ev.sub||'').toUpperCase();
+        const legado = ev._legado ? ' <em>(legado)</em>' : '';
+        return `<div class="nit-central-historico-item">
+            <span class="nit-central-hist-icon">${t.icon}</span>
+            <div class="nit-central-hist-body">
+                <span class="nit-central-hist-tipo">${t.label}${legado} · ${sub}</span>
+                <span class="nit-central-hist-detalhe">${ev.equipe||''}${ev.vt ? ` · VT ${ev.vt}` : ''}</span>
+                ${ev.operador ? `<span class="nit-central-hist-op">${ev.operador}</span>` : ''}
+            </div>
+            <span class="nit-central-hist-ts">${ts}</span>
+        </div>`;
+    },
+
+    // ── Aba inicial ───────────────────────────────────────────────────
+    _determinarAbaInicial(card) {
+        const sv  = this._sv;
+        const sub = sv(card.dataset.sub);
+        this._abrirAba(sub ? 'apoio' : 'despacho');
+
+        const btnEncerrar = document.getElementById('btn-central-encerrar');
+        if (btnEncerrar) btnEncerrar.style.display = sub ? 'flex' : 'none';
+
+        if (sub) {
+            const eq    = sv(card.dataset.equipe);
+            const vt    = sv(card.dataset.viatura);
+            const label = sub === 'vl' ? '🟠 VIA LIVRE' : '🔵 AMC';
+            const html  = `<div class="nit-central-info-despacho-atual">
+                <span>${label}</span>
+                ${eq ? `<span>${eq}${vt ? ` · VT ${vt}` : ''}</span>` : ''}
+            </div>`;
+            const elA = document.getElementById('central-apoio-atual');
+            const elR = document.getElementById('central-rendicao-atual');
+            if (elA) elA.innerHTML = html;
+            if (elR) elR.innerHTML = html;
+        }
+    },
+
+    // ── Tabs ──────────────────────────────────────────────────────────
+    _abrirAba(aba) {
+        const temDespacho = this._sv(this._card?.dataset.sub) !== '';
+        document.querySelectorAll('.nit-central-tab').forEach(btn => {
+            const t = btn.dataset.tab;
+            const bloqueada = (t === 'apoio' || t === 'rendicao') && !temDespacho;
+            btn.classList.toggle('active', t === aba);
+            btn.classList.toggle('disabled', bloqueada);
+            btn.disabled = bloqueada;
+        });
+        document.querySelectorAll('.nit-central-panel').forEach(p => {
+            p.style.display = p.id === `central-panel-${aba}` ? '' : 'none';
+        });
+        if (aba === 'normalizar') this._preencherNormalizarDefaults();
+        if (aba === 'rendicao')   this._atualizarPreviewRendicao();
+    },
+
+    _preencherNormalizarDefaults() {
+        const agora = new Date();
+        const pad   = n => String(n).padStart(2,'0');
+        const dEl   = document.getElementById('central-norm-data');
+        const hEl   = document.getElementById('central-norm-hora');
+        const oEl   = document.getElementById('central-norm-obs');
+        if (dEl && !dEl.value) dEl.value = `${agora.getFullYear()}-${pad(agora.getMonth()+1)}-${pad(agora.getDate())}`;
+        if (hEl && !hEl.value) hEl.value = `${pad(agora.getHours())}:${pad(agora.getMinutes())}`;
+        if (oEl && !oEl.value) oEl.value = this._sv(this._card?.dataset.observacoes);
+    },
+
+    // ── Tipo selector ─────────────────────────────────────────────────
+    _selecionarTipo(panel, tipo, prop) {
+        this[prop] = tipo;
+        document.querySelectorAll(`#central-panel-${panel} .nit-central-tipo-btn`).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tipo === tipo);
+        });
+        if (panel === 'despacho') {
+            const campos = document.getElementById('central-despacho-campos-equipe');
+            if (campos) campos.style.display = tipo === 'sn' ? 'none' : '';
+        }
+        if (panel === 'rendicao') this._atualizarPreviewRendicao();
+        if (panel === 'apoio')    this._atualizarPreviewApoio();
+    },
+
+    // ── Coluna N ─────────────────────────────────────────────────────
+    _derivarColunaN(historico, eventoExtra) {
+        const todos = [
+            ...Object.values(historico || {}),
+            ...(eventoExtra ? [eventoExtra] : [])
+        ].sort((a,b) => (a.ts||0)-(b.ts||0));
+
+        const segmentos = [];
+        let seg = [];
+        for (const ev of todos) {
+            const label = ev.sub === 'vl' ? 'VIA LIVRE' : ev.sub === 'amc' ? 'AMC' : null;
+            if (!label) continue;
+            if (ev.tipo === 'despacho') { seg = [label]; }
+            else if (ev.tipo === 'apoio')   { if (!seg.includes(label)) seg.push(label); }
+            else if (ev.tipo === 'rendição') { if (seg.length) segmentos.push(seg.join(' + ')); seg = [label]; }
+        }
+        if (seg.length) segmentos.push(seg.join(' + '));
+        return segmentos.join(' → ');
+    },
+
+    _buscarHistoricoEDerivar(elId, eventoExtra) {
+        const eventoId = this._sv(this._card?.dataset.eventoid) || this._card?.id;
+        if (!eventoId) return;
+        firebase.database().ref(`kanban/${eventoId}/historico`).get()
+            .then(snap => {
+                const hist    = snap.exists() ? snap.val() : {};
+                const colunaN = this._derivarColunaN(hist, eventoExtra);
+                const el = document.getElementById(elId);
+                if (el) el.textContent = colunaN || '—';
+            });
+    },
+
+    _atualizarPreviewRendicao() {
+        this._buscarHistoricoEDerivar('central-rendicao-coluna-n',
+            { tipo: 'rendição', sub: this._tipoRendicao, ts: Date.now() + 1 });
+    },
+
+    _atualizarPreviewApoio() {
+        const divPrev = document.getElementById('central-apoio-preview');
+        this._buscarHistoricoEDerivar('central-apoio-coluna-n',
+            { tipo: 'apoio', sub: this._tipoApoio, ts: Date.now() + 1 });
+        if (divPrev) divPrev.style.display = '';
+    },
+
+    // ── Ações ─────────────────────────────────────────────────────────
+    confirmarDespacho() {
+        const card   = this._card; if (!card) return;
+        const tipo   = this._tipoDespacho;
+        const equipe = document.getElementById('central-despacho-equipe')?.value.trim() || '';
+        const vt     = document.getElementById('central-despacho-vt')?.value.trim()     || '';
+        if (tipo !== 'sn' && !equipe) { showToast('Informe a equipe.', 'warning'); return; }
+
+        const eventoId  = this._sv(card.dataset.eventoid) || card.id;
+        const colunaMap = { vl: 'coluna-vl', amc: 'coluna-amc', sn: 'coluna-sem-necessidade' };
+        const colunaDest = colunaMap[tipo] || 'coluna-vl';
+        const tsNow     = Date.now();
+
+        NitFirebase.exec((db, ref, update) => {
+            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+            const updates = {};
+            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                tipo: 'despacho', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
+            };
+            if (!this._sv(card.dataset.tsfirstdispatch)) {
+                updates[`kanban/${eventoId}/tsFirstDispatch`] = tsNow;
+            }
+            Object.assign(updates, {
+                [`kanban/${eventoId}/equipe`]:     equipe,
+                [`kanban/${eventoId}/viatura`]:    vt,
+                [`kanban/${eventoId}/sub`]:        tipo,
+                [`kanban/${eventoId}/pl`]:         tipo === 'sn' ? 'sn' : 'atend',
+                [`kanban/${eventoId}/coluna`]:     colunaDest,
+                [`kanban/${eventoId}/tsDespacho`]: tsNow,
+                [`kanban/${eventoId}/operador`]:   NitLogin.operador || 'anon',
+            });
+            update(ref(db, '/'), updates);
+        });
+
+        const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
+        if (container) container.appendChild(card);
+        card.dataset.coluna = colunaDest;
+        showToast(`Despacho: ${tipo.toUpperCase()}`, 'success');
+        this.fechar();
+    },
+
+    confirmarApoio() {
+        const card   = this._card; if (!card) return;
+        const tipo   = this._tipoApoio;
+        const equipe = document.getElementById('central-apoio-equipe')?.value.trim() || '';
+        const vt     = document.getElementById('central-apoio-vt')?.value.trim()     || '';
+        if (!equipe) { showToast('Informe a equipe de apoio.', 'warning'); return; }
+
+        const eventoId = this._sv(card.dataset.eventoid) || card.id;
+        const tsNow    = Date.now();
+
+        NitFirebase.exec((db, ref, update) => {
+            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+            const updates = {};
+            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                tipo: 'apoio', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
+            };
+            updates[`kanban/${eventoId}/equipeApoio`]  = equipe;
+            updates[`kanban/${eventoId}/viaturaApoio`] = vt;
+            update(ref(db, '/'), updates);
+        });
+
+        showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
+        this.fechar();
+    },
+
+    confirmarRendicao() {
+        const card   = this._card; if (!card) return;
+        const tipo   = this._tipoRendicao;
+        const equipe = document.getElementById('central-rendicao-equipe')?.value.trim() || '';
+        const vt     = document.getElementById('central-rendicao-vt')?.value.trim()     || '';
+        if (!equipe) { showToast('Informe a equipe que entra.', 'warning'); return; }
+
+        const eventoId   = this._sv(card.dataset.eventoid) || card.id;
+        const colunaMap  = { vl: 'coluna-vl', amc: 'coluna-amc' };
+        const colunaDest = colunaMap[tipo] || 'coluna-vl';
+        const tsNow      = Date.now();
+
+        NitFirebase.exec((db, ref, update) => {
+            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+            const updates = {};
+            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                tipo: 'rendição', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
+            };
+            Object.assign(updates, {
+                [`kanban/${eventoId}/equipe`]:        equipe,
+                [`kanban/${eventoId}/viatura`]:       vt,
+                [`kanban/${eventoId}/sub`]:           tipo,
+                [`kanban/${eventoId}/equipeApoio`]:   '',
+                [`kanban/${eventoId}/viaturaApoio`]:  '',
+                [`kanban/${eventoId}/coluna`]:        colunaDest,
+                [`kanban/${eventoId}/tsDespacho`]:    tsNow,
+                [`kanban/${eventoId}/operador`]:      NitLogin.operador || 'anon',
+            });
+            update(ref(db, '/'), updates);
+        });
+
+        const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
+        if (container) container.appendChild(card);
+        card.dataset.coluna = colunaDest;
+        showToast('Rendição registrada.', 'success');
+        this.fechar();
+    },
+
+    confirmarEncerrar() {
+        const card = this._card; if (!card) return;
+        nitConfirm('⏹️ Encerrar Operação',
+            `Encerrar operação do card <strong>${card.dataset.codigo}</strong>?<br>
+             A equipe será liberada e o card voltará para <strong>Aguardando</strong>.`,
+            () => {
+                const eventoId = this._sv(card.dataset.eventoid) || card.id;
+                NitFirebase.exec((db, ref, update) => {
+                    update(ref(db, `kanban/${eventoId}`), {
+                        coluna: 'coluna-espera', sub: null, pl: null,
+                        equipe: '', viatura: '', equipeApoio: '', viaturaApoio: '',
+                        tsDespacho: null, ts_encerramento: Date.now(),
+                        operador: NitLogin.operador || 'anon',
+                    });
+                });
+                const cont = document.querySelector('#coluna-espera .kanban-cards-container');
+                if (cont) cont.appendChild(card);
+                card.dataset.coluna = 'coluna-espera';
+                showToast('Operação encerrada.', 'info');
+                this.fechar();
+            });
+    },
+
+    confirmarNormalizar() {
+        const card = this._card; if (!card) return;
+        const dEl  = document.getElementById('central-norm-data');
+        const hEl  = document.getElementById('central-norm-hora');
+        const oEl  = document.getElementById('central-norm-obs');
+        if (!dEl?.value || !hEl?.value) { showToast('Informe data e hora de fim.', 'warning'); return; }
+
+        const [y,m,d]  = dEl.value.split('-');
+        const dataFimBR = `${d}/${m}/${y}`;
+        const horaFimHM = hEl.value.slice(0,5);
+        const obsNova   = oEl?.value.trim() || this._sv(card.dataset.observacoes);
+        const eventoId  = this._sv(card.dataset.eventoid) || card.id;
+
+        NitFirebase.exec((db, ref, update) =>
+            update(ref(db, `kanban/${eventoId}`), {
+                coluna: 'coluna-normalizados', status: 'NORMALIZADO',
+                data_fim: dataFimBR, hora_fim: horaFimHM,
+                observacoes: obsNova, ts_norm: Date.now(),
+                operador: NitLogin.operador || 'anon',
+            })
+        );
+
+        const cont = document.querySelector('#coluna-normalizados .kanban-cards-container');
+        if (cont) cont.prepend(card);
+        Object.assign(card.dataset, { coluna: 'coluna-normalizados', status: 'NORMALIZADO', data_fim: dataFimBR, hora_fim: horaFimHM });
+        showToast(`${card.dataset.codigo} normalizado.`, 'success');
+        registrarAcao(`Normalizado: ${card.dataset.codigo} às ${horaFimHM}`);
+        this.fechar();
+    },
+
+    // ── Setup de eventos ──────────────────────────────────────────────
+    inicializar() {
+        document.getElementById('btn-central-fechar')
+            ?.addEventListener('click', () => this.fechar());
+
+        document.querySelectorAll('.nit-central-tab').forEach(btn =>
+            btn.addEventListener('click', () => { if (!btn.disabled) this._abrirAba(btn.dataset.tab); })
+        );
+
+        // Tipo buttons por painel
+        [['despacho','_tipoDespacho'], ['apoio','_tipoApoio'], ['rendicao','_tipoRendicao']].forEach(([panel, prop]) => {
+            document.querySelectorAll(`#central-panel-${panel} .nit-central-tipo-btn`).forEach(btn =>
+                btn.addEventListener('click', () => this._selecionarTipo(panel, btn.dataset.tipo, prop))
+            );
+        });
+
+        // Preview ao vivo — rendição
+        ['central-rendicao-equipe','central-rendicao-vt'].forEach(id =>
+            document.getElementById(id)?.addEventListener('input', () => this._atualizarPreviewRendicao())
+        );
+
+        // Botões de ação
+        const bind = (id, fn) => document.getElementById(id)?.addEventListener('click', () => fn.call(this));
+        bind('btn-central-despachar',  this.confirmarDespacho);
+        bind('btn-central-encerrar',   this.confirmarEncerrar);
+        bind('btn-central-apoio',      this.confirmarApoio);
+        bind('btn-central-rendicao',   this.confirmarRendicao);
+        bind('btn-central-normalizar', this.confirmarNormalizar);
+
+        // Fechar ao clicar fora
+        document.getElementById('modal-central-ocorrencia')
+            ?.addEventListener('click', e => { if (e.target === e.currentTarget) this.fechar(); });
+    },
+};
 
     // ══════════════════════════════════════════════════════════════════
 // NitViradaDia — versão compatível com NitProcessamento
