@@ -1860,6 +1860,7 @@ const NitData = {
 
     NitCardDetails.inicializar();
     NitCentral.inicializar();
+    NitRecursos.inicializar();
     NitBuscaGlobal.inicializar();
     NitLogout.inicializar();
     NitLazy.inicializar();
@@ -2412,7 +2413,85 @@ window.NitNormalizar = NitNormalizar;
 
 
     // ══════════════════════════════════════════════════════════════════
-// NitCentral — Central da Ocorrência
+// NitRecursos — Banco de Equipes e Viaturas
+// Persiste em /recursos/equipes no Firebase RTDB
+// Alimenta os datalists da Central da Ocorrência
+// ══════════════════════════════════════════════════════════════════
+const NitRecursos = {
+    _cache: {},   // { nome: { vt, tipo } }
+    _listener: null,
+
+    // ── Inicializa listener Firebase ──────────────────────────────────
+    inicializar() {
+        firebase.database().ref('recursos/equipes').on('value', snap => {
+            this._cache = {};
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    const d = child.val();
+                    this._cache[d.nome] = { vt: d.vt || '', tipo: d.tipo || 'vl' };
+                });
+            }
+            this._atualizarDatalist();
+        });
+    },
+
+    // ── Atualiza datalists do DOM ─────────────────────────────────────
+    _atualizarDatalist() {
+        const dlEquipes = document.getElementById('datalist-central-equipes');
+        const dlVTs     = document.getElementById('datalist-central-vts');
+        if (!dlEquipes || !dlVTs) return;
+
+        const nomes = Object.keys(this._cache).sort();
+        const vts   = [...new Set(Object.values(this._cache).map(r => r.vt).filter(Boolean))].sort();
+
+        dlEquipes.innerHTML = nomes.map(n => `<option value="${n}">`).join('');
+        dlVTs.innerHTML     = vts.map(v => `<option value="${v}">`).join('');
+    },
+
+    // ── Auto-fill VT ao selecionar equipe ────────────────────────────
+    // Chame em oninput dos campos de equipe na Central
+    autoFillVT(nomeEquipe, campoVT) {
+        const rec = this._cache[nomeEquipe.trim()];
+        if (!rec) return;
+        const el = document.getElementById(campoVT);
+        if (el && !el.value) el.value = rec.vt;
+        // Sugere tipo também
+        return rec.tipo; // 'vl' | 'amc'
+    },
+
+    // ── Salva ou atualiza uma equipe ─────────────────────────────────
+    salvar(nome, vt, tipo) {
+        if (!nome) return;
+        const chave = nome.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        firebase.database().ref(`recursos/equipes/${chave}`).set({
+            nome, vt: vt || '', tipo: tipo || 'vl',
+            atualizadoEm: Date.now(),
+            operador: NitLogin.operador || 'anon',
+        });
+    },
+
+    // ── Remove uma equipe ─────────────────────────────────────────────
+    remover(nome) {
+        const chave = nome.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+        firebase.database().ref(`recursos/equipes/${chave}`).remove();
+    },
+
+    // ── Aprende automaticamente ao despachar ─────────────────────────
+    // Chame após qualquer despacho/apoio/rendição confirmado
+    aprenderDeDespacho(nome, vt, tipo) {
+        if (!nome || this._cache[nome]) return; // não sobrescreve existente
+        this.salvar(nome, vt, tipo);
+    },
+
+    // ── Retorna lista para exibição (ex: painel admin) ────────────────
+    listar() {
+        return Object.entries(this._cache)
+            .map(([nome, r]) => ({ nome, ...r }))
+            .sort((a, b) => a.nome.localeCompare(b.nome));
+    },
+};
+
+    
 // Modal de gestão operacional com abas: Despacho | Apoio | Rendição | Normalizar
 // Histórico via Firebase push keys (append-only, collision-safe)
 // ══════════════════════════════════════════════════════════════════
@@ -2485,8 +2564,15 @@ const NitCentral = {
                 const tsOp = snap.exists() ? snap.val() : 0;
                 const tick = () => {
                     const now = Date.now();
-                    if (elSLA) elSLA.textContent = tsInicio ? this._formatDelta(now - tsInicio) : '--:--';
-                    if (elOp)  elOp.textContent  = tsOp     ? this._formatDelta(now - tsOp)    : '--:--';
+                    if (elSLA) {
+                        elSLA.textContent = tsInicio ? this._formatDelta(now - tsInicio) : '--:--';
+                        if (tsInicio) {
+                            const h = (now - tsInicio) / 3600000;
+                            elSLA.className = 'nit-central-tempo-valor' +
+                                (h > 8 ? ' sla-critico' : h > 4 ? ' sla-alerta' : ' sla-ok');
+                        }
+                    }
+                    if (elOp) elOp.textContent = tsOp ? this._formatDelta(now - tsOp) : '--:--';
                 };
                 tick();
                 this._timerSLA = setInterval(tick, 10000);
@@ -2545,20 +2631,26 @@ const NitCentral = {
     },
 
     _renderEventoHTML(ev) {
-        const tipoMap = {
-            despacho:  { icon: '🚀', label: 'Despacho'  },
-            apoio:     { icon: '➕', label: 'Apoio'     },
-            rendição:  { icon: '🔄', label: 'Rendição'  },
-            encerramento: { icon: '⏹️', label: 'Encerrado' },
+        const dotMap = {
+            despacho:     'dot-despacho',
+            apoio:        'dot-apoio',
+            'rendição':   'dot-rendição',
         };
-        const t      = tipoMap[ev.tipo] || { icon: '•', label: ev.tipo };
-        const ts     = ev.ts ? new Date(ev.ts).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '--:--';
-        const sub    = ev.sub === 'vl' ? 'VIA LIVRE' : ev.sub === 'amc' ? 'AMC' : (ev.sub||'').toUpperCase();
-        const legado = ev._legado ? ' <em>(legado)</em>' : '';
+        const labelMap = {
+            despacho:     'Despacho',
+            apoio:        'Apoio',
+            'rendição':   'Rendição',
+            encerramento: 'Encerrado',
+        };
+        const dotCls  = dotMap[ev.tipo]   || 'dot-default';
+        const label   = labelMap[ev.tipo] || ev.tipo;
+        const ts      = ev.ts ? new Date(ev.ts).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '--:--';
+        const sub     = ev.sub === 'vl' ? 'VIA LIVRE' : ev.sub === 'amc' ? 'AMC' : (ev.sub||'').toUpperCase();
+        const legado  = ev._legado ? ' <em style="opacity:.5">(legado)</em>' : '';
         return `<div class="nit-central-historico-item">
-            <span class="nit-central-hist-icon">${t.icon}</span>
+            <div class="nit-central-hist-dot ${dotCls}"></div>
             <div class="nit-central-hist-body">
-                <span class="nit-central-hist-tipo">${t.label}${legado} · ${sub}</span>
+                <span class="nit-central-hist-tipo">${label} · ${sub}${legado}</span>
                 <span class="nit-central-hist-detalhe">${ev.equipe||''}${ev.vt ? ` · VT ${ev.vt}` : ''}</span>
                 ${ev.operador ? `<span class="nit-central-hist-op">${ev.operador}</span>` : ''}
             </div>
@@ -2713,6 +2805,7 @@ const NitCentral = {
         const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
         if (container) container.appendChild(card);
         card.dataset.coluna = colunaDest;
+        NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
         showToast(`Despacho: ${tipo.toUpperCase()}`, 'success');
         this.fechar();
     },
@@ -2738,6 +2831,7 @@ const NitCentral = {
             update(ref(db, '/'), updates);
         });
 
+        NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
         showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
         this.fechar();
     },
@@ -2776,6 +2870,7 @@ const NitCentral = {
         const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
         if (container) container.appendChild(card);
         card.dataset.coluna = colunaDest;
+        NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
         showToast('Rendição registrada.', 'success');
         this.fechar();
     },
@@ -2849,8 +2944,21 @@ const NitCentral = {
             );
         });
 
-        // Preview ao vivo — rendição
-        ['central-rendicao-equipe','central-rendicao-vt'].forEach(id =>
+        // Auto-fill VT + sugestão de tipo ao selecionar equipe
+        [
+            ['central-despacho-equipe', 'central-despacho-vt', 'despacho', '_tipoDespacho'],
+            ['central-apoio-equipe',    'central-apoio-vt',    'apoio',    '_tipoApoio'   ],
+            ['central-rendicao-equipe', 'central-rendicao-vt', 'rendicao', '_tipoRendicao'],
+        ].forEach(([elEquipe, elVT, panel, prop]) => {
+            document.getElementById(elEquipe)?.addEventListener('input', e => {
+                const tipo = NitRecursos.autoFillVT(e.target.value, elVT);
+                if (tipo) this._selecionarTipo(panel, tipo, prop);
+                if (panel === 'rendicao') this._atualizarPreviewRendicao();
+            });
+        });
+
+        // Preview ao vivo — rendição (VT change)
+        ['central-rendicao-vt'].forEach(id =>
             document.getElementById(id)?.addEventListener('input', () => this._atualizarPreviewRendicao())
         );
 
