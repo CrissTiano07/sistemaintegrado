@@ -1693,7 +1693,37 @@
     letter-spacing: 0.2px;
 }
 
-/* ── Agendamento de Rendição ─────────────────────────────────────── */
+/* ── Execução de rendição agendada ──────────────────────────────────── */
+.nit-central-agend-execucao {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+.nit-agend-exec-hora {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fbbf24;
+    letter-spacing: -0.3px;
+    line-height: 1;
+}
+.nit-agend-exec-sub {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+.nit-agend-exec-equipe {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+
 .nit-central-agendamento {
     margin: 10px 0 6px;
     padding: 10px 12px;
