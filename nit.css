@@ -535,7 +535,7 @@
         .kanban-card { background-color: var(--color-surface); padding: 12px; border-radius: 10px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); cursor: grab; border: 1px solid var(--color-border); transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-1); gap: var(--space-1); }
         .card-header strong { font-size: 15px; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.2px; }
-        .card-status-tag { background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent); white-space: nowrap; }
+        .card-status-tag { background: rgba(251,191,36,0.12); background: color-mix(in srgb, var(--color-warning) 12%, transparent); color: var(--color-warning); padding: 2px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.35px; border: 1px solid rgba(251,191,36,0.25); border-color: color-mix(in srgb, var(--color-warning) 25%, transparent); white-space: nowrap; }
         .card-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.4; }
 
 /* ── Card body — hierarquia: endereço → estado → obs → resolução ── */
@@ -764,14 +764,14 @@
         .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.4); }
         .card-foi-normalizado { animation: pulso-verde 2s ease-in-out 2; border-color: var(--color-success) !important; }
         @keyframes pulso-verde {
-            0%   { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 50%, transparent); }
-            70%  { transform: scale(1.02); box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-success) 0%, transparent); }
-            100% { transform: scale(1);    box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 0%, transparent); }
+            0%   { transform: scale(1);    box-shadow: 0 0 0 0  rgba(56,189,107,0.5); box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 50%, transparent); }
+            70%  { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(56,189,107,0); box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-success) 0%, transparent); }
+            100% { transform: scale(1);    box-shadow: 0 0 0 0  rgba(56,189,107,0); box-shadow: 0 0 0 0  color-mix(in srgb, var(--color-success) 0%, transparent); }
         }
 
         .kanban-card .card-footer .btn-card-action.complete {
             color: var(--color-success);
-            background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+            background-color: rgba(56,189,107,0.15); background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
             border-radius: 50px;
             padding: 6px 8px;
             transition: all 0.2s ease-in-out;
@@ -779,7 +779,7 @@
         .kanban-card .card-footer .btn-card-action.complete:hover {
             color: #FFFFFF;
             background-color: var(--color-success);
-            box-shadow: 0 4px 12px color-mix(in srgb, var(--color-success) 40%, transparent);
+            box-shadow: 0 4px 12px rgba(56,189,107,0.4); box-shadow: 0 4px 12px color-mix(in srgb, var(--color-success) 40%, transparent);
             transform: scale(1.1);
         }
         .kanban-card .card-footer .btn-card-action:not(.complete)       { opacity: 0.65; transition: opacity 0.2s ease; }
@@ -827,8 +827,8 @@
         .undo-toast-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
         .undo-toast-msg { font-size: 13px; font-weight: var(--font-weight-medium); color: var(--color-text-primary); flex: 1; }
         .undo-toast-btn {
-            background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-            border: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+            background: rgba(59,130,246,0.12); background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+            border: 1px solid rgba(59,130,246,0.35); border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
             color: var(--color-primary);
             border-radius: 6px;
             padding: 4px 12px;
@@ -838,7 +838,7 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-        .undo-toast-btn:hover { background: color-mix(in srgb, var(--color-primary) 20%, transparent); }
+        .undo-toast-btn:hover { background: rgba(59,130,246,0.2); background: color-mix(in srgb, var(--color-primary) 20%, transparent); }
         .undo-progress { height: 3px; background: var(--color-border); border-radius: 2px; overflow: hidden; }
         .undo-progress-bar { height: 100%; background: var(--color-primary); border-radius: 2px; width: 100%; transition: width linear; }
 
