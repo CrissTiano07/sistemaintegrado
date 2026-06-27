@@ -409,11 +409,11 @@
 
             <!-- Tabs -->
             <div class="nit-central-tabs" role="tablist">
-                <button class="nit-central-tab active" data-tab="despacho"  role="tab"><span class="nit-tab-icon">▶</span>Despacho</button>
-                <button class="nit-central-tab"        data-tab="apoio"     role="tab"><span class="nit-tab-icon">＋</span>Apoio</button>
-                <button class="nit-central-tab"        data-tab="rendicao"  role="tab"><span class="nit-tab-icon">⇄</span>Rendição</button>
+                <button class="nit-central-tab active" data-tab="despacho"  role="tab">Despacho</button>
+                <button class="nit-central-tab"        data-tab="apoio"     role="tab">Apoio</button>
+                <button class="nit-central-tab"        data-tab="rendicao"  role="tab">Rendição</button>
                 <div class="nit-tab-divider"></div>
-                <button class="nit-central-tab nit-tab-encerrar" data-tab="normalizar" role="tab"><span class="nit-tab-icon">✓</span>Normalizar</button>
+                <button class="nit-central-tab nit-tab-encerrar" data-tab="normalizar" role="tab">Normalizar</button>
             </div>
 
             <!-- Painéis -->
@@ -526,9 +526,13 @@
 
             </div><!-- /nit-central-body -->
 
-            <!-- Histórico imutável -->
+            <!-- Histórico colapsável -->
             <div class="nit-central-historico">
-                <div class="nit-central-historico-titulo">Histórico</div>
+                <div class="nit-central-historico-header" id="central-hist-header" role="button" tabindex="0" aria-expanded="false">
+                    <span class="nit-central-historico-titulo">Histórico</span>
+                    <span class="nit-central-hist-ultimo" id="central-hist-ultimo">—</span>
+                    <span class="nit-central-hist-chevron" id="central-hist-chevron">▼</span>
+                </div>
                 <div class="nit-central-historico-lista" id="central-historico-lista">
                     <div class="nit-central-historico-vazio">Nenhum registro de operação.</div>
                 </div>
