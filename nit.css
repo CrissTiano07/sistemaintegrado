@@ -1326,15 +1326,25 @@
 }
 
 .nit-central-tempo-valor {
-    font-size: 1.2rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.5px;
+    letter-spacing: -1px;
     color: #f1f5f9;
     line-height: 1;
 }
 
 .nit-central-tempo-op { color: #58a6ff; }
+
+/* SLA alert states — aplicados via JS conforme tempo */
+.nit-central-tempo-valor.sla-ok     { color: #38bd6b; }
+.nit-central-tempo-valor.sla-alerta { color: #fbbf24; }
+.nit-central-tempo-valor.sla-critico { color: #ef4444; animation: nit-pulse 1.5s ease-in-out infinite; }
+
+@keyframes nit-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .6; }
+}
 
 .nit-central-tempo-sep {
     width: 1px;
@@ -1569,22 +1579,43 @@
     font-style: italic;
 }
 
+/* Timeline vertical do histórico */
+.nit-central-historico-lista {
+    position: relative;
+}
+.nit-central-historico-lista::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    background: rgba(255,255,255,0.07);
+}
+
 .nit-central-historico-item {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
+    padding: 5px 0;
+    position: relative;
 }
-.nit-central-historico-item:last-child { border-bottom: none; }
 
-.nit-central-hist-icon {
-    font-size: 13px;
+/* Bolinha colorida da timeline */
+.nit-central-hist-dot {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
     flex-shrink: 0;
-    margin-top: 1px;
-    width: 18px;
-    text-align: center;
+    margin-top: 2px;
+    border: 2px solid #0d1826;
+    position: relative;
+    z-index: 1;
 }
+.nit-central-hist-dot.dot-despacho  { background: #38bd6b; }
+.nit-central-hist-dot.dot-apoio     { background: #58a6ff; }
+.nit-central-hist-dot.dot-rendição  { background: #fbbf24; }
+.nit-central-hist-dot.dot-default   { background: #475569; }
 
 .nit-central-hist-body {
     flex: 1;
@@ -1592,9 +1623,12 @@
     flex-direction: column;
     gap: 1px;
     min-width: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+.nit-central-historico-item:last-child .nit-central-hist-body { border-bottom: none; }
 
-.nit-central-hist-tipo    { font-size: 12px; font-weight: 600; color: #e2e8f0; }
-.nit-central-hist-detalhe { font-size: 11px; color: #94a3b8; }
+.nit-central-hist-tipo    { font-size: 11px; font-weight: 700; color: #e2e8f0; text-transform: uppercase; letter-spacing: .4px; }
+.nit-central-hist-detalhe { font-size: 12px; color: #94a3b8; }
 .nit-central-hist-op      { font-size: 10px; color: #475569; }
-.nit-central-hist-ts      { font-size: 11px; color: #475569; flex-shrink: 0; font-variant-numeric: tabular-nums; margin-top: 1px; }
+.nit-central-hist-ts      { font-size: 11px; color: #64748b; flex-shrink: 0; font-variant-numeric: tabular-nums; margin-top: 2px; text-align: right; min-width: 36px; }
