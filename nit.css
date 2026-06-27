@@ -1392,6 +1392,16 @@
 }
 
 /* Timers */
+/* Zona 3 — SLA card atômico */
+.nit-central-tempos-card {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: inline-flex;
+    margin-top: 4px;
+}
+
 .nit-central-tempos {
     display: flex;
     align-items: center;
@@ -1438,6 +1448,15 @@
     height: 28px;
     background: rgba(255,255,255,0.08);
     flex-shrink: 0;
+}
+
+/* ── Zona 2 — área de decisão (tabs + painéis) ──────────────────────── */
+.nit-central-zona2 {
+    background: rgba(0,0,0,0.18);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Tabs ───────────────────────────────────────────────────────────── */
@@ -1669,6 +1688,10 @@
 }
 .nit-central-actions .btn {
     flex: 1;
+    min-height: 48px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
 }
 
 /* ── Agendamento de Rendição ─────────────────────────────────────── */
