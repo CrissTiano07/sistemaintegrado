@@ -637,7 +637,8 @@ const NitData = {
                     // Firebase child_changed entrega o estado COMPLETO do nó.
                     // Campos ausentes em dados foram deletados do Firebase → limpar dataset.
                     const campos = ['equipe','viatura','pl','sub','status','observacoes',
-                                    'inicio','endereco','tsDespacho','equipeApoio','viaturaApoio',
+                                    'inicio','endereco','tsDespacho','tsFirstDispatch',
+                                    'equipeApoio','viaturaApoio',
                                     'data_fim','hora_fim','fim','coluna'];
                     campos.forEach(k => {
                         el.dataset[k] = (dados[k] != null) ? dados[k] : '';
@@ -652,6 +653,12 @@ const NitData = {
                     if (bodyEl) {
                         bodyEl.innerHTML = Semaforo._buildBodyHTML(el.dataset);
                         el.classList.remove('lazy-pending');
+                    }
+                    // Fix multi-operador: se a Central está aberta para este card,
+                    // atualiza o header do modal com o estado recém-sincronizado
+                    if (NitCentral._card === el) {
+                        NitCentral._renderHeader(el);
+                        NitCentral._iniciarTimers(el);
                     }
                     Semaforo.atualizarPainel();
                 });
