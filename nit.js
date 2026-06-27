@@ -1137,22 +1137,21 @@ const NitData = {
                 const tipoLabel = { vl: 'VIA LIVRE', amc: 'AMC', sn: 'SEM NECESSIDADE' }[tipo] || tipo.toUpperCase();
                 const emoji     = { vl: '🟠', amc: '🔵', sn: '⚪' }[tipo] || '🚦';
 
-                // Equipe primária: extrai da concatenação quando há apoio
+                // Equipe primária
                 const equipeP  = equipeApoio ? (equipe.split(/\s*\+\s*/)[0]  || equipe).trim()  : equipe;
                 const viaturaP = viaturaApoio ? (viatura.split(/\s*\+\s*/)[0] || viatura).trim() : viatura;
 
-                const linhaP = equipeP
-                    ? `<span class="card-equipe-linha">${viaturaP ? `VT: ${viaturaP}` : ''} Equipe: ${equipeP}</span>`
-                    : '';
+                // Linha única: "🔵 AMC · Raimundo · VT 222"
+                const partes = [equipeP, viaturaP ? `VT ${viaturaP}` : ''].filter(Boolean);
+                const linhaP = partes.length ? ` · ${partes.join(' · ')}` : '';
                 const linhaA = equipeApoio
-                    ? `<span class="card-equipe-linha card-equipe-apoio">${viaturaApoio ? `VT: ${viaturaApoio}` : ''} Equipe: ${equipeApoio}</span>`
+                    ? ` + ${equipeApoio}${viaturaApoio ? ` · VT ${viaturaApoio}` : ''}`
                     : '';
 
-                const equipeHTML = (linhaP || linhaA) ? `<p class="card-equipe">${linhaP}${linhaA}</p>` : '';
-                const tsStr      = Semaforo._formatarTimestamp(tsDespacho);
-                const tsHTML     = tsStr ? `<p class="card-ts-despacho">${tsStr}</p>` : '';
+                const tsStr = Semaforo._formatarTimestamp(tsDespacho);
+                const tsHTML = tsStr ? `<p class="card-ts-despacho">${tsStr}</p>` : '';
 
-                despachoBlock = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>${equipeHTML}${tsHTML}`;
+                despachoBlock = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}${linhaP}${linhaA}</p>${tsHTML}`;
             }
 
             // ── Badge de rendição agendada ────────────────────────────────
@@ -2539,6 +2538,13 @@ const NitCentral = {
         this._tipoDespacho = 'vl';
         this._tipoApoio    = 'vl';
         this._tipoRendicao = 'vl';
+        // Resetar histórico para colapsado
+        const lista   = document.getElementById('central-historico-lista');
+        const chevron = document.getElementById('central-hist-chevron');
+        const header  = document.getElementById('central-hist-header');
+        if (lista)   lista.classList.remove('aberto');
+        if (chevron) chevron.textContent = '▼';
+        if (header)  header.setAttribute('aria-expanded', 'false');
         this._renderHeader(card);
         this._renderHistorico(card);
         this._determinarAbaInicial(card);
@@ -2668,8 +2674,10 @@ const NitCentral = {
         const sv       = this._sv;
         const eventoId = sv(card.dataset.eventoid) || card.id;
         const lista    = document.getElementById('central-historico-lista');
+        const elUltimo = document.getElementById('central-hist-ultimo');
         if (!lista) return;
         lista.innerHTML = '<div class="nit-central-historico-vazio">Carregando...</div>';
+        if (elUltimo) elUltimo.textContent = '—';
 
         firebase.database().ref(`kanban/${eventoId}/historico`).get()
             .then(snap => {
@@ -2677,23 +2685,36 @@ const NitCentral = {
                     const sub = sv(card.dataset.sub);
                     const eq  = sv(card.dataset.equipe);
                     if (sub && eq) {
-                        lista.innerHTML = this._renderEventoHTML({
+                        const ev = {
                             tipo: 'despacho', sub, equipe: eq,
                             vt: sv(card.dataset.viatura),
                             ts: parseInt(sv(card.dataset.tsdespacho)) || 0,
                             operador: '', _legado: true
-                        });
+                        };
+                        lista.innerHTML = this._renderEventoHTML(ev);
+                        this._atualizarUltimo(elUltimo, [ev]);
                     } else {
                         lista.innerHTML = '<div class="nit-central-historico-vazio">Nenhum registro de operação.</div>';
+                        if (elUltimo) elUltimo.textContent = '—';
                     }
                     return;
                 }
                 const eventos = Object.values(snap.val()).sort((a,b) => (a.ts||0)-(b.ts||0));
                 lista.innerHTML = eventos.map(ev => this._renderEventoHTML(ev)).join('');
+                this._atualizarUltimo(elUltimo, eventos);
             })
             .catch(() => {
                 lista.innerHTML = '<div class="nit-central-historico-vazio">Erro ao carregar histórico.</div>';
             });
+    },
+
+    _atualizarUltimo(el, eventos) {
+        if (!el || !eventos.length) return;
+        const last = eventos[eventos.length - 1];
+        const labelMap = { despacho: 'Despacho', apoio: 'Apoio', 'rendição': 'Rendição', encerramento: 'Encerrado' };
+        const label = labelMap[last.tipo] || last.tipo;
+        const ts    = last.ts ? new Date(last.ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+        el.textContent = `Último: ${label}${ts ? ` · ${ts}` : ''}`;
     },
 
     _renderEventoHTML(ev) {
@@ -3043,6 +3064,22 @@ const NitCentral = {
         bind('btn-central-apoio',      this.confirmarApoio);
         bind('btn-central-rendicao',   this.confirmarRendicao);
         bind('btn-central-normalizar', this.confirmarNormalizar);
+
+        // Toggle do histórico colapsável
+        const histHeader = document.getElementById('central-hist-header');
+        if (histHeader) {
+            const toggleHist = () => {
+                const lista   = document.getElementById('central-historico-lista');
+                const chevron = document.getElementById('central-hist-chevron');
+                const aberto  = lista?.classList.toggle('aberto');
+                if (chevron) chevron.textContent = aberto ? '▲' : '▼';
+                histHeader.setAttribute('aria-expanded', String(!!aberto));
+            };
+            histHeader.addEventListener('click', toggleHist);
+            histHeader.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHist(); }
+            });
+        }
 
         // Toggle de agendamento de rendição
         document.getElementById('central-rendicao-agendar')
