@@ -362,6 +362,151 @@
         </div>
     </div>
 
+    <!-- CENTRAL DA OCORRÊNCIA ────────────────────────────────────────── -->
+    <div id="modal-central-ocorrencia" class="modal-overlay" role="dialog" aria-modal="true" aria-label="Central da Ocorrência">
+        <div class="modal-container nit-central-container">
+
+            <!-- Header -->
+            <div class="nit-central-header">
+                <div class="nit-central-header-top">
+                    <div class="nit-central-identidade">
+                        <span class="nit-central-codigo" id="central-codigo">---</span>
+                        <span class="nit-central-badge" id="central-status-badge"></span>
+                        <span class="nit-central-badge nit-central-badge-tipo" id="central-tipo-badge"></span>
+                    </div>
+                    <button class="nit-central-fechar" id="btn-central-fechar" aria-label="Fechar">✕</button>
+                </div>
+                <div class="nit-central-endereco" id="central-endereco"></div>
+                <div class="nit-central-tempos">
+                    <div class="nit-central-tempo">
+                        <span class="nit-central-tempo-label">⏱ Registro (SLA Total)</span>
+                        <span class="nit-central-tempo-valor" id="central-tempo-sla">--:--</span>
+                    </div>
+                    <div class="nit-central-tempo-sep"></div>
+                    <div class="nit-central-tempo">
+                        <span class="nit-central-tempo-label">⏱ Atendimento (Operação)</span>
+                        <span class="nit-central-tempo-valor nit-central-tempo-op" id="central-tempo-op">--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="nit-central-tabs" role="tablist">
+                <button class="nit-central-tab active" data-tab="despacho" role="tab">Despacho</button>
+                <button class="nit-central-tab" data-tab="apoio" role="tab">Apoio</button>
+                <button class="nit-central-tab" data-tab="rendicao" role="tab">Rendição</button>
+                <button class="nit-central-tab" data-tab="normalizar" role="tab">Normalizar</button>
+            </div>
+
+            <!-- Painéis -->
+            <div class="nit-central-body">
+
+                <!-- ── Despacho ─────────────────────────────────── -->
+                <div class="nit-central-panel active" id="central-panel-despacho">
+                    <div class="nit-central-tipo-selector" id="central-despacho-tipos">
+                        <button class="nit-central-tipo-btn active" data-tipo="vl">🟠 Via Livre</button>
+                        <button class="nit-central-tipo-btn" data-tipo="amc">🔵 AMC</button>
+                        <button class="nit-central-tipo-btn" data-tipo="sn">— Sem Necessidade</button>
+                    </div>
+                    <div id="central-despacho-campos-equipe">
+                        <div class="form-group">
+                            <label>Equipe / Representante</label>
+                            <input type="text" id="central-despacho-equipe" placeholder="Nome da equipe" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Viatura (VT)</label>
+                            <input type="text" id="central-despacho-vt" placeholder="Número" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="nit-central-actions">
+                        <button class="btn btn-primario" id="btn-central-despachar">Despachar</button>
+                        <button class="btn nit-central-btn-encerrar" id="btn-central-encerrar" style="display:none">
+                            <i class="fas fa-stop-circle"></i> Encerrar Operação
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── Apoio ────────────────────────────────────── -->
+                <div class="nit-central-panel" id="central-panel-apoio" style="display:none">
+                    <div class="nit-central-info-atual" id="central-apoio-atual"></div>
+                    <div class="nit-central-tipo-selector">
+                        <button class="nit-central-tipo-btn active" data-tipo="vl">🟠 Via Livre</button>
+                        <button class="nit-central-tipo-btn" data-tipo="amc">🔵 AMC</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Equipe de Apoio</label>
+                        <input type="text" id="central-apoio-equipe" placeholder="Nome da equipe" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Viatura (VT)</label>
+                        <input type="text" id="central-apoio-vt" placeholder="Número" autocomplete="off">
+                    </div>
+                    <div class="nit-central-coluna-n-preview" id="central-apoio-preview" style="display:none">
+                        <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
+                        <span class="nit-central-coluna-n-valor" id="central-apoio-coluna-n">—</span>
+                    </div>
+                    <div class="nit-central-actions">
+                        <button class="btn btn-primario" id="btn-central-apoio">Adicionar Apoio</button>
+                    </div>
+                </div>
+
+                <!-- ── Rendição ─────────────────────────────────── -->
+                <div class="nit-central-panel" id="central-panel-rendicao" style="display:none">
+                    <div class="nit-central-info-atual" id="central-rendicao-atual"></div>
+                    <div class="nit-central-tipo-selector">
+                        <button class="nit-central-tipo-btn active" data-tipo="vl">🟠 Via Livre</button>
+                        <button class="nit-central-tipo-btn" data-tipo="amc">🔵 AMC</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Equipe que Entra</label>
+                        <input type="text" id="central-rendicao-equipe" placeholder="Nome da equipe" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Viatura (VT)</label>
+                        <input type="text" id="central-rendicao-vt" placeholder="Número" autocomplete="off">
+                    </div>
+                    <div class="nit-central-coluna-n-preview">
+                        <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
+                        <span class="nit-central-coluna-n-valor" id="central-rendicao-coluna-n">—</span>
+                    </div>
+                    <div class="nit-central-actions">
+                        <button class="btn btn-primario" id="btn-central-rendicao">Registrar Rendição</button>
+                    </div>
+                </div>
+
+                <!-- ── Normalizar ───────────────────────────────── -->
+                <div class="nit-central-panel" id="central-panel-normalizar" style="display:none">
+                    <div class="form-group">
+                        <label>Data de Fim</label>
+                        <input type="date" id="central-norm-data">
+                    </div>
+                    <div class="form-group">
+                        <label>Hora de Fim</label>
+                        <input type="time" id="central-norm-hora">
+                    </div>
+                    <div class="form-group">
+                        <label>Observação Final</label>
+                        <textarea id="central-norm-obs" rows="3" placeholder="Descreva a resolução..."></textarea>
+                    </div>
+                    <div class="nit-central-actions">
+                        <button class="btn btn-primario" id="btn-central-normalizar">✅ Normalizar Ocorrência</button>
+                    </div>
+                </div>
+
+            </div><!-- /nit-central-body -->
+
+            <!-- Histórico imutável -->
+            <div class="nit-central-historico">
+                <div class="nit-central-historico-titulo">Histórico</div>
+                <div class="nit-central-historico-lista" id="central-historico-lista">
+                    <div class="nit-central-historico-vazio">Nenhum registro de operação.</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
     <div id="modal-edicao" class="modal-overlay">
         <div class="modal-container">
             <div class="modal-header">Editar Ocorrência</div>
