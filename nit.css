@@ -1371,40 +1371,100 @@
 }
 
 /* ── Tabs ───────────────────────────────────────────────────────────── */
+/* ── Tabs ─────────────────────────────────────────────────────────── */
 .nit-central-tabs {
     display: flex;
-    background: rgba(0,0,0,0.25);
+    align-items: center;
+    background: rgba(0,0,0,0.3);
     border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 5px 8px;
+    gap: 3px;
     flex-shrink: 0;
 }
 
 .nit-central-tab {
     flex: 1;
-    padding: 10px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 6px;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .8px;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
+    letter-spacing: .6px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
     color: #475569;
     cursor: pointer;
-    transition: color .15s, border-color .15s;
+    transition: color .15s, background .15s, border-color .15s;
     line-height: 1;
+    white-space: nowrap;
+    min-height: 34px;
 }
+
+.nit-tab-icon {
+    font-size: 11px;
+    font-style: normal;
+    opacity: .7;
+}
+
 .nit-central-tab:hover:not(:disabled):not(.disabled) {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.08);
     color: #94a3b8;
 }
-.nit-central-tab.active {
-    color: var(--color-accent, #58a6ff);
-    border-bottom-color: var(--color-accent, #58a6ff);
+
+/* Ativo — abas de ação (Despacho, Apoio, Rendição) */
+.nit-central-tab[data-tab="despacho"].active,
+.nit-central-tab[data-tab="apoio"].active,
+.nit-central-tab[data-tab="rendicao"].active {
+    background: rgba(88,166,255,0.14);
+    border-color: rgba(88,166,255,0.25);
+    color: #58a6ff;
 }
+.nit-central-tab[data-tab="despacho"].active .nit-tab-icon,
+.nit-central-tab[data-tab="apoio"].active .nit-tab-icon,
+.nit-central-tab[data-tab="rendicao"].active .nit-tab-icon {
+    opacity: 1;
+}
+
+/* Ativo — Normalizar (encerramento = verde) */
+.nit-central-tab[data-tab="normalizar"].active {
+    background: rgba(56,189,107,0.14);
+    border-color: rgba(56,189,107,0.25);
+    color: #38bd6b;
+}
+.nit-central-tab[data-tab="normalizar"] {
+    color: #38bd6b;
+    opacity: .45;
+}
+.nit-central-tab[data-tab="normalizar"]:not(.disabled):not(:disabled) {
+    opacity: 1;
+}
+.nit-central-tab[data-tab="normalizar"]:hover:not(:disabled):not(.disabled) {
+    background: rgba(56,189,107,0.08);
+    border-color: rgba(56,189,107,0.15);
+    color: #38bd6b;
+}
+
+/* Separador visual antes de Normalizar */
+.nit-tab-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
+    margin: 0 2px;
+}
+
 .nit-central-tab.disabled,
 .nit-central-tab:disabled {
-    opacity: .3;
+    opacity: .2;
     cursor: not-allowed;
+    pointer-events: none;
 }
+
 
 /* ── Painéis ────────────────────────────────────────────────────────── */
 .nit-central-body {
@@ -1550,6 +1610,50 @@
 .nit-central-actions .btn {
     flex: 1;
 }
+
+/* ── Agendamento de Rendição ─────────────────────────────────────── */
+.nit-central-agendamento {
+    margin: 10px 0 6px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+}
+
+.nit-central-agendar-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #94a3b8;
+    user-select: none;
+}
+
+.nit-central-agendar-check {
+    width: 15px;
+    height: 15px;
+    accent-color: #58a6ff;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.nit-central-agendar-campos input[type="time"] {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: #f1f5f9;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color-scheme: dark;
+}
+.nit-central-agendar-campos input[type="time"]:focus {
+    outline: none;
+    border-color: #58a6ff;
+}
+
 
 .nit-central-btn-encerrar {
     flex: 1;
