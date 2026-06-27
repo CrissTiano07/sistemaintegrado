@@ -989,9 +989,7 @@ const NitData = {
                 <div class="card-body card-body-lazy"></div>
                 <div class="card-footer">
                     <button class="btn-card-action copy-location" title="Copiar Localização"><i class="fa-solid fa-location-crosshairs"></i></button>
-                    <button class="btn-card-action details"       title="Ver Detalhes"><i class="fas fa-info-circle"></i></button>
-                    <button class="btn-card-action edit"          title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                    <button class="btn-card-action dispatch"      title="Despachar Equipe"><i class="fas fa-paper-plane"></i></button>
+                    <button class="btn-card-action details"       title="Central da Ocorrência"><i class="fas fa-info-circle"></i></button>
                     <button class="btn-card-action complete"      title="Normalizar"><i class="fas fa-check-circle"></i></button>
                 </div>`;
 
@@ -1360,9 +1358,7 @@ const NitData = {
         handleKanbanBoardClick(e) {
             const card = e.target.closest('.kanban-card');
             if (!card) return;
-            if (e.target.closest('.btn-card-action.dispatch'))           this.abrirModalDespacho(card.id);
-            else if (e.target.closest('.btn-card-action.edit'))          this.abrirModalEdicao(card.id);
-            else if (e.target.closest('.btn-card-action.complete'))      this.handleNormalizarClick(card);
+            if      (e.target.closest('.btn-card-action.complete'))      this.handleNormalizarClick(card);
             else if (e.target.closest('.btn-card-action.copy-location')) this.copiarLocalizacao(card);
             else if (e.target.closest('.btn-card-action.details'))       NitCentral.abrir(card);
             else if (!e.target.closest('.btn-card-action') && !AppState._wasDrag) NitCentral.abrir(card);
@@ -2860,6 +2856,27 @@ const NitCentral = {
         const vt     = document.getElementById('central-rendicao-vt')?.value.trim()     || '';
         if (!equipe) { showToast('Informe a equipe que entra.', 'warning'); return; }
 
+        // ── Agendamento ─────────────────────────────────────────────
+        const isAgendado   = document.getElementById('central-rendicao-agendar')?.checked || false;
+        const horaAgendada = document.getElementById('central-rendicao-hora-agendada')?.value || '';
+
+        if (isAgendado) {
+            if (!horaAgendada) { showToast('Informe o horário da rendição agendada.', 'warning'); return; }
+            const eventoId = this._sv(card.dataset.eventoid) || card.id;
+            NitFirebase.exec((db, ref, update) => {
+                update(ref(db, `kanban/${eventoId}/agendamento`), {
+                    tipo: 'rendição', sub: tipo, equipe, vt,
+                    horaAgendada, tsRegistro: Date.now(),
+                    operador: NitLogin.operador || 'anon',
+                });
+            });
+            NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
+            showToast(`Rendição agendada para ${horaAgendada}.`, 'info');
+            this.fechar();
+            return;
+        }
+
+        // ── Execução imediata ─────────────────────────────────────────────
         const eventoId   = this._sv(card.dataset.eventoid) || card.id;
         const colunaMap  = { vl: 'coluna-vl', amc: 'coluna-amc' };
         const colunaDest = colunaMap[tipo] || 'coluna-vl';
@@ -2877,6 +2894,7 @@ const NitCentral = {
                 [`kanban/${eventoId}/sub`]:           tipo,
                 [`kanban/${eventoId}/equipeApoio`]:   '',
                 [`kanban/${eventoId}/viaturaApoio`]:  '',
+                [`kanban/${eventoId}/agendamento`]:   null,
                 [`kanban/${eventoId}/coluna`]:        colunaDest,
                 [`kanban/${eventoId}/tsDespacho`]:    tsNow,
                 [`kanban/${eventoId}/operador`]:      NitLogin.operador || 'anon',
@@ -2986,6 +3004,15 @@ const NitCentral = {
         bind('btn-central-apoio',      this.confirmarApoio);
         bind('btn-central-rendicao',   this.confirmarRendicao);
         bind('btn-central-normalizar', this.confirmarNormalizar);
+
+        // Toggle de agendamento de rendição
+        document.getElementById('central-rendicao-agendar')
+            ?.addEventListener('change', function() {
+                const campos = document.getElementById('central-rendicao-agendar-campos');
+                const btn    = document.getElementById('btn-central-rendicao');
+                if (campos) campos.style.display = this.checked ? '' : 'none';
+                if (btn)    btn.textContent       = this.checked ? '⏰ Agendar Rendição' : 'Registrar Rendição';
+            });
 
         // Fechar ao clicar fora
         document.getElementById('modal-central-ocorrencia')
