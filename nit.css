@@ -560,11 +560,14 @@
 
 /* 2b. Despacho — tipo de operação */
 .card-despacho-tipo {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
     color: var(--color-text-primary);
     margin: 0 0 3px;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Equipe(s) despachada(s) */
@@ -1471,12 +1474,6 @@
     min-height: 34px;
 }
 
-.nit-tab-icon {
-    font-size: 11px;
-    font-style: normal;
-    opacity: .7;
-}
-
 .nit-central-tab:hover:not(:disabled):not(.disabled) {
     background: rgba(255,255,255,0.05);
     border-color: rgba(255,255,255,0.08);
@@ -1490,11 +1487,6 @@
     background: rgba(88,166,255,0.14);
     border-color: rgba(88,166,255,0.25);
     color: #58a6ff;
-}
-.nit-central-tab[data-tab="despacho"].active .nit-tab-icon,
-.nit-central-tab[data-tab="apoio"].active .nit-tab-icon,
-.nit-central-tab[data-tab="rendicao"].active .nit-tab-icon {
-    opacity: 1;
 }
 
 /* Ativo — Normalizar (encerramento = verde) */
@@ -1747,10 +1739,25 @@
 /* ── Histórico ──────────────────────────────────────────────────────── */
 .nit-central-historico {
     border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 10px 16px 14px;
-    max-height: 160px;
-    overflow-y: auto;
+    padding: 0;
     flex-shrink: 0;
+}
+
+.nit-central-historico-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+}
+.nit-central-historico-header:hover {
+    background: rgba(255,255,255,0.03);
+}
+.nit-central-historico-header:focus-visible {
+    outline: 2px solid rgba(88,166,255,0.5);
+    outline-offset: -2px;
 }
 
 .nit-central-historico-titulo {
@@ -1759,28 +1766,56 @@
     text-transform: uppercase;
     letter-spacing: 1.2px;
     color: #334155;
-    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.nit-central-hist-ultimo {
+    flex: 1;
+    font-size: 10px;
+    color: #475569;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nit-central-hist-chevron {
+    font-size: 9px;
+    color: #334155;
+    flex-shrink: 0;
+    transition: transform .2s ease;
 }
 
 .nit-central-historico-vazio {
     font-size: 12px;
     color: #475569;
     font-style: italic;
+    padding: 0 16px 10px;
 }
 
-/* Timeline vertical do histórico */
+/* Timeline vertical do histórico — colapsável */
 .nit-central-historico-lista {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 300ms ease-out;
     position: relative;
+    padding: 0 16px;
+}
+.nit-central-historico-lista.aberto {
+    max-height: 320px;
+    overflow-y: auto;
+    padding-bottom: 12px;
 }
 .nit-central-historico-lista::before {
     content: '';
     position: absolute;
-    left: 7px;
+    left: 23px;
     top: 10px;
     bottom: 10px;
     width: 1px;
     background: rgba(255,255,255,0.07);
 }
+
 
 .nit-central-historico-item {
     display: flex;
