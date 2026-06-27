@@ -394,18 +394,23 @@
                 <div class="nit-central-divider"></div>
 
                 <!-- Zona 3: Timers SLA -->
-                <div class="nit-central-tempos">
-                    <div class="nit-central-tempo">
-                        <span class="nit-central-tempo-label">⏱ Registro</span>
-                        <span class="nit-central-tempo-valor" id="central-tempo-sla">--:--</span>
-                    </div>
-                    <div class="nit-central-tempo-sep"></div>
-                    <div class="nit-central-tempo">
-                        <span class="nit-central-tempo-label">⏱ Operação</span>
-                        <span class="nit-central-tempo-valor nit-central-tempo-op" id="central-tempo-op">--:--</span>
+                <div class="nit-central-tempos-card">
+                    <div class="nit-central-tempos">
+                        <div class="nit-central-tempo">
+                            <span class="nit-central-tempo-label">⏱ Registro</span>
+                            <span class="nit-central-tempo-valor" id="central-tempo-sla">--:--</span>
+                        </div>
+                        <div class="nit-central-tempo-sep"></div>
+                        <div class="nit-central-tempo">
+                            <span class="nit-central-tempo-label">⏱ Operação</span>
+                            <span class="nit-central-tempo-valor nit-central-tempo-op" id="central-tempo-op">--:--</span>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Zona 2: Decisão (tabs + painéis) -->
+            <div class="nit-central-zona2">
 
             <!-- Tabs -->
             <div class="nit-central-tabs" role="tablist">
@@ -520,11 +525,12 @@
                         <textarea id="central-norm-obs" rows="3" placeholder="Descreva a resolução..."></textarea>
                     </div>
                     <div class="nit-central-actions">
-                        <button class="btn btn-primario" id="btn-central-normalizar">✅ Normalizar Ocorrência</button>
+                        <button class="btn btn-primario" id="btn-central-normalizar">Normalizar Ocorrência</button>
                     </div>
                 </div>
 
             </div><!-- /nit-central-body -->
+            </div><!-- /nit-central-zona2 -->
 
             <!-- Histórico colapsável -->
             <div class="nit-central-historico">
