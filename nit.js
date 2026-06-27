@@ -607,6 +607,10 @@ const NitData = {
                     if (dados.equipeApoio)  el.dataset.equipeApoio  = dados.equipeApoio;
                     if (dados.viaturaApoio) el.dataset.viaturaApoio = dados.viaturaApoio;
                     if (dados.tsDespacho)   el.dataset.tsDespacho   = dados.tsDespacho;
+                    // Agendamento de rendição (objeto aninhado → dataset flat)
+                    el.dataset.agendamentohora   = dados.agendamento?.horaAgendada || '';
+                    el.dataset.agendamentoequipe = dados.agendamento?.equipe        || '';
+                    el.dataset.agendamentosub    = dados.agendamento?.sub           || '';
                     if (coluna === 'coluna-normalizados') {
                         container.prepend(el);
                         // Reordena após inserção — Firebase pode entregar fora de ordem
@@ -638,6 +642,10 @@ const NitData = {
                     campos.forEach(k => {
                         el.dataset[k] = (dados[k] != null) ? dados[k] : '';
                     });
+                    // Agendamento de rendição (objeto aninhado)
+                    el.dataset.agendamentohora   = dados.agendamento?.horaAgendada || '';
+                    el.dataset.agendamentoequipe = dados.agendamento?.equipe        || '';
+                    el.dataset.agendamentosub    = dados.agendamento?.sub           || '';
 
                     // Rerenderiza usando o método compartilhado
                     const bodyEl = el.querySelector('.card-body');
@@ -1098,6 +1106,9 @@ const NitData = {
                 || (dataFim ? `${dataFim}${horaFim ? ' ' + horaFim : ''}` : '');
             const coluna       = d.coluna || '';
             const isNorm       = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
+            const agendHora    = _sv(d.agendamentohora);
+            const agendEquipe  = _sv(d.agendamentoequipe);
+            const agendSub     = _sv(d.agendamentosub);
 
             // ── Observação ────────────────────────────────────────────────
             const frase = Semaforo._fraseTecnica(obs, status, inicio);
@@ -1133,6 +1144,14 @@ const NitData = {
                 despachoBlock = `<p class="card-despacho-tipo">${emoji} ${tipoLabel}</p>${equipeHTML}${tsHTML}`;
             }
 
+            // ── Badge de rendição agendada ────────────────────────────────
+            let agendBlock = '';
+            if (agendHora && !isNorm) {
+                const subLabel  = { vl: 'VL', amc: 'AMC' }[agendSub] || agendSub.toUpperCase();
+                const equipeStr = agendEquipe ? ` · ${agendEquipe}` : '';
+                agendBlock = `<p class="card-agendamento">⏰ Rendição ${subLabel} ${agendHora}${equipeStr}</p>`;
+            }
+
             // ── ⏳ Início: pendentes sem despacho ─────────────────────────
             const inicioExib = (!isNorm && !tipo && inicio)
                 ? `<p class="card-inicio">⏳ ${inicio.replace(/(\d{2})\/(\d{2})\/\d{4}/, '$1/$2')}</p>`
@@ -1144,15 +1163,11 @@ const NitData = {
                 : '';
 
             // ── Hierarquia do body ────────────────────────────────────────
-            // 1. Endereço    — informação primária de localização, sempre no topo
-            // 2. Início      — tempo de espera (pendente sem despacho)
-            // 3. Despacho    — tipo + equipe + hora de início da operação
-            // 4. Observação  — contexto adicional
-            // 5. Fim         — resolução (normalizado)
             return `<p class="card-address">${endereco}</p>`
                 + inicioExib
                 + inicioRef
                 + despachoBlock
+                + agendBlock
                 + (obsExibir ? `<p class="card-obs">${obsExibir}</p>` : '')
                 + (fimExib   ? `<p class="card-fim">✅ ${fimExib}</p>` : '');
         },
@@ -2553,6 +2568,22 @@ const NitCentral = {
         if (statusBadge) {
             statusBadge.textContent = sb.label;
             statusBadge.className   = `nit-central-badge ${sb.cls}`;
+        }
+
+        // Zona 2b — banner de rendição agendada (opcional)
+        const agendBanner = document.getElementById('central-agend-banner');
+        const agendHora   = sv(card.dataset.agendamentohora);
+        const agendEquipe = sv(card.dataset.agendamentoequipe);
+        const agendSub    = sv(card.dataset.agendamentosub);
+        if (agendBanner) {
+            if (agendHora) {
+                const subLabel  = { vl: 'VIA LIVRE', amc: 'AMC' }[agendSub] || agendSub.toUpperCase();
+                const equipeStr = agendEquipe ? ` · ${agendEquipe}` : '';
+                agendBanner.innerHTML = `⏰ Rendição agendada: <strong>${agendHora}</strong> — ${subLabel}${equipeStr}`;
+                agendBanner.style.display = '';
+            } else {
+                agendBanner.style.display = 'none';
+            }
         }
     },
 
