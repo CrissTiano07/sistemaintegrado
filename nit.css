@@ -1285,7 +1285,37 @@
 .nit-central-status-faixa {
     display: flex;
     align-items: center;
-    min-height: 24px;
+    min-height: 28px;
+}
+
+.nit-central-status-operacional {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.nit-sop-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: .2px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+.nit-sop-vl   { background: rgba(240,136,62,0.15);  color: #f0883e; border-color: rgba(240,136,62,0.25); }
+.nit-sop-amc  { background: rgba(88,166,255,0.15);  color: #58a6ff; border-color: rgba(88,166,255,0.25); }
+.nit-sop-norm { background: rgba(56,189,107,0.15);  color: #38bd6b; border-color: rgba(56,189,107,0.25); }
+.nit-sop-esp  { background: rgba(251,191,36,0.10);  color: #fbbf24; border-color: rgba(251,191,36,0.20); }
+.nit-sop-sn   { background: rgba(255,255,255,0.05); color: #64748b; }
+
+.nit-sop-equipe {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
 }
 
 /* Zona 2b — banner de rendição agendada */
