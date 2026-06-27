@@ -1662,7 +1662,10 @@ const NitData = {
         handleDragStart(e) {
             AppState.draggedCard = e.target.closest('.kanban-card');
             if (!AppState.draggedCard) return;
-            AppState._wasDrag = true;                          // flag para suprimir click pós-drag
+            // Safari exige setData para reconhecer o drag; Chrome/Firefox são permissivos
+            e.dataTransfer.setData('text/plain', AppState.draggedCard.id);
+            e.dataTransfer.effectAllowed = 'move';
+            AppState._wasDrag = true;
             AppState.placeholder = document.createElement('div');
             AppState.placeholder.className = 'kanban-card drag-placeholder';
             AppState.placeholder.style.height = `${AppState.draggedCard.offsetHeight}px`;
