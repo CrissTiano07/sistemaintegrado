@@ -2942,6 +2942,10 @@ const NitCentral = {
 
             if (elAgend)  elAgend.style.display  = '';
             if (elNormal) elNormal.style.display  = 'none';
+
+            // Derivar Coluna N com o agendamento como evento extra
+            this._buscarHistoricoEDerivar('central-rendicao-coluna-n-exec',
+                { tipo: 'rendição', sub: agendSub, ts: Date.now() + 1 });
         } else {
             if (elAgend)  elAgend.style.display  = 'none';
             if (elNormal) elNormal.style.display  = '';
