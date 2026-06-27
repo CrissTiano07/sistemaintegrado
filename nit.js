@@ -1722,7 +1722,8 @@ const NitData = {
             const origem   = card.dataset.coluna   || 'desconhecido';
             NitFirebase.exec((db, ref, update) =>
                 update(ref(db, `kanban/${eventoId}`), {
-                    coluna, operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '', ts: Date.now(),
+                    coluna, operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '',
+                    ts: firebase.database.ServerValue.TIMESTAMP,
                 })
             );
             gravarHistoricoFirebase(eventoId, origem, coluna, null, null, null, NitLogin.operador);
@@ -2567,21 +2568,28 @@ const NitCentral = {
             tipoLinha.style.display = tipo ? '' : 'none';
         }
 
-        // Zona 2 — status operacional (não pertence à identidade do semáforo)
-        const statusBadge = document.getElementById('central-status-badge');
-        const coluna = sv(card.dataset.coluna);
-        const statusMap = {
-            'NORMALIZADO':            { label: '✅ Normalizado',    cls: 'badge-norm' },
-            'coluna-vl':              { label: '🟠 Via Livre',      cls: 'badge-vl'  },
-            'coluna-amc':             { label: '🔵 AMC em operação', cls: 'badge-amc' },
-            'coluna-espera':          { label: '⏳ Aguardando',      cls: 'badge-esp' },
-            'coluna-sem-necessidade': { label: '— Sem Necessidade', cls: 'badge-sn'  },
-            'coluna-normalizados':    { label: '✅ Normalizado',     cls: 'badge-norm' },
-        };
-        const sb = statusMap[sv(card.dataset.status)] || statusMap[coluna] || { label: coluna || '—', cls: '' };
-        if (statusBadge) {
-            statusBadge.textContent = sb.label;
-            statusBadge.className   = `nit-central-badge ${sb.cls}`;
+        // Zona 2 — status operacional com equipe (não pertence à identidade do semáforo)
+        const statusEl = document.getElementById('central-status-operacional');
+        const coluna   = sv(card.dataset.coluna);
+        const sub      = sv(card.dataset.sub);
+        const equipe   = sv(card.dataset.equipe);
+        const viatura  = sv(card.dataset.viatura);
+        if (statusEl) {
+            let html = '';
+            if (sub && sub !== 'sn') {
+                const emoji    = sub === 'vl' ? '🟠' : '🔵';
+                const label    = sub === 'vl' ? 'VIA LIVRE' : 'AMC';
+                const equipeStr = equipe ? `${equipe}${viatura ? ` · VT ${viatura}` : ''}` : '';
+                html = `<span class="nit-sop-badge nit-sop-${sub}">${emoji} ${label}</span>`
+                     + (equipeStr ? `<span class="nit-sop-equipe">${equipeStr}</span>` : '');
+            } else if (sub === 'sn') {
+                html = `<span class="nit-sop-badge nit-sop-sn">— Sem Necessidade</span>`;
+            } else if (coluna === 'coluna-normalizados' || sv(card.dataset.status) === 'NORMALIZADO') {
+                html = `<span class="nit-sop-badge nit-sop-norm">✅ Normalizado</span>`;
+            } else {
+                html = `<span class="nit-sop-badge nit-sop-esp">⏳ Aguardando despacho</span>`;
+            }
+            statusEl.innerHTML = html;
         }
 
         // Zona 2b — banner de rendição agendada (opcional)
@@ -2724,20 +2732,6 @@ const NitCentral = {
 
         const btnEncerrar = document.getElementById('btn-central-encerrar');
         if (btnEncerrar) btnEncerrar.style.display = sub ? 'flex' : 'none';
-
-        if (sub) {
-            const eq    = sv(card.dataset.equipe);
-            const vt    = sv(card.dataset.viatura);
-            const label = sub === 'vl' ? '🟠 VIA LIVRE' : '🔵 AMC';
-            const html  = `<div class="nit-central-info-despacho-atual">
-                <span>${label}</span>
-                ${eq ? `<span>${eq}${vt ? ` · VT ${vt}` : ''}</span>` : ''}
-            </div>`;
-            const elA = document.getElementById('central-apoio-atual');
-            const elR = document.getElementById('central-rendicao-atual');
-            if (elA) elA.innerHTML = html;
-            if (elR) elR.innerHTML = html;
-        }
     },
 
     // ── Tabs ──────────────────────────────────────────────────────────
