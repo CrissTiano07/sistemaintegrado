@@ -1270,7 +1270,7 @@
 .nit-central-tipo-linha {
     font-size: 10px;
     font-weight: 600;
-    color: #64748b;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: .5px;
     margin-bottom: 10px;
@@ -1313,7 +1313,7 @@
 .nit-sop-amc  { background: rgba(88,166,255,0.15);  color: #58a6ff; border-color: rgba(88,166,255,0.25); }
 .nit-sop-norm { background: rgba(56,189,107,0.15);  color: #38bd6b; border-color: rgba(56,189,107,0.25); }
 .nit-sop-esp  { background: rgba(251,191,36,0.10);  color: #fbbf24; border-color: rgba(251,191,36,0.20); }
-.nit-sop-sn   { background: rgba(255,255,255,0.05); color: #64748b; }
+.nit-sop-sn   { background: rgba(255,255,255,0.05); color: #94a3b8; }
 
 .nit-sop-equipe {
     font-size: 12px;
@@ -1355,8 +1355,8 @@
 .nit-central-badge.badge-amc  { background: rgba(88,166,255,0.15); color: #58a6ff; border-color: rgba(88,166,255,0.25); }
 .nit-central-badge.badge-norm { background: rgba(56,189,107,0.15); color: #38bd6b; border-color: rgba(56,189,107,0.25); }
 .nit-central-badge.badge-esp  { background: rgba(251,191,36,0.10); color: #fbbf24; border-color: rgba(251,191,36,0.2); }
-.nit-central-badge.badge-sn   { background: rgba(255,255,255,0.05); color: #64748b; }
-.nit-central-badge-tipo       { background: rgba(255,255,255,0.04); color: #64748b; }
+.nit-central-badge.badge-sn   { background: rgba(255,255,255,0.05); color: #94a3b8; }
+.nit-central-badge-tipo       { background: rgba(255,255,255,0.04); color: #94a3b8; }
 
 /* Botão fechar — posicionado no header-top via flex */
 .nit-central-fechar {
@@ -1369,7 +1369,7 @@
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 6px;
-    color: #64748b;
+    color: #94a3b8;
     font-size: 13px;
     cursor: pointer;
     transition: background .15s, color .15s;
@@ -1383,7 +1383,7 @@
 
 .nit-central-endereco {
     font-size: 11px;
-    color: #64748b;
+    color: #94a3b8;
     margin-bottom: 2px;
     line-height: 1.4;
     white-space: nowrap;
@@ -1419,7 +1419,7 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #475569;
+    color: #94a3b8;
 }
 
 .nit-central-tempo-valor {
@@ -1485,7 +1485,7 @@
     background: transparent;
     border: 1px solid transparent;
     border-radius: 6px;
-    color: #475569;
+    color: #94a3b8;
     cursor: pointer;
     transition: color .15s, background .15s, border-color .15s;
     line-height: 1;
@@ -1561,7 +1561,7 @@
     display: block;
     font-size: 10px;
     font-weight: 700;
-    color: #475569;
+    color: #94a3b8;
     text-transform: uppercase;
     letter-spacing: .8px;
     margin-bottom: 5px;
@@ -1615,7 +1615,7 @@
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: var(--radius-sm, 6px);
-    color: #64748b;
+    color: #94a3b8;
     cursor: pointer;
     transition: background .15s, border-color .15s, color .15s;
     text-align: center;
@@ -1671,7 +1671,7 @@
     font-size: 12px;
 }
 .nit-central-coluna-n-label {
-    color: #475569;
+    color: #94a3b8;
     white-space: nowrap;
 }
 .nit-central-coluna-n-valor {
@@ -1788,14 +1788,14 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    color: #334155;
+    color: #64748b;
     flex-shrink: 0;
 }
 
 .nit-central-hist-ultimo {
     flex: 1;
     font-size: 10px;
-    color: #475569;
+    color: #94a3b8;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -1804,14 +1804,14 @@
 
 .nit-central-hist-chevron {
     font-size: 9px;
-    color: #334155;
+    color: #64748b;
     flex-shrink: 0;
     transition: transform .2s ease;
 }
 
 .nit-central-historico-vazio {
     font-size: 12px;
-    color: #475569;
+    color: #94a3b8;
     font-style: italic;
     padding: 0 16px 10px;
 }
@@ -1877,5 +1877,5 @@
 
 .nit-central-hist-tipo    { font-size: 11px; font-weight: 700; color: #e2e8f0; text-transform: uppercase; letter-spacing: .4px; }
 .nit-central-hist-detalhe { font-size: 12px; color: #94a3b8; }
-.nit-central-hist-op      { font-size: 10px; color: #475569; }
-.nit-central-hist-ts      { font-size: 11px; color: #64748b; flex-shrink: 0; font-variant-numeric: tabular-nums; margin-top: 2px; text-align: right; min-width: 36px; }
+.nit-central-hist-op      { font-size: 10px; color: #94a3b8; }
+.nit-central-hist-ts      { font-size: 11px; color: #94a3b8; flex-shrink: 0; font-variant-numeric: tabular-nums; margin-top: 2px; text-align: right; min-width: 36px; }
