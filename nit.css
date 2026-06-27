@@ -609,6 +609,19 @@
     font-weight: 600;
     letter-spacing: 0.2px;
 }
+
+.card-agendamento {
+    margin: 4px 0 0;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 0.2px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.18);
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+}
         /*.card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: auto; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); gap: 4px; }
         .card-body-lazy { min-height: 28px; }
         .kanban-card.lazy-pending .card-body-lazy { background: var(--color-border); border-radius: 4px; opacity: .35; }*/
@@ -1089,6 +1102,14 @@
             .modal-container { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; margin: 0; max-height: 100vh; border-radius: 0; }
             .modal-overlay { align-items: flex-end; padding: 0; }
 
+            /* Central da Ocorrência — bottom-sheet em mobile */
+            #modal-central-ocorrencia .modal-container {
+                border-radius: 16px 16px 0 0 !important;
+                max-height: 92vh !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
             /* cards: ainda mais compactos */
             .kanban-card { padding: 8px 10px; }
             .card-scn    { font-size: 13px; }
@@ -1265,6 +1286,22 @@
     display: flex;
     align-items: center;
     min-height: 24px;
+}
+
+/* Zona 2b — banner de rendição agendada */
+.nit-central-agend-banner {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 6px;
+    font-size: 11px;
+    color: #fbbf24;
+    line-height: 1.4;
+}
+.nit-central-agend-banner strong {
+    font-weight: 800;
+    letter-spacing: .3px;
 }
 
 /* Badges */
@@ -1470,7 +1507,8 @@
 .nit-central-body {
     padding: 14px 16px 10px;
     overflow-y: auto;
-    flex-shrink: 0;
+    flex: 1;
+    min-height: 0;
 }
 
 /* Isola labels e inputs do escopo global */
