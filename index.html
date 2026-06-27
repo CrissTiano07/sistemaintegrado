@@ -273,6 +273,9 @@
     <datalist id="lista-monitores"></datalist>
     <datalist id="lista-locais-datalist"></datalist>
     <datalist id="lista-qrus-datalist"></datalist>
+    <!-- Banco de recursos — alimentados por NitRecursos -->
+    <datalist id="datalist-central-equipes"></datalist>
+    <datalist id="datalist-central-vts"></datalist>
     <datalist id="lista-turnos">
         <option value="MANHÃ"></option>
         <option value="TARDE"></option>
@@ -411,11 +414,11 @@
                     <div id="central-despacho-campos-equipe">
                         <div class="form-group">
                             <label>Equipe / Representante</label>
-                            <input type="text" id="central-despacho-equipe" placeholder="Nome da equipe" autocomplete="off">
+                            <input type="text" id="central-despacho-equipe" placeholder="Nome da equipe" list="datalist-central-equipes" autocomplete="off">
                         </div>
                         <div class="form-group">
                             <label>Viatura (VT)</label>
-                            <input type="text" id="central-despacho-vt" placeholder="Número" autocomplete="off">
+                            <input type="text" id="central-despacho-vt" placeholder="Número" list="datalist-central-vts" autocomplete="off">
                         </div>
                     </div>
                     <div class="nit-central-actions">
@@ -435,11 +438,11 @@
                     </div>
                     <div class="form-group">
                         <label>Equipe de Apoio</label>
-                        <input type="text" id="central-apoio-equipe" placeholder="Nome da equipe" autocomplete="off">
+                        <input type="text" id="central-apoio-equipe" placeholder="Nome da equipe" list="datalist-central-equipes" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label>Viatura (VT)</label>
-                        <input type="text" id="central-apoio-vt" placeholder="Número" autocomplete="off">
+                        <input type="text" id="central-apoio-vt" placeholder="Número" list="datalist-central-vts" autocomplete="off">
                     </div>
                     <div class="nit-central-coluna-n-preview" id="central-apoio-preview" style="display:none">
                         <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
@@ -459,11 +462,11 @@
                     </div>
                     <div class="form-group">
                         <label>Equipe que Entra</label>
-                        <input type="text" id="central-rendicao-equipe" placeholder="Nome da equipe" autocomplete="off">
+                        <input type="text" id="central-rendicao-equipe" placeholder="Nome da equipe" list="datalist-central-equipes" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label>Viatura (VT)</label>
-                        <input type="text" id="central-rendicao-vt" placeholder="Número" autocomplete="off">
+                        <input type="text" id="central-rendicao-vt" placeholder="Número" list="datalist-central-vts" autocomplete="off">
                     </div>
                     <div class="nit-central-coluna-n-preview">
                         <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
