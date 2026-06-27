@@ -474,40 +474,55 @@
 
                 <!-- ── Rendição ─────────────────────────────────── -->
                 <div class="nit-central-panel" id="central-panel-rendicao" style="display:none">
-                    <div class="nit-central-tipo-selector">
-                        <button class="nit-central-tipo-btn active" data-tipo="vl">🟠 Via Livre</button>
-                        <button class="nit-central-tipo-btn" data-tipo="amc">🔵 AMC</button>
-                    </div>
-                    <div class="form-group">
-                        <label>Equipe que Entra</label>
-                        <input type="text" id="central-rendicao-equipe" placeholder="Nome da equipe" list="datalist-central-equipes" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label>Viatura (VT)</label>
-                        <input type="text" id="central-rendicao-vt" placeholder="Número" list="datalist-central-vts" autocomplete="off">
-                    </div>
-                    <div class="nit-central-coluna-n-preview">
-                        <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
-                        <span class="nit-central-coluna-n-valor" id="central-rendicao-coluna-n">—</span>
-                    </div>
 
-                    <!-- Agendamento -->
-                    <div class="nit-central-agendamento">
-                        <label class="nit-central-agendar-label">
-                            <input type="checkbox" id="central-rendicao-agendar" class="nit-central-agendar-check">
-                            <span>Agendar para horário específico</span>
-                        </label>
-                        <div class="nit-central-agendar-campos" id="central-rendicao-agendar-campos" style="display:none">
-                            <div class="form-group" style="margin-top:8px;margin-bottom:0">
-                                <label>Horário da Rendição</label>
-                                <input type="time" id="central-rendicao-hora-agendada">
-                            </div>
+                    <!-- Estado A: rendição agendada pendente → executar -->
+                    <div id="central-rendicao-agendada" style="display:none">
+                        <div class="nit-central-agend-execucao" id="central-agend-execucao-info"></div>
+                        <div class="form-group">
+                            <label>Hora real de execução</label>
+                            <input type="time" id="central-rendicao-hora-real">
+                        </div>
+                        <div class="nit-central-actions">
+                            <button class="btn btn-secundario" id="btn-central-cancelar-agend">Cancelar Agendamento</button>
+                            <button class="btn btn-primario"   id="btn-central-executar-rendicao">Executar Rendição</button>
                         </div>
                     </div>
 
-                    <div class="nit-central-actions">
-                        <button class="btn btn-primario" id="btn-central-rendicao">Registrar Rendição</button>
+                    <!-- Estado B: sem agendamento → agendar nova rendição -->
+                    <div id="central-rendicao-normal">
+                        <div class="nit-central-tipo-selector">
+                            <button class="nit-central-tipo-btn active" data-tipo="vl">🟠 Via Livre</button>
+                            <button class="nit-central-tipo-btn" data-tipo="amc">🔵 AMC</button>
+                        </div>
+                        <div class="form-group">
+                            <label>Equipe que Entra</label>
+                            <input type="text" id="central-rendicao-equipe" placeholder="Nome da equipe" list="datalist-central-equipes" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label>Viatura (VT)</label>
+                            <input type="text" id="central-rendicao-vt" placeholder="Número" list="datalist-central-vts" autocomplete="off">
+                        </div>
+                        <div class="nit-central-coluna-n-preview">
+                            <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
+                            <span class="nit-central-coluna-n-valor" id="central-rendicao-coluna-n">—</span>
+                        </div>
+                        <div class="nit-central-agendamento">
+                            <label class="nit-central-agendar-label">
+                                <input type="checkbox" id="central-rendicao-agendar" class="nit-central-agendar-check">
+                                <span>Agendar para horário específico</span>
+                            </label>
+                            <div class="nit-central-agendar-campos" id="central-rendicao-agendar-campos" style="display:none">
+                                <div class="form-group" style="margin-top:8px;margin-bottom:0">
+                                    <label>Horário da Rendição</label>
+                                    <input type="time" id="central-rendicao-hora-agendada">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="nit-central-actions">
+                            <button class="btn btn-primario" id="btn-central-rendicao">Registrar Rendição</button>
+                        </div>
                     </div>
+
                 </div>
 
                 <!-- ── Normalizar ───────────────────────────────── -->
