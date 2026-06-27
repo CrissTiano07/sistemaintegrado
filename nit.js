@@ -1025,6 +1025,10 @@ const NitData = {
                                     || '',
                     // coluna lida do dataset em tempo de render (pode ter mudado desde cardData)
                     coluna:       card.dataset.coluna   || cardData.coluna           || '',
+                    // Agendamento de rendição
+                    agendamentohora:   cardData.agendamento?.horaAgendada || card.dataset.agendamentohora   || '',
+                    agendamentoequipe: cardData.agendamento?.equipe        || card.dataset.agendamentoequipe || '',
+                    agendamentosub:    cardData.agendamento?.sub           || card.dataset.agendamentosub    || '',
                 });
             };
 
