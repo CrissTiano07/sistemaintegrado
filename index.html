@@ -406,10 +406,11 @@
 
             <!-- Tabs -->
             <div class="nit-central-tabs" role="tablist">
-                <button class="nit-central-tab active" data-tab="despacho" role="tab">Despacho</button>
-                <button class="nit-central-tab" data-tab="apoio" role="tab">Apoio</button>
-                <button class="nit-central-tab" data-tab="rendicao" role="tab">Rendição</button>
-                <button class="nit-central-tab" data-tab="normalizar" role="tab">Normalizar</button>
+                <button class="nit-central-tab active" data-tab="despacho"  role="tab"><span class="nit-tab-icon">▶</span>Despacho</button>
+                <button class="nit-central-tab"        data-tab="apoio"     role="tab"><span class="nit-tab-icon">＋</span>Apoio</button>
+                <button class="nit-central-tab"        data-tab="rendicao"  role="tab"><span class="nit-tab-icon">⇄</span>Rendição</button>
+                <div class="nit-tab-divider"></div>
+                <button class="nit-central-tab nit-tab-encerrar" data-tab="normalizar" role="tab"><span class="nit-tab-icon">✓</span>Normalizar</button>
             </div>
 
             <!-- Painéis -->
@@ -483,6 +484,21 @@
                         <span class="nit-central-coluna-n-label">Coluna N resultante:</span>
                         <span class="nit-central-coluna-n-valor" id="central-rendicao-coluna-n">—</span>
                     </div>
+
+                    <!-- Agendamento -->
+                    <div class="nit-central-agendamento">
+                        <label class="nit-central-agendar-label">
+                            <input type="checkbox" id="central-rendicao-agendar" class="nit-central-agendar-check">
+                            <span>Agendar para horário específico</span>
+                        </label>
+                        <div class="nit-central-agendar-campos" id="central-rendicao-agendar-campos" style="display:none">
+                            <div class="form-group" style="margin-top:8px;margin-bottom:0">
+                                <label>Horário da Rendição</label>
+                                <input type="time" id="central-rendicao-hora-agendada">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="nit-central-actions">
                         <button class="btn btn-primario" id="btn-central-rendicao">Registrar Rendição</button>
                     </div>
