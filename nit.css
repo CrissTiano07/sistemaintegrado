@@ -10,7 +10,7 @@
             --color-border2: #243450;
             --color-text-primary:   #f8faff; 
             --color-text-secondary: #b0c8e8;
-            --color-text-tertiary:  #7a8fa8;
+            --color-text-tertiary:  #94a3b8;
             --color-success: #22C55E;
             --color-warning: #EAB308;
             --color-danger:  #EF4444;
@@ -590,7 +590,6 @@
     font-size: 10px;
     color: var(--color-text-tertiary);
     margin: 0 0 4px;
-    opacity: 0.8;
 }
 
 /* 3. Observação — contexto adicional */
@@ -921,7 +920,7 @@
         @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
         #busca-global-input-wrap { display: flex; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--color-border); gap: 10px; }
         #busca-global-input { flex: 1; background: none; border: none; outline: none !important; box-shadow: none !important; -webkit-appearance: none; font-family: var(--font-family-sans); font-size: 15px; color: var(--color-text-primary); padding: 18px 0; }
-        #busca-global-input::placeholder { color: #64748b; }
+        #busca-global-input::placeholder { color: #94a3b8; }
         #busca-global-esc { background: none; border: 1px solid var(--color-border); border-radius: 4px; color: var(--color-text-tertiary); font-size: 10px; padding: 2px 6px; cursor: pointer; flex-shrink: 0; font-family: var(--font-family-mono); }
         #busca-global-resultados { max-height: 340px; overflow-y: auto; }
         .busca-resultado-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--color-border); transition: background 0.15s; }
