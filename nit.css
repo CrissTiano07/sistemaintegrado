@@ -1200,9 +1200,12 @@
 
 /* ══════════════════════════════════════════════════════════════════
    NitCentral — Central da Ocorrência
+   Escopo: #modal-central-ocorrencia e .nit-central-*
+   Isolado para não conflitar com regras globais de form-group, label, input
    ══════════════════════════════════════════════════════════════════ */
 
-.nit-central-container {
+/* ── Container ────────────────────────────────────────────────────── */
+#modal-central-ocorrencia .modal-container {
     max-width: 520px;
     width: 96%;
     max-height: 90vh;
@@ -1211,21 +1214,24 @@
     padding: 0;
     border-radius: var(--radius-lg);
     overflow: hidden;
+    background: #0d1826;
+    border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Header ─────────────────────────────────────────────────────────── */
+/* ── Header ────────────────────────────────────────────────────────── */
 .nit-central-header {
-    background: linear-gradient(135deg, #0f1f35 0%, #0a1525 100%);
-    padding: 16px 18px 12px;
+    background: linear-gradient(160deg, #101f35 0%, #080f1e 100%);
+    padding: 14px 16px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.07);
     flex-shrink: 0;
 }
 
 .nit-central-header-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    gap: 8px;
 }
 
 .nit-central-identidade {
@@ -1233,247 +1239,333 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 .nit-central-codigo {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 800;
-    color: var(--color-text-primary);
-    letter-spacing: -0.5px;
+    color: #f1f5f9;
+    letter-spacing: -0.3px;
+    line-height: 1;
 }
 
+/* Badges */
 .nit-central-badge {
-    font-size: 11px;
-    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
     padding: 2px 8px;
     border-radius: 20px;
-    background: rgba(255,255,255,0.08);
-    color: var(--color-text-secondary);
+    letter-spacing: .3px;
+    background: rgba(255,255,255,0.07);
+    color: #94a3b8;
+    border: 1px solid transparent;
+    white-space: nowrap;
 }
-.nit-central-badge.badge-vl   { background: rgba(240,136,62,0.15); color: #f0883e; }
-.nit-central-badge.badge-amc  { background: rgba(88,166,255,0.15); color: #58a6ff; }
-.nit-central-badge.badge-norm { background: rgba(56,189,107,0.15); color: #38bd6b; }
-.nit-central-badge.badge-esp  { background: rgba(251,191,36,0.12); color: #fbbf24; }
-.nit-central-badge.badge-sn   { background: rgba(255,255,255,0.06); color: #6b7280; }
-.nit-central-badge-tipo       { background: rgba(255,255,255,0.05); color: var(--color-text-muted); }
+.nit-central-badge.badge-vl   { background: rgba(240,136,62,0.15); color: #f0883e; border-color: rgba(240,136,62,0.25); }
+.nit-central-badge.badge-amc  { background: rgba(88,166,255,0.15); color: #58a6ff; border-color: rgba(88,166,255,0.25); }
+.nit-central-badge.badge-norm { background: rgba(56,189,107,0.15); color: #38bd6b; border-color: rgba(56,189,107,0.25); }
+.nit-central-badge.badge-esp  { background: rgba(251,191,36,0.10); color: #fbbf24; border-color: rgba(251,191,36,0.2); }
+.nit-central-badge.badge-sn   { background: rgba(255,255,255,0.05); color: #64748b; }
+.nit-central-badge-tipo       { background: rgba(255,255,255,0.04); color: #64748b; }
 
+/* Botão fechar — posicionado no header-top via flex */
 .nit-central-fechar {
-    background: none;
-    border: none;
-    color: var(--color-text-muted);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 4px;
-    line-height: 1;
-    transition: color .15s, background .15s;
     flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    color: #64748b;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    line-height: 1;
 }
-.nit-central-fechar:hover { color: var(--color-text-primary); background: rgba(255,255,255,0.08); }
+.nit-central-fechar:hover {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.3);
+    color: #ef4444;
+}
 
 .nit-central-endereco {
-    font-size: 12px;
-    color: var(--color-text-secondary);
+    font-size: 11px;
+    color: #64748b;
     margin-bottom: 10px;
     line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+/* Timers */
 .nit-central-tempos {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 }
 
 .nit-central-tempo {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
 }
 
 .nit-central-tempo-label {
     font-size: 9px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .8px;
-    color: var(--color-text-muted);
+    letter-spacing: 1px;
+    color: #475569;
 }
 
 .nit-central-tempo-valor {
-    font-size: 18px;
+    font-size: 1.2rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: var(--color-text-primary);
     letter-spacing: -0.5px;
+    color: #f1f5f9;
+    line-height: 1;
 }
 
 .nit-central-tempo-op { color: #58a6ff; }
 
 .nit-central-tempo-sep {
     width: 1px;
-    height: 32px;
-    background: rgba(255,255,255,0.1);
+    height: 28px;
+    background: rgba(255,255,255,0.08);
+    flex-shrink: 0;
 }
 
-/* Tabs ───────────────────────────────────────────────────────────── */
+/* ── Tabs ───────────────────────────────────────────────────────────── */
 .nit-central-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.25);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
     flex-shrink: 0;
 }
 
 .nit-central-tab {
     flex: 1;
-    padding: 10px 6px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 10px 4px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .6px;
+    letter-spacing: .8px;
     background: none;
     border: none;
-    color: var(--color-text-muted);
-    cursor: pointer;
     border-bottom: 2px solid transparent;
+    color: #475569;
+    cursor: pointer;
     transition: color .15s, border-color .15s;
+    line-height: 1;
+}
+.nit-central-tab:hover:not(:disabled):not(.disabled) {
+    color: #94a3b8;
+}
+.nit-central-tab.active {
+    color: var(--color-accent, #58a6ff);
+    border-bottom-color: var(--color-accent, #58a6ff);
+}
+.nit-central-tab.disabled,
+.nit-central-tab:disabled {
+    opacity: .3;
+    cursor: not-allowed;
 }
 
-.nit-central-tab:hover:not(.disabled) { color: var(--color-text-secondary); }
-.nit-central-tab.active  { color: var(--color-accent); border-bottom-color: var(--color-accent); }
-.nit-central-tab.disabled { opacity: .3; cursor: not-allowed; }
-
-/* Body / Painéis ─────────────────────────────────────────────────── */
+/* ── Painéis ────────────────────────────────────────────────────────── */
 .nit-central-body {
-    padding: 16px 18px 12px;
+    padding: 14px 16px 10px;
     overflow-y: auto;
     flex-shrink: 0;
 }
 
-.nit-central-panel .form-group { margin-bottom: 12px; }
-.nit-central-panel .form-group label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    letter-spacing: .7px;
-    margin-bottom: 5px;
+/* Isola labels e inputs do escopo global */
+#modal-central-ocorrencia .form-group {
+    margin-bottom: 10px;
 }
-.nit-central-panel .form-group input,
-.nit-central-panel .form-group textarea,
-.nit-central-panel .form-group select {
+
+#modal-central-ocorrencia .form-group label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 5px;
+    /* Reset de qualquer cor global */
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+#modal-central-ocorrencia .form-group input[type="text"],
+#modal-central-ocorrencia .form-group input[type="date"],
+#modal-central-ocorrencia .form-group input[type="time"],
+#modal-central-ocorrencia .form-group textarea {
     width: 100%;
     box-sizing: border-box;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
     padding: 9px 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm, 6px);
+    color: #f1f5f9;
     font-size: 13px;
+    font-family: var(--font-family-sans, 'Inter', sans-serif);
     transition: border-color .2s;
+    outline: none;
 }
-.nit-central-panel .form-group input:focus,
-.nit-central-panel .form-group textarea:focus { outline: none; border-color: var(--color-accent); }
-.nit-central-panel textarea { resize: vertical; min-height: 64px; }
+#modal-central-ocorrencia .form-group input:focus,
+#modal-central-ocorrencia .form-group textarea:focus {
+    border-color: var(--color-accent, #58a6ff);
+}
+#modal-central-ocorrencia .form-group input[type="date"],
+#modal-central-ocorrencia .form-group input[type="time"] {
+    color-scheme: dark;
+}
+#modal-central-ocorrencia .form-group textarea {
+    resize: vertical;
+    min-height: 60px;
+}
 
-/* Tipo selector ──────────────────────────────────────────────────── */
+/* ── Tipo selector ──────────────────────────────────────────────────── */
 .nit-central-tipo-selector {
     display: flex;
     gap: 6px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
 
 .nit-central-tipo-btn {
     flex: 1;
-    padding: 9px 6px;
-    font-size: 12px;
+    padding: 8px 4px;
+    font-size: 11px;
     font-weight: 600;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm, 6px);
+    color: #64748b;
     cursor: pointer;
     transition: background .15s, border-color .15s, color .15s;
     text-align: center;
+    line-height: 1.3;
 }
-.nit-central-tipo-btn:hover { background: rgba(255,255,255,0.08); }
-.nit-central-tipo-btn[data-tipo="vl"].active  { background: rgba(240,136,62,0.15); border-color: #f0883e; color: #f0883e; }
-.nit-central-tipo-btn[data-tipo="amc"].active { background: rgba(88,166,255,0.15); border-color: #58a6ff; color: #58a6ff; }
-.nit-central-tipo-btn[data-tipo="sn"].active  { background: rgba(255,255,255,0.08); border-color: #6b7280; color: #9ca3af; }
+.nit-central-tipo-btn:hover {
+    background: rgba(255,255,255,0.07);
+    color: #94a3b8;
+}
+.nit-central-tipo-btn[data-tipo="vl"].active {
+    background: rgba(240,136,62,0.12);
+    border-color: rgba(240,136,62,0.4);
+    color: #f0883e;
+}
+.nit-central-tipo-btn[data-tipo="amc"].active {
+    background: rgba(88,166,255,0.12);
+    border-color: rgba(88,166,255,0.4);
+    color: #58a6ff;
+}
+.nit-central-tipo-btn[data-tipo="sn"].active {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.15);
+    color: #94a3b8;
+}
 
-/* Info despacho atual ────────────────────────────────────────────── */
+/* ── Info despacho atual (Apoio / Rendição) ─────────────────────────── */
+.nit-central-info-atual {
+    margin-bottom: 12px;
+}
+
 .nit-central-info-despacho-atual {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.04);
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(255,255,255,0.06);
+    padding: 7px 11px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius-sm, 6px);
     font-size: 12px;
-    color: var(--color-text-secondary);
-    margin-bottom: 14px;
+    color: #94a3b8;
 }
 
-/* Preview Coluna N ───────────────────────────────────────────────── */
+/* ── Preview Coluna N ───────────────────────────────────────────────── */
 .nit-central-coluna-n-preview {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
-    background: rgba(88,166,255,0.06);
-    border: 1px solid rgba(88,166,255,0.2);
-    border-radius: var(--radius-sm);
+    padding: 7px 11px;
+    background: rgba(88,166,255,0.05);
+    border: 1px solid rgba(88,166,255,0.15);
+    border-radius: var(--radius-sm, 6px);
     margin-bottom: 12px;
     font-size: 12px;
 }
-.nit-central-coluna-n-label { color: var(--color-text-muted); }
-.nit-central-coluna-n-valor { font-weight: 700; color: #58a6ff; font-family: var(--font-family-mono); }
+.nit-central-coluna-n-label {
+    color: #475569;
+    white-space: nowrap;
+}
+.nit-central-coluna-n-valor {
+    font-weight: 700;
+    color: #58a6ff;
+    font-family: var(--font-family-mono, monospace);
+}
 
-/* Actions ────────────────────────────────────────────────────────── */
+/* ── Actions ────────────────────────────────────────────────────────── */
 .nit-central-actions {
     display: flex;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 6px;
 }
-.nit-central-actions .btn { flex: 1; }
+.nit-central-actions .btn {
+    flex: 1;
+}
+
 .nit-central-btn-encerrar {
-    background: rgba(239,68,68,0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239,68,68,0.25);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
+    padding: 8px 12px;
+    background: rgba(239,68,68,0.08);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius-sm, 6px);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
     transition: background .15s;
 }
-.nit-central-btn-encerrar:hover { background: rgba(239,68,68,0.2); }
+.nit-central-btn-encerrar:hover {
+    background: rgba(239,68,68,0.18);
+    border-color: rgba(239,68,68,0.35);
+}
 
-/* Histórico ──────────────────────────────────────────────────────── */
+/* ── Histórico ──────────────────────────────────────────────────────── */
 .nit-central-historico {
-    border-top: 1px solid rgba(255,255,255,0.07);
-    padding: 12px 18px 16px;
-    max-height: 180px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 16px 14px;
+    max-height: 160px;
     overflow-y: auto;
     flex-shrink: 0;
 }
 
 .nit-central-historico-titulo {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--color-text-muted);
+    letter-spacing: 1.2px;
+    color: #334155;
     margin-bottom: 8px;
 }
 
 .nit-central-historico-vazio {
     font-size: 12px;
-    color: var(--color-text-muted);
+    color: #475569;
     font-style: italic;
 }
 
@@ -1486,7 +1578,13 @@
 }
 .nit-central-historico-item:last-child { border-bottom: none; }
 
-.nit-central-hist-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.nit-central-hist-icon {
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    width: 18px;
+    text-align: center;
+}
 
 .nit-central-hist-body {
     flex: 1;
@@ -1496,7 +1594,7 @@
     min-width: 0;
 }
 
-.nit-central-hist-tipo    { font-size: 12px; font-weight: 600; color: var(--color-text-primary); }
-.nit-central-hist-detalhe { font-size: 11px; color: var(--color-text-secondary); }
-.nit-central-hist-op      { font-size: 10px; color: var(--color-text-muted); }
-.nit-central-hist-ts      { font-size: 11px; color: var(--color-text-muted); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.nit-central-hist-tipo    { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+.nit-central-hist-detalhe { font-size: 11px; color: #94a3b8; }
+.nit-central-hist-op      { font-size: 10px; color: #475569; }
+.nit-central-hist-ts      { font-size: 11px; color: #475569; flex-shrink: 0; font-variant-numeric: tabular-nums; margin-top: 1px; }
