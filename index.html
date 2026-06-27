@@ -371,23 +371,34 @@
 
             <!-- Header -->
             <div class="nit-central-header">
+                <!-- Zona 1: Identidade do semáforo -->
                 <div class="nit-central-header-top">
-                    <div class="nit-central-identidade">
-                        <span class="nit-central-codigo" id="central-codigo">---</span>
-                        <span class="nit-central-badge" id="central-status-badge"></span>
-                        <span class="nit-central-badge nit-central-badge-tipo" id="central-tipo-badge"></span>
-                    </div>
+                    <span class="nit-central-codigo" id="central-codigo">---</span>
                     <button class="nit-central-fechar" id="btn-central-fechar" aria-label="Fechar">✕</button>
                 </div>
                 <div class="nit-central-endereco" id="central-endereco"></div>
+                <div class="nit-central-tipo-linha" id="central-tipo-linha"></div>
+
+                <!-- Divider -->
+                <div class="nit-central-divider"></div>
+
+                <!-- Zona 2: Status operacional -->
+                <div class="nit-central-status-faixa">
+                    <span class="nit-central-badge" id="central-status-badge"></span>
+                </div>
+
+                <!-- Divider -->
+                <div class="nit-central-divider"></div>
+
+                <!-- Zona 3: Timers SLA -->
                 <div class="nit-central-tempos">
                     <div class="nit-central-tempo">
-                        <span class="nit-central-tempo-label">⏱ Registro (SLA Total)</span>
+                        <span class="nit-central-tempo-label">⏱ Registro</span>
                         <span class="nit-central-tempo-valor" id="central-tempo-sla">--:--</span>
                     </div>
                     <div class="nit-central-tempo-sep"></div>
                     <div class="nit-central-tempo">
-                        <span class="nit-central-tempo-label">⏱ Atendimento (Operação)</span>
+                        <span class="nit-central-tempo-label">⏱ Operação</span>
                         <span class="nit-central-tempo-valor nit-central-tempo-op" id="central-tempo-op">--:--</span>
                     </div>
                 </div>
