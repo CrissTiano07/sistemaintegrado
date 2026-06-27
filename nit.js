@@ -611,6 +611,7 @@ const NitData = {
                     el.dataset.agendamentohora   = dados.agendamento?.horaAgendada || '';
                     el.dataset.agendamentoequipe = dados.agendamento?.equipe        || '';
                     el.dataset.agendamentosub    = dados.agendamento?.sub           || '';
+                    el.dataset.agendamentovt     = dados.agendamento?.vt            || '';
                     if (coluna === 'coluna-normalizados') {
                         container.prepend(el);
                         // Reordena após inserção — Firebase pode entregar fora de ordem
@@ -647,6 +648,7 @@ const NitData = {
                     el.dataset.agendamentohora   = dados.agendamento?.horaAgendada || '';
                     el.dataset.agendamentoequipe = dados.agendamento?.equipe        || '';
                     el.dataset.agendamentosub    = dados.agendamento?.sub           || '';
+                    el.dataset.agendamentovt     = dados.agendamento?.vt            || '';
 
                     // Rerenderiza usando o método compartilhado
                     const bodyEl = el.querySelector('.card-body');
@@ -1036,6 +1038,7 @@ const NitData = {
                     agendamentohora:   cardData.agendamento?.horaAgendada || card.dataset.agendamentohora   || '',
                     agendamentoequipe: cardData.agendamento?.equipe        || card.dataset.agendamentoequipe || '',
                     agendamentosub:    cardData.agendamento?.sub           || card.dataset.agendamentosub    || '',
+                    agendamentovt:     cardData.agendamento?.vt            || card.dataset.agendamentovt     || '',
                 });
             };
 
@@ -1120,6 +1123,7 @@ const NitData = {
             const agendHora    = _sv(d.agendamentohora);
             const agendEquipe  = _sv(d.agendamentoequipe);
             const agendSub     = _sv(d.agendamentosub);
+            const agendVt      = _sv(d.agendamentovt);
 
             // ── Observação ────────────────────────────────────────────────
             const frase = Semaforo._fraseTecnica(obs, status, inicio);
@@ -1157,9 +1161,10 @@ const NitData = {
             // ── Badge de rendição agendada ────────────────────────────────
             let agendBlock = '';
             if (agendHora && !isNorm) {
-                const subLabel  = { vl: 'VL', amc: 'AMC' }[agendSub] || agendSub.toUpperCase();
-                const equipeStr = agendEquipe ? ` · ${agendEquipe}` : '';
-                agendBlock = `<p class="card-agendamento">⏰ Rendição ${subLabel} ${agendHora}${equipeStr}</p>`;
+                const subLabel   = { vl: 'VL', amc: 'AMC' }[agendSub] || agendSub.toUpperCase();
+                const equipeStr  = agendEquipe ? ` · ${agendEquipe}` : '';
+                const vtStr      = agendVt ? ` · VT ${agendVt}` : '';
+                agendBlock = `<p class="card-agendamento">⏰ Rendição ${subLabel} ${agendHora}${equipeStr}${vtStr}</p>`;
             }
 
             // ── ⏳ Início: pendentes sem despacho ─────────────────────────
@@ -2769,7 +2774,7 @@ const NitCentral = {
             p.style.display = p.id === `central-panel-${aba}` ? '' : 'none';
         });
         if (aba === 'normalizar') this._preencherNormalizarDefaults();
-        if (aba === 'rendicao')   this._atualizarPreviewRendicao();
+        if (aba === 'rendicao')   { this._atualizarPreviewRendicao(); this._renderEstadoRendicao(); }
     },
 
     _preencherNormalizarDefaults() {
@@ -2907,6 +2912,113 @@ const NitCentral = {
         NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
         showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
         this.fechar();
+    },
+
+    // ── Estado do painel de Rendição ─────────────────────────────────
+    _renderEstadoRendicao() {
+        const card    = this._card; if (!card) return;
+        const sv      = this._sv;
+        const agendHora   = sv(card.dataset.agendamentohora);
+        const agendEquipe = sv(card.dataset.agendamentoequipe);
+        const agendSub    = sv(card.dataset.agendamentosub);
+        const agendVt     = sv(card.dataset.agendamentovt);
+
+        const elAgend  = document.getElementById('central-rendicao-agendada');
+        const elNormal = document.getElementById('central-rendicao-normal');
+
+        if (agendHora) {
+            // Preencher info do agendamento
+            const subLabel = { vl: '🟠 VIA LIVRE', amc: '🔵 AMC' }[agendSub] || agendSub.toUpperCase();
+            const vtStr    = agendVt ? ` · VT ${agendVt}` : '';
+            const infoEl   = document.getElementById('central-agend-execucao-info');
+            if (infoEl) infoEl.innerHTML =
+                `<span class="nit-agend-exec-hora">⏰ ${agendHora}</span>` +
+                `<span class="nit-agend-exec-sub">${subLabel}</span>` +
+                (agendEquipe ? `<span class="nit-agend-exec-equipe">${agendEquipe}${vtStr}</span>` : '');
+
+            // Pré-preencher hora real com hora agendada
+            const horaRealEl = document.getElementById('central-rendicao-hora-real');
+            if (horaRealEl) horaRealEl.value = agendHora;
+
+            if (elAgend)  elAgend.style.display  = '';
+            if (elNormal) elNormal.style.display  = 'none';
+        } else {
+            if (elAgend)  elAgend.style.display  = 'none';
+            if (elNormal) elNormal.style.display  = '';
+        }
+    },
+
+    // ── Executar rendição agendada ────────────────────────────────────
+    confirmarExecutarRendicao() {
+        const card = this._card; if (!card) return;
+        const sv   = this._sv;
+        const agendEquipe = sv(card.dataset.agendamentoequipe);
+        const agendVt     = sv(card.dataset.agendamentovt);
+        const agendSub    = sv(card.dataset.agendamentosub);
+        const horaReal    = document.getElementById('central-rendicao-hora-real')?.value || '';
+
+        if (!horaReal)    { showToast('Informe a hora real de execução.', 'warning'); return; }
+        if (!agendEquipe) { showToast('Agendamento sem equipe definida.', 'warning'); return; }
+
+        // Calcular ts a partir da hora real (data de hoje)
+        const [h, m]   = horaReal.split(':').map(Number);
+        const agora    = new Date();
+        const tsExec   = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), h, m).getTime();
+
+        const eventoId   = sv(card.dataset.eventoid) || card.id;
+        const colunaMap  = { vl: 'coluna-vl', amc: 'coluna-amc' };
+        const colunaDest = colunaMap[agendSub] || 'coluna-vl';
+
+        NitFirebase.exec((db, ref, update) => {
+            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+            const updates = {};
+            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                tipo: 'rendição', sub: agendSub, equipe: agendEquipe,
+                vt: agendVt, ts: tsExec, operador: NitLogin.operador || 'anon',
+            };
+            Object.assign(updates, {
+                [`kanban/${eventoId}/equipe`]:       agendEquipe,
+                [`kanban/${eventoId}/viatura`]:      agendVt,
+                [`kanban/${eventoId}/sub`]:          agendSub,
+                [`kanban/${eventoId}/equipeApoio`]:  '',
+                [`kanban/${eventoId}/viaturaApoio`]: '',
+                [`kanban/${eventoId}/agendamento`]:  null,
+                [`kanban/${eventoId}/coluna`]:       colunaDest,
+                [`kanban/${eventoId}/tsDespacho`]:   tsExec,
+                [`kanban/${eventoId}/operador`]:     NitLogin.operador || 'anon',
+            });
+            update(ref(db, '/'), updates);
+        });
+
+        // Atualizar DOM imediatamente
+        const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
+        if (container) container.appendChild(card);
+        Object.assign(card.dataset, {
+            coluna: colunaDest, equipe: agendEquipe, viatura: agendVt, sub: agendSub,
+            agendamentohora: '', agendamentoequipe: '', agendamentosub: '', agendamentovt: '',
+        });
+        NitRecursos.aprenderDeDespacho(agendEquipe, agendVt, agendSub);
+        showToast(`Rendição executada às ${horaReal}.`, 'success');
+        this.fechar();
+    },
+
+    // ── Cancelar agendamento ──────────────────────────────────────────
+    cancelarAgendamento() {
+        const card = this._card; if (!card) return;
+        const eventoId = this._sv(card.dataset.eventoid) || card.id;
+        nitConfirm('Cancelar Agendamento',
+            'Remover a rendição agendada? O card permanece no estado atual.',
+            () => {
+                NitFirebase.exec((db, ref, update) =>
+                    update(ref(db, `kanban/${eventoId}`), { agendamento: null })
+                );
+                Object.assign(card.dataset, {
+                    agendamentohora: '', agendamentoequipe: '',
+                    agendamentosub: '', agendamentovt: '',
+                });
+                showToast('Agendamento cancelado.', 'info');
+                this.fechar();
+            });
     },
 
     confirmarRendicao() {
@@ -3059,11 +3171,13 @@ const NitCentral = {
 
         // Botões de ação
         const bind = (id, fn) => document.getElementById(id)?.addEventListener('click', () => fn.call(this));
-        bind('btn-central-despachar',  this.confirmarDespacho);
-        bind('btn-central-encerrar',   this.confirmarEncerrar);
-        bind('btn-central-apoio',      this.confirmarApoio);
-        bind('btn-central-rendicao',   this.confirmarRendicao);
-        bind('btn-central-normalizar', this.confirmarNormalizar);
+        bind('btn-central-despachar',         this.confirmarDespacho);
+        bind('btn-central-encerrar',          this.confirmarEncerrar);
+        bind('btn-central-apoio',             this.confirmarApoio);
+        bind('btn-central-rendicao',          this.confirmarRendicao);
+        bind('btn-central-executar-rendicao', this.confirmarExecutarRendicao);
+        bind('btn-central-cancelar-agend',    this.cancelarAgendamento);
+        bind('btn-central-normalizar',        this.confirmarNormalizar);
 
         // Toggle do histórico colapsável
         const histHeader = document.getElementById('central-hist-header');
