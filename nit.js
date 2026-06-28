@@ -2623,37 +2623,33 @@ const NitCentral = {
     // ── Timers ───────────────────────────────────────────────────────
     _iniciarTimers(card) {
         this._pararTimers();
-        const sv        = this._sv;
-        const tsInicio  = this._parseBR(sv(card.dataset.inicio));
-        const eventoId  = sv(card.dataset.eventoid) || card.id;
-        const elSLA     = document.getElementById('central-tempo-sla');
-        const elOp      = document.getElementById('central-tempo-op');
+        const sv       = this._sv;
+        const tsInicio = this._parseBR(sv(card.dataset.inicio));
+        const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;   // despacho atual, não o primeiro
+        const elSLA    = document.getElementById('central-tempo-sla');
+        const elOp     = document.getElementById('central-tempo-op');
 
-        firebase.database().ref(`kanban/${eventoId}/tsFirstDispatch`).get()
-            .then(snap => {
-                const tsOp = snap.exists() ? snap.val() : 0;
-                const tick = () => {
-                    const now = Date.now();
-                    if (elSLA) {
-                        elSLA.textContent = tsInicio ? this._formatDelta(now - tsInicio) : '--:--';
-                        if (tsInicio) {
-                            const h = (now - tsInicio) / 3600000;
-                            elSLA.className = 'nit-central-tempo-valor' +
-                                (h > 8 ? ' sla-critico' : h > 4 ? ' sla-alerta' : ' sla-ok');
-                        }
-                    }
-                    if (elOp) {
-                        elOp.textContent = tsOp ? this._formatDelta(now - tsOp) : '--:--';
-                        if (tsOp) {
-                            const hOp = (now - tsOp) / 3600000;
-                            elOp.className = 'nit-central-tempo-valor nit-central-tempo-op' +
-                                (hOp > 2 ? ' sla-critico' : hOp > 1 ? ' sla-alerta' : ' sla-ok');
-                        }
-                    }
-                };
-                tick();
-                this._timerSLA = setInterval(tick, 10000);
-            });
+        const tick = () => {
+            const now = Date.now();
+            if (elSLA) {
+                elSLA.textContent = tsInicio ? this._formatDelta(now - tsInicio) : '--:--';
+                if (tsInicio) {
+                    const h = (now - tsInicio) / 3600000;
+                    elSLA.className = 'nit-central-tempo-valor' +
+                        (h > 8 ? ' sla-critico' : h > 4 ? ' sla-alerta' : ' sla-ok');
+                }
+            }
+            if (elOp) {
+                elOp.textContent = tsOp ? this._formatDelta(now - tsOp) : '--:--';
+                if (tsOp) {
+                    const hOp = (now - tsOp) / 3600000;
+                    elOp.className = 'nit-central-tempo-valor nit-central-tempo-op' +
+                        (hOp > 2 ? ' sla-critico' : hOp > 1 ? ' sla-alerta' : ' sla-ok');
+                }
+            }
+        };
+        tick();
+        this._timerSLA = setInterval(tick, 10000);
     },
 
     _pararTimers() {
