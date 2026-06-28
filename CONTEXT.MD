@@ -1,5 +1,6 @@
 # NIT — Núcleo de Inteligência de Tráfego · CONTEXT.md
 > Fullstack sênior. Leia antes de qualquer mudança. Max 200 linhas.
+> Atualizado: 28/06/2026
 
 ---
 
@@ -16,20 +17,20 @@
 
 ---
 
-## 2. Arquivos Frontend
+## 2. Arquivos
 
 ```
-index.html   ~675 linhas   HTML estrutural + Firebase config (carrega nit.css e nit.js externos)
-nit.css     ~1600 linhas   Todo CSS incluindo Central da Ocorrência
-nit.js      ~3200 linhas   Toda lógica JS
+Frontend
+  index.html            ~735L   HTML estrutural + Firebase config
+  nit.css              ~1910L   Todo CSS
+  nit.js               ~3490L   Toda lógica JS
+
+Backend (Railway)
+  routes/export.py       ~306L  Cron + endpoint manual de exportação
+  services/sheets_integration.py ~498L  Integração Google Sheets
 ```
 
-**Módulos JS (ordem em nit.js):**
-`NitFirebase` → `NitLogin` → `NitData` → `AppState` → `DOM` → utilitários →
-`NitLogger` → `Semaforo` → `inicializarApp` → `NitNormalizar` → `NitSidebar` →
-`NitLazy` → `NitCardDetails` → `NitBuscaGlobal` → `NitLogout` →
-`NitNormalizados` → `inicializarBuscasPorColuna` → `NitViradaDia` →
-`NitProcessamento` → **`NitRecursos`** → **`NitCentral`**
+**Módulos JS:** `NitFirebase → NitLogin → NitData → AppState → DOM → NitLogger → Semaforo → inicializarApp → NitNormalizar → NitSidebar → NitLazy → NitCardDetails → NitBuscaGlobal → NitLogout → NitNormalizados → inicializarBuscasPorColuna → NitViradaDia → NitProcessamento → NitRecursos → NitCentral`
 
 ---
 
@@ -39,7 +40,7 @@ nit.js      ~3200 linhas   Toda lógica JS
 _reprocessar()           lógica de herança entre plantões
 _payloadFirebase()       estrutura canônica de gravação Firebase
 statusFromSecao()        regras de classificação de status
-append_heranca_diaria()  backend: herança diária (export.py)
+append_heranca_diaria()  backend: herança diária (sheets_integration.py)
 _montar_linha_nova()     backend: linha na planilha (sheets_integration.py)
 ```
 
@@ -47,135 +48,161 @@ _montar_linha_nova()     backend: linha na planilha (sheets_integration.py)
 
 ## 4. Arquitetura de Card — Estado Atual
 
-**`Semaforo._buildBodyHTML(d)`** — método único. Sanitizador `_sv()` em todos os campos.
+**`Semaforo._buildBodyHTML(d)`** — método único. Sanitizador `_sv()`.
+
+**Formato despacho:** `🔵 AMC · Raimundo · VT 222` (linha única)
+Com apoio: `🔵 AMC · Raimundo · VT 222 + José · VT 300`
 
 **Hierarquia visual do body:**
 ```
 1. card-address       endereço
-2. card-inicio        ⏳ DD/MM HH:MM — pendente SEM despacho
-3. inicioRef          ⏳ opaco — normalizado SEM fim (fallback)
-4. card-despacho-tipo 🟠/🔵 + card-equipe + card-ts-despacho
-5. card-obs           observação
-6. card-fim           ✅ DD/MM/YYYY HH:MM
+2. card-inicio        ⏳ DD/MM — pendente SEM despacho
+3. card-despacho-tipo 🟠/🔵 + equipe · VT (linha única)
+4. card-ts-despacho   hora de início da operação
+5. card-agendamento   ⏰ Rendição VL 14:30 · Equipe · VT (âmbar, se agendado)
+6. card-obs           observação
+7. card-fim           ✅ DD/MM/YYYY HH:MM
 ```
 
-**`child_changed`** usa `_buildBodyHTML(el.dataset)` — fonte única de renderização.
+**Dataset flat do agendamento:** `agendamentohora` · `agendamentoequipe` · `agendamentosub` · `agendamentovt`
+Mapeado em `child_added`, `child_changed` e `criarElementoCard`.
 
 ---
 
-## 5. Próxima Arquitetura — Decisões Fechadas
+## 5. Central da Ocorrência — Arquitetura
 
-### 5.1 Central da Ocorrência (IMPLEMENTADA — pendente fixes)
-Modal acessível via botão `ℹ️`. Abas: Despacho | Apoio | Rendição | Normalizar.
-Histórico via **push keys Firebase** (append-only, collision-safe).
-`tsFirstDispatch` imutável no nó raiz do card.
-
-**Header da Central — FIX PENDENTE:**
+**Header — 3 zonas:**
 ```
-Hierarquia correta:
-  072                              [✕]
-  R. JUSTINIANO & AV. BEZERRA
-  FALHA DE EQUIPAMENTO
-  ─────────────────────────────
-  🔵 AMC em operação              ← status operacional separado
-  ─────────────────────────────
-  ⏱ Registro  106h00m | ⏱ Operação 2h12m
-```
-Badge AMC/VL NÃO pertence à identidade do semáforo.
-Pertence ao status operacional — faixa própria entre identidade e timers.
-
-**SLA thresholds — FIX PENDENTE:**
-- SLA Total:  verde <4h · âmbar 4–8h · vermelho >8h (com pulse)
-- Operação:   verde <1h · âmbar 1–2h · vermelho >2h (limites próprios)
-
-### 5.2 NitRecursos (IMPLEMENTADO)
-Banco de equipes/viaturas em `/recursos/equipes` no Firebase.
-Auto-fill VT + tipo ao selecionar equipe. Aprendizado automático de novos nomes.
-Compartilhado entre módulos (Semáforo, Reboques, etc).
-
-### 5.3 Firebase — Histórico de Despacho
-```
-/kanban/{eventoId}/historico/{pushKey}:
-  { tipo: 'despacho'|'apoio'|'rendição', equipe, vt, sub, ts, operador }
-/kanban/{eventoId}/tsFirstDispatch: timestamp (imutável)
+Zona 1: código + endereço + tipo
+────────────────────────────────
+Zona 2: 🔵 AMC · Raimundo · VT 222  (status operacional rico)
+        ⏰ banner âmbar se rendição agendada
+────────────────────────────────
+Zona 3: [SLA card] ⏱ Registro 1h51m | ⏱ Operação 0h32m
 ```
 
-### 5.4 Coluna N — Derivação do Histórico
-```
-Via Livre = recurso humano/viatura. NÃO é estado de via ou tráfego.
-Algoritmo: despacho→segmento, apoio→+, rendição→→
-Exemplos: [VL, apoio AMC] → "VIA LIVRE + AMC"
-          [VL, rendição AMC] → "VIA LIVRE → AMC"
-```
+**Timers:**
+- REGISTRO: `_parseBR(card.dataset.inicio)` — data do relatório CEMOB
+- OPERAÇÃO: `parseInt(card.dataset.tsdespacho)` — despacho ATUAL (resetado em rendições)
+- Thresholds Registro: verde <4h · âmbar 4–8h · vermelho >8h
+- Thresholds Operação: verde <1h · âmbar 1–2h · vermelho >2h
 
-### 5.5 Card Passivo + Drag & Drop (PENDENTE)
-Card inteiro clicável → abre Central. Distinção clique/drag por delta posição.
-Normalizar exclusivamente no modal.
+**Tabs:** 4 pills — DESPACHO | APOIO | RENDIÇÃO | ╱ | NORMALIZAR (verde)
+
+**Rendição — 2 estados no painel:**
+- Estado A (agendamento pendente): painel de execução com hora real editável + Coluna N preview
+- Estado B (sem agendamento): form de nova rendição ou agendamento
+
+**Histórico:** colapsado por padrão. Header clicável → max-height 300ms ease-out.
+Badge "Último: Rendição · 07:50" derivado de `_atualizarUltimo()`.
+
+**colunaN derivado async:** `confirmarApoio` e `confirmarRendicao` leem historico
+do Firebase ANTES de gravar — elimina dependência de elemento DOM desatualizado.
+
+**Atalho busca global:** `Ctrl+Shift+K`
 
 ---
 
-## 6. Auth — Firebase Auth com Google
+## 6. Sincronização Multi-Operador
 
-Login com Google + whitelist `/usuarios_autorizados/{email_key}`.
-Email key: substituir `.` e `@` por `|`. Ex: `user|gmail|com`.
-`onAuthStateChanged` → `_verificarAutorizacao()` → `_concluirLogin()`.
-`inicializarListenerFirebase()` só após auth confirmada.
+**`child_changed`** campos sincronizados:
+```js
+['equipe','viatura','pl','sub','status','observacoes','inicio','endereco',
+ 'tsDespacho','tsFirstDispatch','equipeApoio','viaturaApoio',
+ 'data_fim','hora_fim','fim','coluna']
++ agendamento (objeto aninhado → 4 campos flat)
+```
+
+**Modal refresh em tempo real:** `child_changed` chama `_renderHeader + _iniciarTimers`
+se `NitCentral._card === el`. Modal sempre reflete estado Firebase.
+
+**Comportamentos aceitos (last-write-wins):**
+- Despacho simultâneo: card converge, historico registra ambos (push keys)
+- `_reprocessar` simultâneo: janela de inconsistência transitória, convergência garantida
+- `ServerValue.TIMESTAMP` no drag-and-drop
+
+**Safari:** `dataTransfer.setData('text/plain', id)` + `effectAllowed = 'move'` no `dragstart`.
 
 ---
 
-## 7. Backend — Estado
+## 7. Coluna N — Fluxo Completo
 
-**Bugs resolvidos:** #17 (coluna O write-once), #18 (obs if_not_empty),
-status M sempre NORMALIZADO, cursor `_int()` helper, herança duplicada,
-fallback APPEND removido.
+**Frontend** grava `colunaN` no Firebase em todo `confirmar*`:
+- Despacho: computado local (`'VIA LIVRE'` / `'AMC'`)
+- Apoio/Rendição: lê historico Firebase async → `_derivarColunaN(hist, eventoExtra)`
 
-**`clientes.json`:** `"plantonista": "plantonista"` (lê campo Firebase).
+**Backend Section 4** (`export.py`): prioridade `colunaN` do Firebase →
+derivado do historico via `_derivar_coluna_n()` → fallback `sub_map` simples.
+Retorna transição mais recente: `"VIA LIVRE → AMC"` (não a cadeia histórica toda).
 
-**Firebase Rules:**
-```json
-"kanban": { ".read": "auth != null", ".write": "auth != null",
-  ".indexOn": ["ts","ts_norm","ts_dataReferencia","status","coluna","codigo"] }
-"usuarios_autorizados": { ".read": "auth != null", ".write": false }
+**Planilha:** coluna N atualizada em cards ativos a cada ciclo do cron.
+Na normalização: `update_ocorrencia_normalizada` grava colunaN se presente.
+
+---
+
+## 8. Backend — Estado Estável (28/06/2026)
+
+**Cron estável.** Planilha sendo alimentada corretamente.
+
+**Bugs resolvidos nesta sessão:**
+- `append_heranca_diaria` implementada (faltava em sheets_integration.py)
+- `get_cursor/update_cursor` com `ultimo_dataReferencia`
+- `calcular_tempo_atendimento` aceita `DD/MM/YYYY` + extrai `inicio` composto do Firebase
+- `executar_exportacao` sem `return resultado` (causava `NoneType.get()` no cron)
+- Section 4: filtra normalizados, prioriza `colunaN`, deriva do historico
+
+**Campos Firebase:** `inicio` "DD/MM/YYYY HH:MM" · `tsDespacho` ms (atual) · `tsFirstDispatch` ms (imutável) · `colunaN` string · `agendamento` objeto · `data_fim` · `hora_fim` · `ts_norm`
+
+**`_montar_linha_nova` — coluna N (L.124):**
+```python
+dados.get("colunaN") or sub_map.get(sub, fb("operando_cruzamento"))
 ```
 
 ---
 
-## 8. Fixes Deployados (prontos nos outputs desta sessão)
+## 9. CSS — Padrão de Cores Dark Mode
 
-| Fix | Arquivo |
-|-----|---------|
-| Login Google + whitelist | nit.js + index.html |
-| Listener Firebase após auth | nit.js |
-| NitCentral (Despacho/Apoio/Rendição/Normalizar) | nit.js + index.html |
-| NitRecursos banco de equipes | nit.js + index.html |
-| Auto-fill VT + aprendizado | nit.js |
-| SLA alert states (verde/âmbar/vermelho) | nit.js + nit.css |
-| Timeline vertical histórico | nit.js + nit.css |
-| CSS Central refatorado (escopo isolado) | nit.css |
-| VANDALISMO em TIPOS | nit.js |
-| Reincidente por dataReferencia | nit.js |
-| child_changed usa _buildBodyHTML | nit.js |
-| Sanitizador _sv em _buildBodyHTML | nit.js |
-| ordenarNormalizados em atualizarPainel | nit.js |
-| extrairPlantonista do cabeçalho CEMOB | nit.js |
+```
+--color-text-primary:   #f8faff    títulos, valores críticos
+--color-text-secondary: #b0c8e8    texto de apoio
+--color-text-tertiary:  #94a3b8    metadados, timestamps (WCAG AA 5.2:1)
+```
 
-## 9. Pendente Próxima Sessão
-
-1. **Header da Central** — separar identidade do semáforo do status operacional
-2. **SLA operação** — thresholds próprios (1h/2h)
-3. **Card passivo** — card 100% clicável, drag&drop mantido
-4. **Ctrl+K conflito** — trocar atalho para outro não conflitante
-5. **Bug 1 datas início** — confirmar se relatório mesmo plantão causa perda
+`#64748b` — decorativo puro (chevrons, separadores, títulos uppercase 9px).
+`color-mix()` tem fallbacks `rgba()` para browsers sem suporte.
 
 ---
 
-## 10. Prompt Universal
+## 10. Dead Code — Limpar em Sessão Dedicada
+
+```
+abrirModalDespacho()    substituído pela Central (modal antigo no HTML)
+handleNormalizarClick() substituído pela aba Normalizar da Central
+CSS btn-card-action.*   .dispatch, .edit, .complete (classes removidas do template)
+```
+
+---
+
+## 11. Pendente Próxima Sessão
+
+1. **Campo texto/chat no topo do modal** — substituir o círculo (status badge)
+   por área de texto colaborativa (comentários do operador em tempo real)
+2. **Bug 1 datas início** — confirmar se relatório mesmo plantão causa perda de tsInicio
+3. **Auto-execução rendição agendada** — listener/polling no horário
+4. **Modal horizontal (futuro)** — grid 3 colunas quando dados forem suficientes
+5. **Ranking quebras (futuro)** — endpoint FastAPI, mínimo 30 dias de dados
+6. **Limpeza dead code** — seção 10
+
+---
+
+## 12. Prompt Universal
 
 ```
 Você é fullstack sênior em JS, HTML, CSS, Firebase, Railway,
 Google Sheets, Python e FastAPI.
 Leia CONTEXT.md. Respeite seção 3 (protegidas).
-Frontend: nit.js + nit.css externos ao index.html (~675L).
-Outputs desta sessão contêm versão mais recente dos 3 arquivos.
-Próximas implementações: seção 9 deste CONTEXT.md.
+Frontend: nit.js (~3490L) + nit.css (~1910L) + index.html (~735L).
+Backend: routes/export.py (~306L) + services/sheets_integration.py (~498L).
+Outputs desta sessão contêm versão mais recente de todos os arquivos.
+Próximas implementações: seção 11 deste CONTEXT.md.
 ```
