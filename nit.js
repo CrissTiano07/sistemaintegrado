@@ -2876,6 +2876,7 @@ const NitCentral = {
                 [`kanban/${eventoId}/coluna`]:     colunaDest,
                 [`kanban/${eventoId}/tsDespacho`]: tsNow,
                 [`kanban/${eventoId}/operador`]:   NitLogin.operador || 'anon',
+                [`kanban/${eventoId}/colunaN`]:    { vl: 'VIA LIVRE', amc: 'AMC', sn: '' }[tipo] || '',
             });
             update(ref(db, '/'), updates);
         });
@@ -2898,20 +2899,26 @@ const NitCentral = {
         const eventoId = this._sv(card.dataset.eventoid) || card.id;
         const tsNow    = Date.now();
 
-        NitFirebase.exec((db, ref, update) => {
-            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
-            const updates = {};
-            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
-                tipo: 'apoio', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
-            };
-            updates[`kanban/${eventoId}/equipeApoio`]  = equipe;
-            updates[`kanban/${eventoId}/viaturaApoio`] = vt;
-            update(ref(db, '/'), updates);
-        });
+        // Derivar colunaN do historico Firebase (garante valor correto independente do timing do DOM)
+        firebase.database().ref(`kanban/${eventoId}/historico`).get().then(snap => {
+            const hist    = snap.exists() ? snap.val() : {};
+            const colunaN = this._derivarColunaN(hist, { tipo: 'apoio', sub: tipo, ts: tsNow + 1 });
 
-        NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
-        showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
-        this.fechar();
+            NitFirebase.exec((db, ref, update) => {
+                const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+                const updates = {};
+                updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                    tipo: 'apoio', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
+                };
+                updates[`kanban/${eventoId}/equipeApoio`]  = equipe;
+                updates[`kanban/${eventoId}/viaturaApoio`] = vt;
+                updates[`kanban/${eventoId}/colunaN`]      = colunaN || '';
+                update(ref(db, '/'), updates);
+            });
+            NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
+            showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
+            this.fechar();
+        });
     },
 
     // ── Estado do painel de Rendição ─────────────────────────────────
@@ -2990,6 +2997,7 @@ const NitCentral = {
                 [`kanban/${eventoId}/coluna`]:       colunaDest,
                 [`kanban/${eventoId}/tsDespacho`]:   tsExec,
                 [`kanban/${eventoId}/operador`]:     NitLogin.operador || 'anon',
+                [`kanban/${eventoId}/colunaN`]:      (() => { const v = document.getElementById('central-rendicao-coluna-n-exec')?.textContent?.trim(); return (v && v !== '—') ? v : ''; })(),
             });
             update(ref(db, '/'), updates);
         });
@@ -3058,32 +3066,39 @@ const NitCentral = {
         const colunaDest = colunaMap[tipo] || 'coluna-vl';
         const tsNow      = Date.now();
 
-        NitFirebase.exec((db, ref, update) => {
-            const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
-            const updates = {};
-            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
-                tipo: 'rendição', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
-            };
-            Object.assign(updates, {
-                [`kanban/${eventoId}/equipe`]:        equipe,
-                [`kanban/${eventoId}/viatura`]:       vt,
-                [`kanban/${eventoId}/sub`]:           tipo,
-                [`kanban/${eventoId}/equipeApoio`]:   '',
-                [`kanban/${eventoId}/viaturaApoio`]:  '',
-                [`kanban/${eventoId}/agendamento`]:   null,
-                [`kanban/${eventoId}/coluna`]:        colunaDest,
-                [`kanban/${eventoId}/tsDespacho`]:    tsNow,
-                [`kanban/${eventoId}/operador`]:      NitLogin.operador || 'anon',
-            });
-            update(ref(db, '/'), updates);
-        });
+        // Derivar colunaN do historico Firebase antes de gravar
+        firebase.database().ref(`kanban/${eventoId}/historico`).get().then(snap => {
+            const hist    = snap.exists() ? snap.val() : {};
+            const colunaN = this._derivarColunaN(hist, { tipo: 'rendição', sub: tipo, ts: tsNow + 1 });
 
-        const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
-        if (container) container.appendChild(card);
-        card.dataset.coluna = colunaDest;
-        NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
-        showToast('Rendição registrada.', 'success');
-        this.fechar();
+            NitFirebase.exec((db, ref, update) => {
+                const pushKey = ref(db, `kanban/${eventoId}/historico`).push().key;
+                const updates = {};
+                updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                    tipo: 'rendição', sub: tipo, equipe, vt, ts: tsNow, operador: NitLogin.operador || 'anon',
+                };
+                Object.assign(updates, {
+                    [`kanban/${eventoId}/equipe`]:        equipe,
+                    [`kanban/${eventoId}/viatura`]:       vt,
+                    [`kanban/${eventoId}/sub`]:           tipo,
+                    [`kanban/${eventoId}/equipeApoio`]:   '',
+                    [`kanban/${eventoId}/viaturaApoio`]:  '',
+                    [`kanban/${eventoId}/agendamento`]:   null,
+                    [`kanban/${eventoId}/coluna`]:        colunaDest,
+                    [`kanban/${eventoId}/tsDespacho`]:    tsNow,
+                    [`kanban/${eventoId}/operador`]:      NitLogin.operador || 'anon',
+                    [`kanban/${eventoId}/colunaN`]:       colunaN || '',
+                });
+                update(ref(db, '/'), updates);
+            });
+
+            const container = document.querySelector(`#${colunaDest} .kanban-cards-container`);
+            if (container) container.appendChild(card);
+            card.dataset.coluna = colunaDest;
+            NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
+            showToast('Rendição registrada.', 'success');
+            this.fechar();
+        });
     },
 
     confirmarEncerrar() {
