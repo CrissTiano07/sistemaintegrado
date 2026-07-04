@@ -917,6 +917,8 @@ const NitData = {
                             hora_fim:       horaFim,
                             ts_norm:        Date.now(),
                             dataReferencia: ev.dataReferencia,
+                            // obs incluída aqui também para write atômico
+                            ...(ev.observacoes && { observacoes: ev.observacoes }),
                         })
                     );
                     atualizados++;
