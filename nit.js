@@ -2947,8 +2947,15 @@ const NitCentral = {
                 update(ref(db, '/'), updates);
             });
             NitRecursos.aprenderDeDespacho(equipe, vt, tipo);
+
+            // Limpa campos para próximo apoio sem fechar o modal
+            const eqEl = document.getElementById('central-apoio-equipe');
+            const vtEl = document.getElementById('central-apoio-vt');
+            if (eqEl) eqEl.value = '';
+            if (vtEl) vtEl.value = '';
             showToast(`Apoio adicionado: ${tipo.toUpperCase()}`, 'success');
-            this.fechar();
+            // Atualiza preview da Coluna N para refletir o apoio recém-adicionado
+            setTimeout(() => this._atualizarPreviewApoio(), 400);
         });
     },
 
@@ -3202,14 +3209,16 @@ const NitCentral = {
         });
 
         // Auto-fill VT + sugestão de tipo ao selecionar equipe
+        // Despacho e rendição: auto-fill VT + tipo (pré-seleciona com base no histórico)
+        // Apoio: auto-fill VT apenas — tipo não é sobrescrito (usuário define a missão, não o histórico)
         [
-            ['central-despacho-equipe', 'central-despacho-vt', 'despacho', '_tipoDespacho'],
-            ['central-apoio-equipe',    'central-apoio-vt',    'apoio',    '_tipoApoio'   ],
-            ['central-rendicao-equipe', 'central-rendicao-vt', 'rendicao', '_tipoRendicao'],
-        ].forEach(([elEquipe, elVT, panel, prop]) => {
+            ['central-despacho-equipe', 'central-despacho-vt', 'despacho', '_tipoDespacho', true ],
+            ['central-apoio-equipe',    'central-apoio-vt',    'apoio',    '_tipoApoio',    false],
+            ['central-rendicao-equipe', 'central-rendicao-vt', 'rendicao', '_tipoRendicao', true ],
+        ].forEach(([elEquipe, elVT, panel, prop, autoTipo]) => {
             document.getElementById(elEquipe)?.addEventListener('input', e => {
                 const tipo = NitRecursos.autoFillVT(e.target.value, elVT);
-                if (tipo) this._selecionarTipo(panel, tipo, prop);
+                if (tipo && autoTipo) this._selecionarTipo(panel, tipo, prop);
                 if (panel === 'rendicao') this._atualizarPreviewRendicao();
             });
         });
