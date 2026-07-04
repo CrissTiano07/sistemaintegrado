@@ -1151,14 +1151,24 @@ const NitData = {
             const agendVt      = _sv(d.agendamentovt);
 
             // ── Observação ────────────────────────────────────────────────
-            const frase = Semaforo._fraseTecnica(obs, status, inicio);
+            // Normalizados: não usar _fraseTecnica (corta no 1º ponto = texto da fase pendente)
+            // Exibir o final da obs onde fica a descrição da resolução
+            const frase = isNorm ? '' : Semaforo._fraseTecnica(obs, status, inicio);
             const obsFallback = obs
                 .replace(/NORMALIZADOS\s*✅/gi, '')
                 .replace(/PENDENTES\s*❌/gi, '')
                 .replace(/\*/g, '')
                 .replace(/\s+/g, ' ')
                 .trim();
-            const obsExibir = frase || (obsFallback.length > 120 ? obsFallback.slice(0, 120) + '…' : obsFallback);
+            let obsExibir;
+            if (frase) {
+                obsExibir = frase;
+            } else if (isNorm && obsFallback.length > 120) {
+                // Exibe os últimos 110 chars com reticências no início
+                obsExibir = '…' + obsFallback.slice(-110).trimStart();
+            } else {
+                obsExibir = obsFallback.length > 120 ? obsFallback.slice(0, 120) + '…' : obsFallback;
+            }
 
             // ── Bloco de despacho ─────────────────────────────────────────
             let despachoBlock = '';
