@@ -867,15 +867,28 @@ const NitData = {
                     return;
                 }
 
-                // Card já existe no DOM — atualiza observações se o relatório trouxer dado novo
-                if (ev.observacoes && ev.observacoes !== existente.element.dataset.observacoes) {
-                    existente.element.dataset.observacoes = ev.observacoes;
-                    NitFirebase.exec((db, ref, update) =>
-                        update(ref(db, `kanban/${ev.eventoId}`), {
-                            observacoes: ev.observacoes,
-                            ts: Date.now(),
-                        })
-                    );
+                // Card já existe no DOM — atualiza campos que o relatório pode trazer corrigidos
+                {
+                    const patch = {};
+                    if (ev.observacoes && ev.observacoes !== existente.element.dataset.observacoes) {
+                        existente.element.dataset.observacoes = ev.observacoes;
+                        patch.observacoes = ev.observacoes;
+                    }
+                    // tipo (causa) e problema podem chegar corrigidos em re-processamentos
+                    const tipoAtual = existente.element.dataset.tipo || '';
+                    if (ev.tipo && ev.tipo !== 'N/I' && ev.tipo !== tipoAtual) {
+                        existente.element.dataset.tipo = ev.tipo;
+                        patch.tipo = ev.tipo;
+                    }
+                    if (ev.problema && ev.problema !== existente.element.dataset.problema) {
+                        existente.element.dataset.problema = ev.problema;
+                        patch.problema = ev.problema;
+                    }
+                    if (Object.keys(patch).length) {
+                        NitFirebase.exec((db, ref, update) =>
+                            update(ref(db, `kanban/${ev.eventoId}`), { ...patch, ts: Date.now() })
+                        );
+                    }
                 }
 
                 if (!existente.normalizado && status === 'NORMALIZADO') {
