@@ -1153,6 +1153,7 @@ const NitData = {
             // ── Observação ────────────────────────────────────────────────
             // Normalizados: não usar _fraseTecnica (corta no 1º ponto = texto da fase pendente)
             // Exibir o final da obs onde fica a descrição da resolução
+            const causaTipo = _sv(d.tipo).toUpperCase();
             const frase = isNorm ? '' : Semaforo._fraseTecnica(obs, status, inicio);
             const obsFallback = obs
                 .replace(/NORMALIZADOS\s*✅/gi, '')
@@ -1161,7 +1162,13 @@ const NitData = {
                 .replace(/\s+/g, ' ')
                 .trim();
             let obsExibir;
-            if (frase) {
+            // INVESTIGANDO sem despacho: exibir label claro independente de obs
+            if (!isNorm && !tipo && causaTipo === 'INVESTIGANDO') {
+                const partes = (inicio || '').split(' ');
+                const dataH  = partes[0] ? partes[0].slice(0,5) : '';
+                const hora   = partes[1] || '';
+                obsExibir = dataH && hora ? `${dataH} ${hora} — Investigando.` : 'Investigando.';
+            } else if (frase) {
                 obsExibir = frase;
             } else if (isNorm && obsFallback.length > 120) {
                 // Exibe os últimos 110 chars com reticências no início
@@ -2653,6 +2660,28 @@ const NitCentral = {
                 agendBanner.style.display = 'none';
             }
         }
+
+        // Zona 2c — observação completa (colapsável)
+        const obsFaixa   = document.getElementById('central-obs-faixa');
+        const obsPreview = document.getElementById('central-obs-preview');
+        const obsTexto   = document.getElementById('central-obs-texto');
+        const obsCorpo   = document.getElementById('central-obs-corpo');
+        const obsToggle  = document.getElementById('central-obs-toggle');
+        const obsRaw     = sv(card.dataset.observacoes);
+        if (obsFaixa) {
+            if (obsRaw) {
+                const preview = obsRaw.length > 60 ? obsRaw.slice(0, 60) + '…' : obsRaw;
+                if (obsPreview) obsPreview.textContent = `📋 ${preview}`;
+                if (obsTexto)   obsTexto.textContent   = obsRaw;
+                if (obsCorpo)   obsCorpo.style.display = 'none';
+                if (obsToggle)  obsToggle.setAttribute('aria-expanded', 'false');
+                const chv = obsToggle?.querySelector('.nit-central-obs-chevron');
+                if (chv) chv.textContent = '▼';
+                obsFaixa.style.display = '';
+            } else {
+                obsFaixa.style.display = 'none';
+            }
+        }
     },
 
     // ── Timers ───────────────────────────────────────────────────────
@@ -3237,6 +3266,18 @@ const NitCentral = {
         bind('btn-central-executar-rendicao', this.confirmarExecutarRendicao);
         bind('btn-central-cancelar-agend',    this.cancelarAgendamento);
         bind('btn-central-normalizar',        this.confirmarNormalizar);
+
+        // Toggle da observação completa
+        document.getElementById('central-obs-toggle')
+            ?.addEventListener('click', () => {
+                const corpo   = document.getElementById('central-obs-corpo');
+                const toggle  = document.getElementById('central-obs-toggle');
+                const chevron = toggle?.querySelector('.nit-central-obs-chevron');
+                const aberto  = corpo?.style.display === 'none';
+                if (corpo)   corpo.style.display  = aberto ? '' : 'none';
+                if (toggle)  toggle.setAttribute('aria-expanded', String(aberto));
+                if (chevron) chevron.textContent   = aberto ? '▲' : '▼';
+            });
 
         // Toggle do histórico colapsável
         const histHeader = document.getElementById('central-hist-header');
