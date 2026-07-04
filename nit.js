@@ -530,9 +530,11 @@ const NitData = {
         },
 
         extrairDadosDaLinha(linha) {
-    const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
+    // Aceita tabs/espaços iniciais (formato CEMOB tab-separado: \tCAUSA\t*🚦...)
+    const prefixMatch = linha.match(/^[\t\s]*([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
     const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
-    const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL','VANDALISMO'];
+    const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE',
+                   'IMPROCEDENTE','FURTO','ENEL','VANDALISMO','AGENTE DA NATUREZA'];
     const tipoFromPrefixo = TIPOS.find(t => prefixo.includes(t));
 
     const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
