@@ -533,11 +533,15 @@ const NitData = {
     const prefixMatch = linha.match(/^([A-ZÀ-Ú][A-ZÀ-Ú\s]{1,30}?)\s*(?:\*\s*)?🚦/u);
     const prefixo = prefixMatch ? prefixMatch[1].trim().toUpperCase() : '';
     const TIPOS = ['FALHA DE EQUIPAMENTO','INVESTIGANDO','ROMPIMENTO','ACIDENTE','IMPROCEDENTE','FURTO','ENEL','VANDALISMO'];
-    const tipo = TIPOS.find(t => prefixo.includes(t)) || 'N/I';
+    const tipoFromPrefixo = TIPOS.find(t => prefixo.includes(t));
 
     const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
     const m = linha.match(re);
     if (!m) return null;
+
+    // Tipo: prefixo tem prioridade; fallback em m[3] (campo problema do CEMOB)
+    const tipoFromProblema = TIPOS.find(t => (m[3] || '').toUpperCase().includes(t));
+    const tipo = tipoFromPrefixo || tipoFromProblema || 'N/I';
 
     const resto   = m[4] || '';
     const inicioM = resto.match(/In[ií]cio:[\t ]*(\d{2}\/\d{2}\/\d{4}[\t ]+\d{2}:\d{2})/i);
@@ -820,6 +824,7 @@ const NitData = {
                                 update(ref(db, `kanban/${eventoIdAnterior}`), {
                                     coluna:   'coluna-normalizados',
                                     status:   'NORMALIZADO',
+                                    pl:       'norm',
                                     ts:       Date.now(),
                                     data_fim: dataFim,
                                     hora_fim: horaFim,
@@ -889,13 +894,13 @@ const NitData = {
 
                     NitFirebase.exec((db, ref, update) =>
                         update(ref(db, `kanban/${ev.eventoId}`), {
-                            coluna:   'coluna-normalizados',
-                            status:   'NORMALIZADO',
-                            ts:       Date.now(),
-                            data_fim: dataFim,
-                            hora_fim: horaFim,
-                            ts_norm:  Date.now(),
-                            // ✅ CORREÇÃO #20: atualizar dataReferencia no Firebase também
+                            coluna:         'coluna-normalizados',
+                            status:         'NORMALIZADO',
+                            pl:             'norm',
+                            ts:             Date.now(),
+                            data_fim:       dataFim,
+                            hora_fim:       horaFim,
+                            ts_norm:        Date.now(),
                             dataReferencia: ev.dataReferencia,
                         })
                     );
@@ -949,24 +954,27 @@ const NitData = {
                 dataReferencia: ev.dataReferencia || '',
                 endereco:       ev.endereco    || '',
                 problema:       ev.problema    || '',
-                observacoes:    ev.observacoes || '',
                 tipo:           ev.tipo        || '',
+                inicio:         ev.inicio      || '',
                 status,
-                equipe:         ev.equipe  || '',
-                viatura:        ev.viatura || '',
-                inicio:         ev.inicio  || '',
-                pl:             ev.pl      || '',
-                sub:            ev.sub     || '',
+                // Campos que chegam vazios do relatório NÃO devem sobrescrever
+                // dados já gravados no Firebase (equipe, obs gravadas manualmente)
+                ...(ev.observacoes && { observacoes: ev.observacoes }),
+                ...(ev.equipe      && { equipe:      ev.equipe  }),
+                ...(ev.viatura     && { viatura:      ev.viatura }),
+                ...(ev.pl          && { pl:           ev.pl      }),
+                ...(ev.sub         && { sub:          ev.sub     }),
                 reincidente:    ev.reincidente || false,
                 plantonista:    ev.plantonista || '',
                 operador:       NitLogin.operador || 'anon',
                 turno:          NitLogin.turno    || '',
                 ts:             Date.now(),
-                // ✅ fix: gravar campos de fim quando ocorrência nasce normalizada
+                // Gravar campos de fim quando ocorrência nasce normalizada
                 ...(status === 'NORMALIZADO' && {
                     data_fim: dataFim,
                     hora_fim: horaFim,
                     ts_norm:  Date.now(),
+                    pl:       'norm',
                 }),
             };
         },
