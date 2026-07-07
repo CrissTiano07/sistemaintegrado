@@ -1,0 +1,484 @@
+/* ============================================================================
+   NIT — Módulo Reboques  ·  reboques.css  ·  v2026.07.04
+   ----------------------------------------------------------------------------
+   Estilos isolados (prefixo .nit-reboque-*). Herda TODAS as variáveis de tema
+   do nit.css: --color-bg, --color-surface, --color-border, --color-text-*,
+   --color-accent, --color-success, --color-warning, --color-danger,
+   --color-primary, --radius-lg, --radius-sm.
+   Tipografia: Inter (UI) e JetBrains Mono (dados) — já carregadas no index.
+   ============================================================================ */
+
+/* ── Layout geral da aba ─────────────────────────────────────────────────── */
+.nit-reboque-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr 340px;
+    gap: 16px;
+    height: 100%;
+    min-height: 0;
+    flex-grow: 1;
+}
+.nit-reboque-lateral,
+.nit-reboque-eventos-painel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 0;
+}
+@media (max-width: 1280px) {
+    .nit-reboque-layout { grid-template-columns: 260px 1fr 300px; }
+}
+@media (max-width: 1024px) {
+    .nit-reboque-layout { grid-template-columns: 1fr; overflow-y: auto; }
+}
+
+/* ── Painéis (mesmo padrão visual do sistema) ────────────────────────────── */
+.nit-reboque-painel {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    min-height: 0;
+}
+.nit-reboque-painel.crescer { flex-grow: 1; }
+.nit-reboque-painel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+.nit-reboque-painel-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.nit-reboque-painel-header h3 i { color: var(--color-accent); }
+.nit-reboque-painel-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* ── Entrada do plantão ──────────────────────────────────────────────────── */
+#nit-reboque-bruto-input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 140px;
+    resize: vertical;
+    background: var(--color-bg);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+#nit-reboque-bruto-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+}
+
+/* ── Balanço ─────────────────────────────────────────────────────────────── */
+.nit-reboque-balanco {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    padding: 4px 0;
+}
+.nit-reboque-balanco-item span {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+}
+.nit-reboque-balanco-item strong {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+#nit-reboque-count-disponiveis { color: var(--color-success); }
+#nit-reboque-count-atuando     { color: var(--color-warning); }
+
+/* ── Kanban ──────────────────────────────────────────────────────────────── */
+.nit-reboque-kanban {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    min-height: 0;
+}
+.nit-reboque-coluna {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    min-height: 0;
+    overflow: hidden;
+}
+.nit-reboque-coluna-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+.nit-reboque-coluna-header .nit-reboque-col-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+#nit-reboques-disponiveis,
+#nit-reboques-atuando {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 120px;
+    transition: background-color 0.15s ease;
+}
+
+/* faixa de status por coluna */
+.nit-reboque-coluna[data-coluna="disponiveis"] .nit-reboque-coluna-header i { color: var(--color-success); }
+.nit-reboque-coluna[data-coluna="atuando"]     .nit-reboque-coluna-header i { color: var(--color-warning); }
+
+/* ── Card de reboquista ──────────────────────────────────────────────────── */
+.nit-reboque-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-success);
+    border-radius: var(--radius-lg);
+    padding: 10px 12px;
+    cursor: grab;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.nit-reboque-card[data-status="atuando"] { border-left-color: var(--color-warning); }
+.nit-reboque-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.nit-reboque-card.arrastando { opacity: 0.4; cursor: grabbing; }
+
+.nit-reboque-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.nit-reboque-card-header strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.3;
+}
+.nit-reboque-status-tag {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.nit-reboque-status-tag.disponivel {
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+}
+.nit-reboque-status-tag.atuando {
+    color: var(--color-warning);
+    background: color-mix(in srgb, var(--color-warning) 14%, transparent);
+}
+/* fallback para navegadores sem color-mix */
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+    .nit-reboque-status-tag.disponivel { background: rgba(56, 189, 107, 0.14); }
+    .nit-reboque-status-tag.atuando    { background: rgba(251, 191, 36, 0.14); }
+}
+
+.nit-reboque-card-info { display: flex; flex-direction: column; gap: 3px; }
+.nit-reboque-info-line {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+.nit-reboque-info-line i {
+    width: 13px;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-size: 11px;
+}
+.nit-reboque-mono { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; }
+
+.nit-reboque-ocorrencia {
+    margin-top: 7px;
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-warning) 35%, transparent);
+    color: var(--color-warning);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+    .nit-reboque-ocorrencia {
+        background: rgba(251, 191, 36, 0.08);
+        border-color: rgba(251, 191, 36, 0.35);
+    }
+}
+
+.nit-reboque-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 8px;
+    padding-top: 7px;
+    border-top: 1px solid var(--color-border);
+}
+.nit-reboque-spacer { flex-grow: 1; }
+.nit-reboque-acao {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-tertiary);
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.nit-reboque-acao:hover { background: var(--color-surface); }
+.nit-reboque-acao.js-editar:hover,
+.nit-reboque-acao.js-ev-editar:hover      { color: var(--color-accent); }
+.nit-reboque-acao.js-remover:hover,
+.nit-reboque-acao.js-ev-remover:hover     { color: var(--color-danger); }
+.nit-reboque-acao.js-acionar:hover        { color: var(--color-primary); }
+.nit-reboque-acao.js-finalizar:hover,
+.nit-reboque-acao.js-ev-finalizar:hover   { color: var(--color-success); }
+.nit-reboque-acao.js-ev-relatorio:hover   { color: var(--color-success); }
+
+/* ── Eventos ─────────────────────────────────────────────────────────────── */
+.nit-reboque-evento-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+    padding: 10px 12px;
+    transition: border-color 0.15s ease;
+}
+.nit-reboque-evento-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.nit-reboque-evento-header strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: 0.3px;
+}
+.nit-reboque-evento-hora { font-size: 11px; color: var(--color-text-tertiary); }
+.nit-reboque-evento-body { display: flex; flex-direction: column; gap: 3px; }
+.nit-reboque-evento-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+}
+.nit-reboque-evento-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent);
+}
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+    .nit-reboque-evento-tag { background: rgba(88, 166, 255, 0.12); }
+}
+.nit-reboque-evento-tag.vazio {
+    background: transparent;
+    border: 1px dashed var(--color-border);
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+.nit-reboque-tag-x {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.7;
+}
+.nit-reboque-tag-x:hover { opacity: 1; }
+
+/* ── Estados de drop e vazio ─────────────────────────────────────────────── */
+.nit-reboque-dropzone-ativa {
+    background: color-mix(in srgb, var(--color-accent) 7%, transparent) !important;
+    border-color: var(--color-accent) !important;
+}
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+    .nit-reboque-dropzone-ativa { background: rgba(88, 166, 255, 0.07) !important; }
+}
+.nit-reboque-vazio {
+    padding: 24px 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+/* ── Painel de acionamento (lateral fixo, não bloqueia o kanban) ─────────── */
+#nit-reboque-acionamento {
+    position: fixed;
+    top: 70px;
+    right: 16px;
+    width: 340px;
+    max-height: calc(100vh - 90px);
+    display: none;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+    z-index: 900;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+}
+#nit-reboque-acionamento.aberto { display: flex; }
+#nit-reboque-acion-dropzone {
+    margin: 0 12px;
+    padding: 10px;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 34px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.nit-reboque-form { padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.nit-reboque-form label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-text-tertiary);
+    margin-bottom: 4px;
+}
+.nit-reboque-form input,
+.nit-reboque-form textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    resize: vertical;
+}
+.nit-reboque-form input:focus,
+.nit-reboque-form textarea:focus { outline: none; border-color: var(--color-accent); }
+.nit-reboque-form input:disabled,
+.nit-reboque-form textarea:disabled { opacity: 0.55; cursor: not-allowed; }
+.nit-reboque-form-footer {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+/* ── Modais próprios (edição / relatório) ────────────────────────────────── */
+.nit-reboque-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(3, 8, 15, 0.65);
+    z-index: 950;
+}
+.nit-reboque-modal-overlay.aberto { display: flex; }
+.nit-reboque-modal {
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.nit-reboque-modal.larga { width: min(560px, calc(100vw - 32px)); }
+#nit-reboque-relatorio-texto {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 300px;
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+/* ── Comportamento da aba (independente do nit.css) ──────────────────────── */
+/* Garante ocultar/exibir corretamente mesmo que o nit.css só conheça a aba
+   Semáforo. Regras por ID vencem .tab-content genéricas sem usar !important. */
+#tab-reboques { display: none; }
+#tab-reboques.active {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    height: 100%;
+}
