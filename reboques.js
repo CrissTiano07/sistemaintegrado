@@ -47,6 +47,32 @@ const NitReboques = (() => {
     const _abrirModal  = el => el?.classList.add('aberto');
     const _fecharModal = el => el?.classList.remove('aberto');
 
+    /* ── Ícones SVG (outline 24×24, stroke-width 2) ────────────────────────── */
+    const I = {
+        edit:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+        trash:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+        check:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+        dispatch:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,
+        ban:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+        pencil:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="2" x2="22" y2="6"/><path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"/></svg>`,
+        copy:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+        send:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+        plus:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+        // info-line icons (menores)
+        clock:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+        phone:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+        users:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        mappin:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+        radio:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`,
+        info:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        comment: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+        truck:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+        car:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v4"/><circle cx="18" cy="17" r="3"/><circle cx="10" cy="17" r="3"/></svg>`,
+        save:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+    };
+
+
+
     /* ── Init / Destroy ───────────────────────────────────────────────────── */
     function inicializar(db) {
         if (S.inicializado) return;
@@ -129,7 +155,7 @@ const NitReboques = (() => {
     }
 
     function processarPlantao() {
-        const bruto = g('nit-reboque-bruto-input')?.value.trim();
+        const bruto = g('nit-rb-bruto')?.value.trim();
         if (!bruto) { toast('Insira o relatório de plantão.','warning'); return; }
         const blocos = bruto.split(/\n\s*\n/).filter(b => b.trim());
         const updates = {}; let novosV=0, novosR=0;
@@ -155,7 +181,7 @@ const NitReboques = (() => {
         if (!novosV && !novosR) { toast('Nenhum recurso novo encontrado.','info'); return; }
         updates[`${PATH_CONFIG}/data`] = hojeISO();
         S.db.ref().update(updates)
-            .then(() => { toast(`Processado: ${novosV} viatura(s), ${novosR} reboquista(s).`,'success'); if (g('nit-reboque-bruto-input')) g('nit-reboque-bruto-input').value=''; _fecharModal(g('nit-reboque-modal-processar')); })
+            .then(() => { toast(`Processado: ${novosV} viatura(s), ${novosR} reboquista(s).`,'success'); if (g('nit-rb-bruto')) g('nit-rb-bruto').value=''; _fecharModal(g('nit-reboque-modal-processar')); })
             .catch(e => { console.error(e); toast('Falha ao gravar no Firebase.','error'); });
     }
 
@@ -197,18 +223,18 @@ const NitReboques = (() => {
                 <span class="nit-reboque-status-tag ${tagClass}">${tagLabel}</span>
             </div>
             <div class="nit-reboque-card-info">
-                <div class="nit-reboque-info-line"><i class="fas fa-truck-pickup"></i><span class="nit-reboque-mono">VT ${esc(r.vt||'N/I')} · ${esc(r.placa||'N/I')}</span></div>
-                <div class="nit-reboque-info-line"><i class="far fa-clock"></i>Plantão até ${esc(r.plantao||'N/I')}</div>
-                <div class="nit-reboque-info-line"><i class="fas fa-mobile-alt"></i><span class="nit-reboque-mono">${esc(r.smart||'N/I')}</span></div>
-                ${atuando && r.ocorrencia ? `<div class="nit-reboque-ocorrencia" title="${esc(r.ocorrencia)}"><i class="fas fa-info-circle"></i> ${esc(r.ocorrencia)}</div>` : ''}
+                <div class="nit-reboque-info-line">${I.truck}<span class="nit-reboque-mono">VT ${esc(r.vt||'N/I')} · ${esc(r.placa||'N/I')}</span></div>
+                <div class="nit-reboque-info-line">${I.clock}Plantão até ${esc(r.plantao||'N/I')}</div>
+                <div class="nit-reboque-info-line">${I.phone}<span class="nit-reboque-mono">${esc(r.smart||'N/I')}</span></div>
+                ${atuando && r.ocorrencia ? `<div class="nit-reboque-ocorrencia" title="${esc(r.ocorrencia)}">${I.info} ${esc(r.ocorrencia)}</div>` : ''}
             </div>
             <div class="nit-reboque-card-footer">
-                <button class="nit-reboque-acao js-editar" title="Editar reboquista"><i class="fas fa-user-edit"></i></button>
-                <button class="nit-reboque-acao js-remover" title="Remover reboquista"><i class="fas fa-trash-alt"></i></button>
+                <button class="nit-reboque-acao js-editar" title="Editar reboquista">${I.edit}</button>
+                <button class="nit-reboque-acao js-remover" title="Remover reboquista">${I.trash}</button>
                 <span class="nit-reboque-spacer"></span>
                 ${atuando
-                    ? `<button class="nit-reboque-acao js-finalizar" title="Finalizar atendimento"><i class="fas fa-check-circle"></i></button>`
-                    : `<button class="nit-reboque-acao js-acionar" title="Vincular a ocorrência"><i class="fas fa-sign-out-alt"></i></button>`}
+                    ? `<button class="nit-reboque-acao js-finalizar" title="Finalizar atendimento">${I.check}</button>`
+                    : `<button class="nit-reboque-acao js-acionar" title="Vincular a ocorrência">${I.dispatch}</button>`}
             </div>
         </div>`;
     }
@@ -233,14 +259,14 @@ const NitReboques = (() => {
                 ${ev.horario?`<div class="nit-reboque-info-line"><i class="far fa-clock"></i>${esc(ev.horario)}</div>`:''}
                 ${ev.obs?`<div class="nit-reboque-info-line"><i class="fas fa-comment-dots"></i>${esc(ev.obs)}</div>`:''}
             </div>
-            <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label"><i class="fas fa-truck-pickup"></i> Reboques</span><div class="nit-reboque-evento-tags">${rebTagsHTML}</div></div>
-            <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label"><i class="fas fa-car-side"></i> Viaturas</span><div class="nit-reboque-evento-tags">${vtTagsHTML}</div></div>
+            <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label">${I.truck} Reboques</span><div class="nit-reboque-evento-tags">${rebTagsHTML}</div></div>
+            <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label">${I.car} Viaturas</span><div class="nit-reboque-evento-tags">${vtTagsHTML}</div></div>
             <div class="nit-reboque-card-footer">
-                <button class="nit-reboque-acao js-ev-editar"    title="Editar"><i class="fas fa-pencil-alt"></i></button>
-                <button class="nit-reboque-acao js-ev-relatorio" title="Copiar relatório"><i class="fab fa-whatsapp"></i></button>
+                <button class="nit-reboque-acao js-ev-editar"    title="Editar">${I.pencil}</button>
+                <button class="nit-reboque-acao js-ev-relatorio" title="Copiar relatório">${I.copy}</button>
                 <span class="nit-reboque-spacer"></span>
-                <button class="nit-reboque-acao js-ev-finalizar" title="Finalizar e liberar recursos"><i class="fas fa-check-circle"></i></button>
-                <button class="nit-reboque-acao js-ev-remover"   title="Cancelar ocorrência"><i class="fas fa-ban"></i></button>
+                <button class="nit-reboque-acao js-ev-finalizar" title="Finalizar e liberar recursos">${I.check}</button>
+                <button class="nit-reboque-acao js-ev-remover"   title="Cancelar ocorrência">${I.ban}</button>
             </div>
         </div>`;
     }
@@ -720,14 +746,40 @@ const NitReboques = (() => {
         return (ord(ant)+ord(prox))/2;
     }
 
+    /* ── Sidebar do módulo Reboques ──────────────────────────────────────────── */
+    function _bindSidebar() {
+        const sidebar     = g('nit-rb-sidebar');
+        const toggle      = g('nit-rb-btn-toggle');
+        const textarea    = g('nit-rb-bruto');
+        const placeholder = g('nit-rb-bruto-placeholder');
+
+        toggle?.addEventListener('click', () => {
+            sidebar?.classList.toggle('collapsed');
+            toggle.setAttribute('aria-expanded', String(!sidebar?.classList.contains('collapsed')));
+        });
+
+        if (textarea && placeholder) {
+            const sync = () => { placeholder.style.opacity = textarea.value ? '0' : '1'; };
+            textarea.addEventListener('input', sync);
+            sync();
+        }
+
+        // seção balanço toggle
+        g('nit-rb-sec-balanco-header')?.addEventListener('click', () => {
+            g('nit-rb-sec-balanco')?.classList.toggle('collapsed-sec');
+        });
+        g('nit-rb-sec-acoes-header')?.addEventListener('click', () => {
+            g('nit-rb-sec-acoes')?.classList.toggle('collapsed-sec');
+        });
+    }
+
     /* ── Bind UI ──────────────────────────────────────────────────────────── */
     function _bindUI() {
         const on = (id, ev, fn) => g(id)?.addEventListener(ev, fn);
 
         // top bar
-        on('nit-reboque-btn-processar-open','click',()=>_abrirModal(g('nit-reboque-modal-processar')));
-        on('nit-reboque-btn-processar','click', processarPlantao);
-        on('nit-reboque-modal-processar-fechar','click',()=>_fecharModal(g('nit-reboque-modal-processar')));
+        _bindSidebar();
+        on('nit-rb-btn-processar','click', processarPlantao);
         on('nit-reboque-btn-add-viatura','click',()=>abrirEdicaoViatura(null));
         on('nit-reboque-btn-add-reboquista','click',()=>abrirEdicaoReboquista(null));
         on('nit-reboque-btn-rel-viaturas','click', gerarRelatorioViaturas);
@@ -769,7 +821,7 @@ const NitReboques = (() => {
         on('nit-reboque-rel-reboques-fechar','click',()=>_fecharModal(g('nit-reboque-modal-rel-reboques')));
 
         // modal processar
-        g('nit-reboque-modal-processar')?.addEventListener('click',e=>{ if(e.target===g('nit-reboque-modal-processar')) _fecharModal(g('nit-reboque-modal-processar')); });
+
 
         // ESC global
         document.addEventListener('keydown', e => {
