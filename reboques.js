@@ -317,13 +317,14 @@ const NitReboques = (() => {
         const blocos = _splitBlocos(bruto);
         const updates = {}; let novosV=0, novosR=0;
         let ordV = maxOrdem(S.viaturas), ordR = maxOrdem(S.reboquistas);
-        const vtExiste  = vt   => Object.values(S.viaturas   ).some(v => v?.vt   === vt);
+        const vtKey     = d => d.vt === 'MT VL' ? `MT VL:${(d.equipe||'').slice(0,30)}` : d.vt;
+        const vtExiste  = key => Object.values(S.viaturas).some(v => (v?.vt==='MT VL'?`MT VL:${(v.equipe||'').slice(0,30)}`:v?.vt) === key);
         const nomExiste = nome => Object.values(S.reboquistas ).some(r => r?.nome === nome);
 
         blocos.forEach(bloco => {
             const d = _extrairBloco(bloco);
             if (!d) return;
-            if (d.tipoRecurso === 'viatura' && !vtExiste(d.vt)) {
+            if (d.tipoRecurso === 'viatura' && !vtExiste(vtKey(d))) {
                 const id = novoId('vt');
                 updates[`${PATH_VIATURAS}/${id}`] = { vt:d.vt, placa:d.placa||'', equipe:d.equipe, qru:d.qru, qth:d.qth, status:d.status, eventoId:'', ordem:++ordV };
                 S.viaturas[id] = updates[`${PATH_VIATURAS}/${id}`];
@@ -354,17 +355,17 @@ const NitReboques = (() => {
                 <span class="nit-reboque-status-tag ${tagClass}">${tagLabel}</span>
             </div>
             <div class="nit-reboque-card-info">
-                <div class="nit-reboque-info-line"><i class="fas fa-users"></i>${esc(v.equipe||'Equipe não informada')}</div>
-                ${v.qru ? `<div class="nit-reboque-info-line"><i class="fas fa-broadcast-tower"></i>${esc(v.qru)}</div>` : ''}
-                ${v.qth ? `<div class="nit-reboque-info-line"><i class="fas fa-map-marker-alt"></i>${esc(v.qth)}</div>` : ''}
+                <div class="nit-reboque-info-line">${I.users}${esc(v.equipe||'Equipe não informada')}</div>
+                ${v.qru ? `<div class="nit-reboque-info-line">${I.radio}${esc(v.qru)}</div>` : ''}
+                ${v.qth ? `<div class="nit-reboque-info-line">${I.mappin}${esc(v.qth)}</div>` : ''}
             </div>
             <div class="nit-reboque-card-footer">
-                <button class="nit-reboque-acao js-vt-editar" title="Editar viatura"><i class="fas fa-edit"></i></button>
-                <button class="nit-reboque-acao js-vt-remover" title="Remover viatura"><i class="fas fa-trash-alt"></i></button>
+                <button class="nit-reboque-acao js-vt-editar" title="Editar viatura">${I.edit}</button>
+                <button class="nit-reboque-acao js-vt-remover" title="Remover viatura">${I.trash}</button>
                 <span class="nit-reboque-spacer"></span>
                 ${atuando
-                    ? `<button class="nit-reboque-acao js-vt-finalizar" title="Marcar como disponível"><i class="fas fa-check-circle"></i></button>`
-                    : `<button class="nit-reboque-acao js-vt-acionar" title="Vincular a ocorrência"><i class="fas fa-sign-out-alt"></i></button>`}
+                    ? `<button class="nit-reboque-acao js-vt-finalizar" title="Marcar como disponível">${I.check}</button>`
+                    : `<button class="nit-reboque-acao js-vt-acionar" title="Vincular a ocorrência">${I.dispatch}</button>`}
             </div>
         </div>`;
     }
@@ -412,9 +413,9 @@ const NitReboques = (() => {
                 <span class="nit-reboque-evento-hora nit-reboque-mono">${esc(ev.criado||'')}</span>
             </div>
             <div class="nit-reboque-card-info">
-                <div class="nit-reboque-info-line"><i class="fas fa-map-marker-alt"></i>${esc(ev.endereco||'')}</div>
-                ${ev.horario?`<div class="nit-reboque-info-line"><i class="far fa-clock"></i>${esc(ev.horario)}</div>`:''}
-                ${ev.obs?`<div class="nit-reboque-info-line"><i class="fas fa-comment-dots"></i>${esc(ev.obs)}</div>`:''}
+                <div class="nit-reboque-info-line">${I.mappin}${esc(ev.endereco||'')}</div>
+                ${ev.horario?`<div class="nit-reboque-info-line">${I.clock}${esc(ev.horario)}</div>`:''}
+                ${ev.obs?`<div class="nit-reboque-info-line">${I.comment}${esc(ev.obs)}</div>`:''}
             </div>
             <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label">${I.truck} Reboques</span><div class="nit-reboque-evento-tags">${rebTagsHTML}</div></div>
             <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label">${I.car} Viaturas</span><div class="nit-reboque-evento-tags">${vtTagsHTML}</div></div>
@@ -474,9 +475,10 @@ const NitReboques = (() => {
     function abrirEdicaoViatura(id) {
         const v = id ? (S.viaturas[id]||{}) : {};
         const titulo = g('nit-reboque-viatura-titulo');
-        if (titulo) titulo.innerHTML = `<i class="fas fa-car-side"></i> ${id?'Editar':'Adicionar'} Viatura`;
+        if (titulo) titulo.textContent = `${id?'Editar':'Adicionar'} Viatura`;
         if (g('nit-reboque-viatura-id'))     g('nit-reboque-viatura-id').value    = id||'';
         if (g('nit-reboque-viatura-vt'))     g('nit-reboque-viatura-vt').value    = v.vt||'';
+        if (g('nit-reboque-viatura-placa'))  g('nit-reboque-viatura-placa').value   = v.placa||'';
         if (g('nit-reboque-viatura-equipe')) g('nit-reboque-viatura-equipe').value = v.equipe||'';
         if (g('nit-reboque-viatura-qru'))    g('nit-reboque-viatura-qru').value   = v.qru||'';
         if (g('nit-reboque-viatura-qth'))    g('nit-reboque-viatura-qth').value   = v.qth||'';
@@ -490,16 +492,18 @@ const NitReboques = (() => {
         const vt  = g('nit-reboque-viatura-vt')?.value.trim().toUpperCase()||'';
         if (!vt) { toast('O número da VT é obrigatório.','error'); return; }
         const dados = {
-            vt, equipe: g('nit-reboque-viatura-equipe')?.value.trim()||'',
-            qru: g('nit-reboque-viatura-qru')?.value.trim()||'',
-            qth: g('nit-reboque-viatura-qth')?.value.trim()||'',
+            vt,
+            placa:  g('nit-reboque-viatura-placa')?.value.trim().toUpperCase()||'',
+            equipe: g('nit-reboque-viatura-equipe')?.value.trim()||'',
+            qru:    g('nit-reboque-viatura-qru')?.value.trim()||'',
+            qth:    g('nit-reboque-viatura-qth')?.value.trim()||'',
             status: g('nit-reboque-viatura-status')?.value||'disponivel',
         };
         const updates = {};
         if (id && S.viaturas[id]) {
             Object.entries(dados).forEach(([k,v])=>{ updates[`${PATH_VIATURAS}/${id}/${k}`]=v; });
             // atualiza snapshot nos eventos vinculados
-            const label = `VT ${dados.vt}${dados.equipe?' — '+dados.equipe:''}`;
+            const label = `VT ${dados.vt}${dados.placa?' · '+dados.placa:''}${dados.equipe?' — '+dados.equipe:''}`;
             Object.entries(S.eventos).forEach(([evId,ev])=>{ if(ev?.viaturas?.[id]) updates[`${PATH_EVENTOS}/${evId}/viaturas/${id}`]=label; });
             toast('Viatura atualizada!','success');
         } else {
@@ -526,7 +530,7 @@ const NitReboques = (() => {
     function abrirEdicaoReboquista(id) {
         const r = id ? (S.reboquistas[id]||{}) : {};
         const titulo = g('nit-reboque-edit-titulo');
-        if (titulo) titulo.innerHTML = `<i class="fas fa-user-edit"></i> ${id?'Editar':'Adicionar'} Reboquista`;
+        if (titulo) titulo.textContent = `${id?'Editar':'Adicionar'} Reboquista`;
         if (g('nit-reboque-edit-id'))      g('nit-reboque-edit-id').value      = id||'';
         if (g('nit-reboque-edit-nome'))    g('nit-reboque-edit-nome').value    = r.nome||'';
         if (g('nit-reboque-edit-vt'))      g('nit-reboque-edit-vt').value      = r.vt||'';
@@ -580,7 +584,7 @@ const NitReboques = (() => {
         S.multi = { reboquistaIds:[], viaturaIds:[] };
         S.editandoEventoId = null;
         const t = g('nit-reboque-acion-titulo');
-        if (t) t.innerHTML = '<i class="fas fa-bullhorn"></i> Registrar Ocorrência';
+        if (t) t.textContent = 'Registrar Ocorrência';
         ['nit-reboque-acion-tipo','nit-reboque-acion-endereco','nit-reboque-acion-horario','nit-reboque-acion-obs']
             .forEach(id => { const el=g(id); if(el){el.value='';el.disabled=false;} });
         _renderTagsAcionamento();
@@ -641,7 +645,7 @@ const NitReboques = (() => {
         const evId = novoId('evt');
         const snapRebs  = {}; S.multi.reboquistaIds.forEach(id=>{ snapRebs[id]  = S.reboquistas[id]?.nome||'?'; });
         const snapViats = {}; S.multi.viaturaIds.forEach(id=>{
-            const v=S.viaturas[id]||{}; snapViats[id]=`VT ${v.vt||'?'}${v.equipe?' — '+v.equipe:''}`;
+            const v=S.viaturas[id]||{}; snapViats[id]=`VT ${v.vt||'?'}${v.placa?' · '+v.placa:''}${v.equipe?' — '+v.equipe:''}`;
         });
         const updates = {};
         updates[`${PATH_EVENTOS}/${evId}`] = { tipo, endereco, horario, obs, criado: agoraHHMM(), criadoTs: String(Date.now()), reboquistas: snapRebs, viaturas: snapViats };
@@ -676,7 +680,7 @@ const NitReboques = (() => {
         _resetAcionamento();
         S.editandoEventoId = evId;
         const t = g('nit-reboque-acion-titulo');
-        if (t) t.innerHTML = '<i class="fas fa-pencil-alt"></i> Editar Ocorrência';
+        if (t) t.textContent = 'Editar Ocorrência';
         if (g('nit-reboque-acion-tipo'))     g('nit-reboque-acion-tipo').value     = ev.tipo||'';
         if (g('nit-reboque-acion-endereco')) g('nit-reboque-acion-endereco').value = ev.endereco||'';
         if (g('nit-reboque-acion-horario'))  g('nit-reboque-acion-horario').value  = ev.horario||'';
@@ -877,7 +881,7 @@ const NitReboques = (() => {
         } else {
             const v = S.viaturas[id]; if (!v) return;
             if (v.eventoId===evId) { toast(`VT ${v.vt} já está nesta ocorrência.`,'info'); return; }
-            const label = `VT ${v.vt}${v.equipe?' — '+v.equipe:''}`;
+            const label = `VT ${v.vt}${v.placa?' · '+v.placa:''}${v.equipe?' — '+v.equipe:''}`;
             const updates = {};
             if (v.eventoId) updates[`${PATH_EVENTOS}/${v.eventoId}/viaturas/${id}`] = null;
             updates[`${PATH_EVENTOS}/${evId}/viaturas/${id}`] = label;
