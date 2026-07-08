@@ -155,6 +155,16 @@ const NitReboques = (() => {
         return `(${ddd.replace(/\D/g,'')}) ${fmt}`;
     }
 
+    // Detecta linhas que são endereços/locais e NÃO nomes de agentes
+    function _ehEndereco(linha) {
+        const l = linha.trim();
+        if (/^(av\.?|avenida|rua|r\.\s|bairro|estr\.?|rodovia|rod\.?|alameda|al\.?|pra[çc]a|travessa|trav\.?|viela|via\s+\w)/i.test(l)) return true;
+        if (/\b(com\s+av|x\s+av|e\s+av|esquina|cruzamento|br[\s\-]\d{2,3})\b/i.test(l)) return true;
+        if (/^rota\b/i.test(l)) return true;
+        if (/\bkm\s*\d+/i.test(l)) return true;
+        return false;
+    }
+
     // Detecta se a primeira linha é uma viatura (começa com "VT" + qualquer separador)
     function _extrairBloco(bloco) {
         const linhas = bloco.split('\n').map(l => l.trim()).filter(l => l);
@@ -181,45 +191,64 @@ const NitReboques = (() => {
     function _parseViatura(linhas) {
         const lPrimClean = linhas[0].replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
 
-        // Extrai só o número da VT (evita capturar "176 🚨 PML 3117 EM MANUTENÇÃO")
+        // Extrai só o número da VT
         const vtNumM = lPrimClean.match(/VT[\s\-:\.]*(\d+)/i);
         const vtNum  = vtNumM ? vtNumM[1] : '';
 
-        // Texto bruto após "VT" (detecta MT VL quando não há número)
+        // Detecta MT VL (motorista via livre sem VT)
         const vtTudo = lPrimClean.replace(/^VT[\s\-:\.']*/i, '').trim().toUpperCase();
         const ehVL   = !vtNum && /^(MT\.?\s*V\.?L\.?|MT\.?\s*VIA\s*LIVRE|MOTO\s*VIA\s*LIVRE|MOTORISTA\s*VIA\s*LIVRE|MTVL|VIA\s*LIVRE)$/.test(vtTudo);
         const vt     = ehVL ? 'MT VL' : (vtNum || 'N/I');
 
-        // Placa inline na primeira linha: "VT 176 🚨 PML 3117 EM MANUTENÇÃO" → "PML3117"
-        let placaInline = '';
-        let notaInline  = '';
+        // Placa inline (ex: "VT 176 PML3117")
+        let placaInline = '', notaInline = '';
         if (vtNumM) {
             const apos   = lPrimClean.slice(vtNumM.index + vtNumM[0].length).trim();
             const placaM = apos.match(/^([A-Z]{2,3}\s*[\dA-Z]{3,7})/i);
-            if (placaM) {
-                placaInline = placaM[1].replace(/\s/g, '').toUpperCase();
-                notaInline  = apos.slice(placaM[0].length).trim();
+            if (placaM) { placaInline = placaM[1].replace(/\s/g,'').toUpperCase(); notaInline = apos.slice(placaM[0].length).trim(); }
+            else { notaInline = apos; }
+        }
+
+        // ── Fix 1: QTH/QRU em linhas separadas sem separador ───────────────
+        // "QTH\nav a x av f" → "QTH: av a x av f"
+        const linhasResto = [];
+        for (let i = 1; i < linhas.length; i++) {
+            const l = linhas[i];
+            if (/^Q[\.\s]*[RT][\.\s]*[UH]\s*$/i.test(l) && i + 1 < linhas.length) {
+                linhasResto.push(l.trim() + ': ' + linhas[i + 1].trim());
+                i++;
             } else {
-                notaInline  = apos;
+                linhasResto.push(l);
             }
         }
 
-        // Extrai equipe: filtra ruído + QRU/QTH/EQUIPE
-        const equipeLinhas = ehVL ? [] : linhas.slice(1).filter(l => {
-            if (_isRuido(l)) return false;
-            if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O|MISS[AÃ]O|EQUIPE\s*:)/i.test(l)) return false;
-            return true;
-        });
-        const equipe = equipeLinhas.join(' / ').replace(/\s{2,}/g, ' ').trim();
-
-        // QRU/QTH das linhas seguintes; nota inline entra como QRU fallback
+        // ── Fix 2: extrai QRU/QTH dos labels (inclui nota inline) ──────────
         let qru = notaInline, qth = '';
-        linhas.forEach(l => {
+        linhasResto.forEach(l => {
             const qruM = l.match(/^Q[\.\s]*R[\.\s]*[UQ][\.\s]*[:\-\s]+(.+)/i);
             if (qruM) qru = qruM[1].trim();
             const qthM = l.match(/^(?:Q[\.\s]*T[\.\s]*H|LOCAL|ENDERE[ÇC]O)[\.\s]*[:\-\s]+(.+)/i);
             if (qthM) qth = qthM[1].trim();
         });
+
+        // ── Fix 2b: endereço implícito (sem label) → QTH ───────────────────
+        if (!qth) {
+            const endImpl = linhasResto.find(l =>
+                !_isRuido(l) &&
+                !/^Q[\.\s]*[RT]/i.test(l) &&
+                _ehEndereco(l)
+            );
+            if (endImpl) qth = endImpl;
+        }
+
+        // ── Fix 3: equipe inclui MT VL; exclui ruído, labels e endereços ───
+        const equipeLinhas = linhasResto.filter(l => {
+            if (_isRuido(l)) return false;
+            if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O|MISS[AÃ]O|EQUIPE\s*:)/i.test(l)) return false;
+            if (_ehEndereco(l)) return false;
+            return true;
+        });
+        const equipe = equipeLinhas.join(' / ').replace(/\s{2,}/g, ' ').trim();
 
         const status = (qru || qth) ? 'atuando' : 'disponivel';
         return { tipoRecurso: 'viatura', vt, placa: placaInline, equipe, qru, qth, status };
