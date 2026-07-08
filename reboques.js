@@ -139,11 +139,10 @@ const NitReboques = (() => {
     }
 
     // Normaliza representação de horário → "18:00hs" ou "18hs"
+    // Aceita ponto-e-vírgula como separador (00;00 → 00:00)
     function _normHorario(raw) {
-        const s = raw.trim().replace(/\s+/g, '');
-        // já tem minutos: 18:00 → 18:00hs
+        const s = raw.trim().replace(/\s+/g, '').replace(/;/g, ':');
         if (/^\d{1,2}:\d{2}/.test(s)) return s.replace(/h.*$/i, '').trim() + 'hs';
-        // só hora: 18h, 18hs, 18hrs → 18hs
         return s.replace(/h.*$/i, '').trim() + 'hs';
     }
 
@@ -174,36 +173,50 @@ const NitReboques = (() => {
     }
 
     function _parseViatura(linhas) {
-        // Extrai número bruto da VT — aceita qualquer separador após "VT"
-        const vtBruto = linhas[0].replace(/^VT[\s\-:\.']*/i, '').trim().toUpperCase();
+        const lPrimClean = linhas[0].replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
 
-        // Variantes de "motorista/moto em via livre" (sem VT operacional)
-        const ehVL = /^(MT\.?\s*V\.?L\.?|MT\.?\s*VIA\s*LIVRE|MOTO\s*VIA\s*LIVRE|MOTORISTA\s*VIA\s*LIVRE|MTVL|VIA\s*LIVRE)$/.test(vtBruto);
-        const vt   = ehVL ? 'MT VL' : (vtBruto || 'N/I');
+        // Extrai só o número da VT (evita capturar "176 🚨 PML 3117 EM MANUTENÇÃO")
+        const vtNumM = lPrimClean.match(/VT[\s\-:\.]*(\d+)/i);
+        const vtNum  = vtNumM ? vtNumM[1] : '';
 
-        // Extrai equipe: filtra ruído + linhas de QRU/QTH/EQUIPE
+        // Texto bruto após "VT" (detecta MT VL quando não há número)
+        const vtTudo = lPrimClean.replace(/^VT[\s\-:\.']*/i, '').trim().toUpperCase();
+        const ehVL   = !vtNum && /^(MT\.?\s*V\.?L\.?|MT\.?\s*VIA\s*LIVRE|MOTO\s*VIA\s*LIVRE|MOTORISTA\s*VIA\s*LIVRE|MTVL|VIA\s*LIVRE)$/.test(vtTudo);
+        const vt     = ehVL ? 'MT VL' : (vtNum || 'N/I');
+
+        // Placa inline na primeira linha: "VT 176 🚨 PML 3117 EM MANUTENÇÃO" → "PML3117"
+        let placaInline = '';
+        let notaInline  = '';
+        if (vtNumM) {
+            const apos   = lPrimClean.slice(vtNumM.index + vtNumM[0].length).trim();
+            const placaM = apos.match(/^([A-Z]{2,3}\s*[\dA-Z]{3,7})/i);
+            if (placaM) {
+                placaInline = placaM[1].replace(/\s/g, '').toUpperCase();
+                notaInline  = apos.slice(placaM[0].length).trim();
+            } else {
+                notaInline  = apos;
+            }
+        }
+
+        // Extrai equipe: filtra ruído + QRU/QTH/EQUIPE
         const equipeLinhas = ehVL ? [] : linhas.slice(1).filter(l => {
             if (_isRuido(l)) return false;
-            // descarta linhas que são QRU, QTH, LOCAL, ENDEREÇO, MISSÃO
             if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O|MISS[AÃ]O|EQUIPE\s*:)/i.test(l)) return false;
             return true;
         });
         const equipe = equipeLinhas.join(' / ').replace(/\s{2,}/g, ' ').trim();
 
-        // Extrai QRU e QTH — tolera Q.R.U, "QRU :", "Qru", espaços extras
-        let qru = '', qth = '';
+        // QRU/QTH das linhas seguintes; nota inline entra como QRU fallback
+        let qru = notaInline, qth = '';
         linhas.forEach(l => {
-            // QRU: Q.R.U., QRU, Qru, QR.U etc.
             const qruM = l.match(/^Q[\.\s]*R[\.\s]*[UQ][\.\s]*[:\-\s]+(.+)/i);
             if (qruM) qru = qruM[1].trim();
-
-            // QTH / LOCAL / ENDEREÇO
             const qthM = l.match(/^(?:Q[\.\s]*T[\.\s]*H|LOCAL|ENDERE[ÇC]O)[\.\s]*[:\-\s]+(.+)/i);
             if (qthM) qth = qthM[1].trim();
         });
 
         const status = (qru || qth) ? 'atuando' : 'disponivel';
-        return { tipoRecurso: 'viatura', vt, equipe, qru, qth, status };
+        return { tipoRecurso: 'viatura', vt, placa: placaInline, equipe, qru, qth, status };
     }
 
     function _parseReboquista(linhas) {
@@ -231,9 +244,9 @@ const NitReboques = (() => {
         linhas.forEach(l => {
             // ── Plantão ─────────────────────────────────────────────────────
             // Aceita: "Plantão até às 18hrs", "Plantao ate 18:00hs", "Plantão: 18h",
-            //         "Plantão 18hrs", "Plantão até as 18:00", "até às 18hs"
-            const pm = l.match(/plant[aã]o\s*[:\-]?\s*(?:at[eé]\s+)?(?:[àas]+\s*)?([\d:]+\s*h[ro]?[sa]?)/i)
-                    || l.match(/at[eé]\s+[àas]?\s*([\d:]+\s*h[ro]?[sa]?)/i);
+            //         "Plantão 18hrs", "Plantão at 18hs", "00;00" (ponto-e-vírgula)
+            const pm = l.match(/plant[aã]o\s*[:\-]?\s*(?:at[eé]?\s+)?(?:[àas]+\s*)?([\d:;]+\s*h[ro]?[sa]?)/i)
+                    || l.match(/at[eé]?\s+[àas]?\s*([\d:;]+\s*h[ro]?[sa]?)/i);
             if (pm) dados.plantao = _normHorario(pm[1]);
 
             // ── Contato ──────────────────────────────────────────────────────
@@ -249,14 +262,14 @@ const NitReboques = (() => {
             }
 
             // ── VT + placa ───────────────────────────────────────────────────
-            // Strip de emojis antes (🚨 sem flag u corrompe o char-class)
-            // Aceita: "VT 193 🚨 ABC1234", "VT:193 ABC1234", "VT - 193/ABC1234"
-            // Placa: padrão antigo ABC1234 e Mercosul ABC1A23
+            // Strip de emojis (🚨 sem flag u corromperia), aceita espaço na placa
+            // Aceita: "VT 193 🚨 ABC1234", "VT 078 🚨 ORS 8092", "VT:193 ABC1234"
+            // Placa: padrão antigo ABC1234, espaçado ORS 8092, Mercosul ABC1A23
             const lSem = l.replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
-            const vm = lSem.match(/VT[\s\-:\.]*(\d+)\s*[\s\/\-]*([A-Z]{2,3}[\dA-Z]{4,7})?/i);
+            const vm = lSem.match(/VT[\s\-:\.]*(\d+)\s*[\s\/\-]*([A-Z]{2,3}\s*[\dA-Z]{3,7})?/i);
             if (vm) {
                 dados.vt    = vm[1].trim();
-                dados.placa = vm[2]?.toUpperCase().replace(/\s/g, '') || 'N/I';
+                dados.placa = vm[2]?.replace(/\s/g, '').toUpperCase() || 'N/I';
             }
         });
 
@@ -277,7 +290,7 @@ const NitReboques = (() => {
             if (!d) return;
             if (d.tipoRecurso === 'viatura' && !vtExiste(d.vt)) {
                 const id = novoId('vt');
-                updates[`${PATH_VIATURAS}/${id}`] = { vt:d.vt, equipe:d.equipe, qru:d.qru, qth:d.qth, status:d.status, eventoId:'', ordem:++ordV };
+                updates[`${PATH_VIATURAS}/${id}`] = { vt:d.vt, placa:d.placa||'', equipe:d.equipe, qru:d.qru, qth:d.qth, status:d.status, eventoId:'', ordem:++ordV };
                 S.viaturas[id] = updates[`${PATH_VIATURAS}/${id}`];
                 novosV++;
             } else if (d.tipoRecurso === 'reboquista' && !nomExiste(d.nome)) {
@@ -302,7 +315,7 @@ const NitReboques = (() => {
         return `
         <div class="nit-reboque-card" draggable="true" data-id="${esc(id)}" data-tipo="viatura" data-status="${esc(v.status)}">
             <div class="nit-reboque-card-header">
-                <strong class="nit-reboque-mono">VT ${esc(v.vt||'N/I')}</strong>
+                <strong class="nit-reboque-mono">VT ${esc(v.vt||'N/I')}${v.placa ? ` · ${esc(v.placa)}` : ''}</strong>
                 <span class="nit-reboque-status-tag ${tagClass}">${tagLabel}</span>
             </div>
             <div class="nit-reboque-card-info">
