@@ -108,56 +108,165 @@ const NitReboques = (() => {
         _atualizarBalanco();
     }
 
-    /* ── Parser ───────────────────────────────────────────────────────────── */
-    // Viatura: primeira linha começa com VT (+ número ou hífen/dois-pontos)
-    // Reboquista: nome primeiro + linha com VT e 🚨 ou Plantão
+    /* ── Parser v2 (resiliente) ───────────────────────────────────────────── */
+
+    // Pré-processa o texto bruto em blocos:
+    // • normaliza \r\n → \n
+    // • "//" inline → separador de bloco (padrão do WhatsApp AMC)
+    // • "---" como separador alternativo
+    // • múltiplas linhas em branco colapsam para uma
+    function _splitBlocos(bruto) {
+        return bruto
+            .replace(/\r\n?/g, '\n')                 // normaliza line endings
+            .replace(/\/\//g, '\n\n')                // // → separador de bloco
+            .replace(/^-{3,}\s*$/gm, '\n')           // --- como separador
+            .replace(/\n{3,}/g, '\n\n')              // colapsa linhas em branco múltiplas
+            .split(/\n\s*\n/)
+            .map(b => b.trim())
+            .filter(b => b.length > 0);
+    }
+
+    // Descarta linhas de ruído: saudações, emojis soltos, datas, horários soltos
+    function _isRuido(linha) {
+        const l = linha.trim();
+        if (!l || l.length < 2) return true;
+        if (/^(boa\s+(?:tarde|noite|manh[ãa])|bom\s+dia|ol[aá]\b|oi\b|ok\b|obrigad)/i.test(l)) return true;
+        // menos de 3 letras na linha (emojis, pontuação, números soltos)
+        if ((l.match(/[a-zA-ZÀ-ÿ]/g) || []).length < 3) return true;
+        // data pura: 08/07, 08/07/2026, 08-07
+        if (/^\d{1,2}[\/\-]\d{1,2}([\/\-]\d{2,4})?$/.test(l)) return true;
+        return false;
+    }
+
+    // Normaliza representação de horário → "18:00hs" ou "18hs"
+    function _normHorario(raw) {
+        const s = raw.trim().replace(/\s+/g, '');
+        // já tem minutos: 18:00 → 18:00hs
+        if (/^\d{1,2}:\d{2}/.test(s)) return s.replace(/h.*$/i, '').trim() + 'hs';
+        // só hora: 18h, 18hs, 18hrs → 18hs
+        return s.replace(/h.*$/i, '').trim() + 'hs';
+    }
+
+    // Formata telefone: "85999999999" → "(85) 99999-9999"
+    function _normTelefone(ddd, num) {
+        const n = num.replace(/\D/g, '');
+        const fmt = n.length >= 9
+            ? n.replace(/(\d{4,5})(\d{4})$/, '$1-$2')
+            : n;
+        return `(${ddd.replace(/\D/g,'')}) ${fmt}`;
+    }
+
+    // Detecta se a primeira linha é uma viatura (começa com "VT" + qualquer separador)
     function _extrairBloco(bloco) {
         const linhas = bloco.split('\n').map(l => l.trim()).filter(l => l);
         if (!linhas.length) return null;
         const primeira = linhas[0];
-        if (/^VT[\s\-:]+/i.test(primeira)) return _parseViatura(linhas);
-        if (linhas.some(l => /VT\s+[\w\d]+/i.test(l) || /Plantão/i.test(l) || /Smart:/i.test(l)))
-            return _parseReboquista(linhas);
+
+        // VT-first: "VT 211", "VT: 211", "VT-211", "VT.211", "VT211"
+        if (/^VT[\s\-:\.]*[\dA-Z]/i.test(primeira)) return _parseViatura(linhas);
+
+        // Reboquista: contém linha com VT+número, Plantão, ou palavra-chave de contato
+        const temVT      = linhas.some(l => /VT[\s\-:\.]*\d+/i.test(l));
+        const temPlantao = linhas.some(l => /plant[aã]o|at[eé]\s+[àa]?s?\s*\d/i.test(l));
+        const temContato = linhas.some(l => /(?:smart|celular|tel[ef]\.?|fone|whats(?:app)?|zap|contato)\s*[:\-]/i.test(l));
+        if (temVT || temPlantao || temContato) return _parseReboquista(linhas);
         return null;
     }
 
     function _parseViatura(linhas) {
-        const vtMatch = linhas[0].match(/VT[\s\-:]+(.+)/i);
-        const vtBruto = vtMatch ? vtMatch[1].trim().toUpperCase() : 'N/I';
-        // "MT VIA LIVRE" → status especial sem equipe real
-        const ehMtVL = /MT\s+VIA\s*LIVRE/i.test(vtBruto);
-        const vt = ehMtVL ? 'MT VL' : vtBruto;
-        const equipe = ehMtVL ? '' : linhas.slice(1)
-            .filter(l => !/^(QRU|QTH|BOA\s+(TARDE|NOITE|MANHA))/i.test(l))
-            .join(' / ').trim();
+        // Extrai número bruto da VT — aceita qualquer separador após "VT"
+        const vtBruto = linhas[0].replace(/^VT[\s\-:\.']*/i, '').trim().toUpperCase();
+
+        // Variantes de "motorista/moto em via livre" (sem VT operacional)
+        const ehVL = /^(MT\.?\s*V\.?L\.?|MT\.?\s*VIA\s*LIVRE|MOTO\s*VIA\s*LIVRE|MOTORISTA\s*VIA\s*LIVRE|MTVL|VIA\s*LIVRE)$/.test(vtBruto);
+        const vt   = ehVL ? 'MT VL' : (vtBruto || 'N/I');
+
+        // Extrai equipe: filtra ruído + linhas de QRU/QTH/EQUIPE
+        const equipeLinhas = ehVL ? [] : linhas.slice(1).filter(l => {
+            if (_isRuido(l)) return false;
+            // descarta linhas que são QRU, QTH, LOCAL, ENDEREÇO, MISSÃO
+            if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O|MISS[AÃ]O|EQUIPE\s*:)/i.test(l)) return false;
+            return true;
+        });
+        const equipe = equipeLinhas.join(' / ').replace(/\s{2,}/g, ' ').trim();
+
+        // Extrai QRU e QTH — tolera Q.R.U, "QRU :", "Qru", espaços extras
         let qru = '', qth = '';
         linhas.forEach(l => {
-            const qruM = l.match(/QRU\s*[:\-]\s*(.+)/i); if (qruM) qru = qruM[1].trim();
-            const qthM = l.match(/QTH\s*[:\-]\s*(.+)/i); if (qthM) qth = qthM[1].trim();
+            // QRU: Q.R.U., QRU, Qru, QR.U etc.
+            const qruM = l.match(/^Q[\.\s]*R[\.\s]*[UQ][\.\s]*[:\-\s]+(.+)/i);
+            if (qruM) qru = qruM[1].trim();
+
+            // QTH / LOCAL / ENDEREÇO
+            const qthM = l.match(/^(?:Q[\.\s]*T[\.\s]*H|LOCAL|ENDERE[ÇC]O)[\.\s]*[:\-\s]+(.+)/i);
+            if (qthM) qth = qthM[1].trim();
         });
+
         const status = (qru || qth) ? 'atuando' : 'disponivel';
         return { tipoRecurso: 'viatura', vt, equipe, qru, qth, status };
     }
 
     function _parseReboquista(linhas) {
-        const linhaNome = linhas.find(l =>
-            !/VT\s+[\w\d]+/i.test(l) && !/🚨/.test(l) && !/Plantão/i.test(l) &&
-            !/Smart:/i.test(l) && !/VISTORIADOR/i.test(l) && !/ASSUMIR.*HORAS/i.test(l) && l.length > 2
-        );
-        if (!linhaNome) return null;
-        const dados = { tipoRecurso: 'reboquista', nome: linhaNome.trim().toUpperCase(), vt:'N/I', placa:'N/I', plantao:'N/I', smart:'N/I' };
-        linhas.forEach(l => {
-            const pm = l.match(/Plantão até\s+(?:às\s+)?([\d:]+\s*h?r?s?)/i); if (pm) dados.plantao = pm[1].trim();
-            const sm = l.match(/Smart:\s*\(?(\d{2})\)?\s*([\d\s.\-]+)/i);      if (sm) dados.smart   = `(${sm[1]}) ${sm[2].trim()}`;
-            const vm = l.match(/VT\s+([\w\d]+)\s*🚨?\s*([A-Z0-9]+)?/i);        if (vm) { dados.vt = vm[1].trim(); dados.placa = vm[2]?.trim()||'N/I'; }
+        // Linha do nome: exclui todas as linhas com padrões conhecidos
+        const linhaNome = linhas.find(l => {
+            if (_isRuido(l)) return false;
+            if (/VT[\s\-:\.]*[\d\w]+/i.test(l)) return false;       // linha de VT
+            if (/[🚨🔴🟡🟢]/u.test(l)) return false;                  // emojis de status
+            if (/plant[aã]o|at[eé]\s+[àa]?s?\s*\d/i.test(l)) return false; // plantão
+            if (/(?:smart|celular|tel[ef]\.?|fone|whats(?:app)?|zap|contato)\s*[:\-]/i.test(l)) return false; // contato (exige : ou -)
+            if (/vistoriador|assumir.*hora|central|supervis/i.test(l)) return false; // papéis/funções
+            if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O)/i.test(l)) return false; // QRU/QTH
+            if (/^\d+$/.test(l)) return false;                         // linha só com números
+            if (l.length < 3) return false;
+            return true;
         });
+        if (!linhaNome) return null;
+
+        const dados = {
+            tipoRecurso: 'reboquista',
+            nome: linhaNome.trim().toUpperCase().replace(/\s+/g, ' '),
+            vt: 'N/I', placa: 'N/I', plantao: 'N/I', smart: 'N/I',
+        };
+
+        linhas.forEach(l => {
+            // ── Plantão ─────────────────────────────────────────────────────
+            // Aceita: "Plantão até às 18hrs", "Plantao ate 18:00hs", "Plantão: 18h",
+            //         "Plantão 18hrs", "Plantão até as 18:00", "até às 18hs"
+            const pm = l.match(/plant[aã]o\s*[:\-]?\s*(?:at[eé]\s+)?(?:[àas]+\s*)?([\d:]+\s*h[ro]?[sa]?)/i)
+                    || l.match(/at[eé]\s+[àas]?\s*([\d:]+\s*h[ro]?[sa]?)/i);
+            if (pm) dados.plantao = _normHorario(pm[1]);
+
+            // ── Contato ──────────────────────────────────────────────────────
+            // Aceita: Smart, Celular, Tel, Fone, Whatsapp, Zap, Contato
+            // Formatos: "(85) 99999-9999", "85 99999-9999", "85999999999"
+            const sm = l.match(/(?:smart|celular|tel[ef]\.?|fone|whats(?:app)?|zap|contato)\s*[:\-]?\s*\(?\s*(\d{2})\s*\)?\s*[\s.\-]?([\d\s.\-]{8,})/i);
+            if (sm) dados.smart = _normTelefone(sm[1], sm[2]);
+
+            // Telefone "nu" (sem palavra-chave): linha que só tem número com DDD
+            if (!sm) {
+                const tel = l.match(/^\(?\s*(\d{2})\s*\)?\s*[\s.\-]?(9?\d{4}[\s.\-]?\d{4})\s*$/);
+                if (tel) dados.smart = _normTelefone(tel[1], tel[2]);
+            }
+
+            // ── VT + placa ───────────────────────────────────────────────────
+            // Strip de emojis antes (🚨 sem flag u corrompe o char-class)
+            // Aceita: "VT 193 🚨 ABC1234", "VT:193 ABC1234", "VT - 193/ABC1234"
+            // Placa: padrão antigo ABC1234 e Mercosul ABC1A23
+            const lSem = l.replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
+            const vm = lSem.match(/VT[\s\-:\.]*(\d+)\s*[\s\/\-]*([A-Z]{2,3}[\dA-Z]{4,7})?/i);
+            if (vm) {
+                dados.vt    = vm[1].trim();
+                dados.placa = vm[2]?.toUpperCase().replace(/\s/g, '') || 'N/I';
+            }
+        });
+
         return dados;
     }
 
     function processarPlantao() {
         const bruto = g('nit-rb-bruto')?.value.trim();
         if (!bruto) { toast('Insira o relatório de plantão.','warning'); return; }
-        const blocos = bruto.split(/\n\s*\n/).filter(b => b.trim());
+        const blocos = _splitBlocos(bruto);
         const updates = {}; let novosV=0, novosR=0;
         let ordV = maxOrdem(S.viaturas), ordR = maxOrdem(S.reboquistas);
         const vtExiste  = vt   => Object.values(S.viaturas   ).some(v => v?.vt   === vt);
