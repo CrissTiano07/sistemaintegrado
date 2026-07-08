@@ -268,134 +268,170 @@
             </div>
         </div>
 
+
 <div id="tab-reboques" class="tab-content">
 
-    <div class="nit-reboque-layout">
-
-        <!-- Coluna esquerda: entrada + balanço + ações -->
-        <aside class="nit-reboque-lateral">
-            <div class="nit-reboque-painel">
-                <div class="nit-reboque-painel-header">
-                    <h3><i class="fas fa-paste"></i> Processar Plantão</h3>
-                </div>
-                <div class="nit-reboque-painel-body">
-                    <textarea id="nit-reboque-bruto-input"
-                        placeholder="Cole aqui a lista de reboquistas de plantão (formato WhatsApp)..."></textarea>
-                    <button id="nit-reboque-btn-processar" class="btn btn-primario" style="width:100%">
-                        <i class="fas fa-cogs"></i> Processar Plantão
-                    </button>
-                </div>
+    <!-- TOP BAR ──────────────────────────────────────────────────────── -->
+    <div class="nit-reboque-topbar">
+        <button id="nit-reboque-btn-processar-open" class="btn btn-primario">
+            <i class="fas fa-paste"></i> Processar Plantão
+        </button>
+        <div class="nit-reboque-balanco-top">
+            <div class="nit-reboque-balanco-grupo">
+                <span class="nit-reboque-balanco-label">🚗 VTs</span>
+                <span id="nit-reboque-bal-vt-disp" class="nit-reboque-bal-val">0</span> disponível
+                <span id="nit-reboque-bal-vt-atua"    class="nit-reboque-bal-val">0</span> atuando
+                <span id="nit-reboque-bal-vt-total"    class="nit-reboque-bal-val">0</span> total
             </div>
-
-            <div class="nit-reboque-painel">
-                <div class="nit-reboque-painel-header">
-                    <h3><i class="fas fa-chart-pie"></i> Balanço da Frota</h3>
-                </div>
-                <div class="nit-reboque-painel-body">
-                    <div class="nit-reboque-balanco">
-                        <div class="nit-reboque-balanco-item">
-                            <span>Disponíveis</span>
-                            <strong id="nit-reboque-count-disponiveis">0</strong>
-                        </div>
-                        <div class="nit-reboque-balanco-item">
-                            <span>Atuando</span>
-                            <strong id="nit-reboque-count-atuando">0</strong>
-                        </div>
-                        <div class="nit-reboque-balanco-item">
-                            <span>Total</span>
-                            <strong id="nit-reboque-count-total">0</strong>
-                        </div>
-                    </div>
-                </div>
+            <div class="nit-reboque-balanco-sep"></div>
+            <div class="nit-reboque-balanco-grupo">
+                <span class="nit-reboque-balanco-label">🚛 Reboques</span>
+                <span id="nit-reboque-bal-reb-disp"  class="nit-reboque-bal-val">0</span> disp.
+                <span id="nit-reboque-bal-reb-atua"  class="nit-reboque-bal-val">0</span> atuando
+                <span id="nit-reboque-bal-reb-total" class="nit-reboque-bal-val">0</span> total
             </div>
-
-            <div class="nit-reboque-painel">
-                <div class="nit-reboque-painel-header">
-                    <h3><i class="fas fa-tools"></i> Ações</h3>
-                </div>
-                <div class="nit-reboque-painel-body">
-                    <button id="nit-reboque-btn-adicionar" class="btn btn-secundario" style="width:100%">
-                        <i class="fas fa-user-plus"></i> Adicionar Reboquista
-                    </button>
-                    <button id="nit-reboque-btn-relatorio" class="btn btn-secundario" style="width:100%">
-                        <i class="fab fa-whatsapp"></i> Relatório da Frota
-                    </button>
-                    <button id="nit-reboque-btn-limpar" class="btn btn-secundario" style="width:100%">
-                        <i class="fas fa-broom"></i> Limpar Plantão
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Centro: kanban Disponíveis | Atuando -->
-        <section class="nit-reboque-kanban">
-            <div class="nit-reboque-coluna" data-coluna="disponiveis">
-                <div class="nit-reboque-coluna-header">
-                    <i class="fas fa-circle"></i> Disponíveis
-                    <span id="nit-reboque-col-count-disponiveis" class="nit-reboque-col-count">0</span>
-                </div>
-                <div id="nit-reboques-disponiveis"></div>
-            </div>
-            <div class="nit-reboque-coluna" data-coluna="atuando">
-                <div class="nit-reboque-coluna-header">
-                    <i class="fas fa-circle"></i> Atuando
-                    <span id="nit-reboque-col-count-atuando" class="nit-reboque-col-count">0</span>
-                </div>
-                <div id="nit-reboques-atuando"></div>
-            </div>
-        </section>
-
-        <!-- Coluna direita: ocorrências em andamento -->
-        <aside class="nit-reboque-eventos-painel">
-            <div class="nit-reboque-painel crescer">
-                <div class="nit-reboque-painel-header">
-                    <h3><i class="fas fa-bullhorn"></i> Ocorrências em Andamento</h3>
-                    <span id="nit-reboque-eventos-count" class="nit-reboque-col-count">0</span>
-                </div>
-                <div class="nit-reboque-painel-body" id="nit-reboques-eventos"></div>
-            </div>
-        </aside>
+        </div>
+        <div class="nit-reboque-topbar-acoes">
+            <button id="nit-reboque-btn-add-viatura"    class="btn btn-secundario" title="Adicionar viatura"><i class="fas fa-plus"></i> VT</button>
+            <button id="nit-reboque-btn-add-reboquista" class="btn btn-secundario" title="Adicionar reboquista"><i class="fas fa-plus"></i> Reboque</button>
+            <button id="nit-reboque-btn-rel-viaturas"   class="btn btn-secundario"><i class="fab fa-whatsapp"></i> Rel. VTs</button>
+            <button id="nit-reboque-btn-rel-reboques"   class="btn btn-secundario"><i class="fab fa-whatsapp"></i> Rel. Reboques</button>
+            <button id="nit-reboque-btn-limpar"         class="btn btn-secundario"><i class="fas fa-broom"></i> Limpar</button>
+        </div>
     </div>
 
-    <!-- Painel lateral de acionamento (fixo à direita, não bloqueia o kanban:
-         permite arrastar mais reboquistas durante o multi-acionamento) -->
+    <!-- LAYOUT 3 COLUNAS ─────────────────────────────────────────────── -->
+    <div class="nit-reboque-layout">
+
+        <!-- VIA LIVRE: viaturas -->
+        <div class="nit-reboque-coluna" data-coluna="via-livre">
+            <div class="nit-reboque-coluna-header">
+                <i class="fas fa-car-side" style="color:var(--color-success)"></i>
+                Via Livre
+                <span class="nit-reboque-col-count" id="nit-reboque-col-count-vialivre">0</span>
+            </div>
+            <div id="nit-reboques-vialivre" class="nit-reboque-cards-area"></div>
+        </div>
+
+        <!-- REBOQUES: reboquistas -->
+        <div class="nit-reboque-coluna" data-coluna="reboques">
+            <div class="nit-reboque-coluna-header">
+                <i class="fas fa-truck-pickup" style="color:var(--color-accent)"></i>
+                Reboques
+                <span class="nit-reboque-col-count" id="nit-reboque-col-count-reboques">0</span>
+            </div>
+            <div id="nit-reboques-reboques" class="nit-reboque-cards-area"></div>
+        </div>
+
+        <!-- OCORRÊNCIAS EM ANDAMENTO -->
+        <div class="nit-reboque-coluna" data-coluna="ocorrencias">
+            <div class="nit-reboque-coluna-header">
+                <i class="fas fa-bullhorn" style="color:var(--color-warning)"></i>
+                Ocorrências em Andamento
+                <span class="nit-reboque-col-count" id="nit-reboque-eventos-count">0</span>
+            </div>
+            <div class="nit-reboque-eventos-search">
+                <input type="search" id="nit-reboque-busca-eventos" placeholder="Buscar tipo, local, equipe…">
+            </div>
+            <div id="nit-reboques-eventos" class="nit-reboque-cards-area"></div>
+            <div class="nit-reboque-eventos-footer">
+                <button id="nit-reboque-btn-nova-ocorrencia" class="btn btn-primario" style="width:100%">
+                    <i class="fas fa-plus"></i> Nova Ocorrência
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PAINEL DE ACIONAMENTO (flutuante) ────────────────────────────── -->
     <div id="nit-reboque-acionamento">
         <div class="nit-reboque-painel-header">
-            <h3 id="nit-reboque-acion-titulo"><i class="fas fa-sign-out-alt"></i> Acionamento de Reboque</h3>
-        </div>
-        <div id="nit-reboque-acion-dropzone">
-            <span id="nit-reboque-acion-tags" style="display:contents"></span>
+            <h3 id="nit-reboque-acion-titulo"><i class="fas fa-bullhorn"></i> Registrar Ocorrência</h3>
         </div>
         <div class="nit-reboque-form">
             <div>
                 <label for="nit-reboque-acion-tipo">Tipo de Evento *</label>
-                <input type="text" id="nit-reboque-acion-tipo" placeholder="Ex: ACIDENTE, PANE, GUINCHO...">
+                <input type="text" id="nit-reboque-acion-tipo" placeholder="Ex: ACIDENTE, PANE, GUINCHO…">
             </div>
             <div>
                 <label for="nit-reboque-acion-endereco">Endereço *</label>
                 <input type="text" id="nit-reboque-acion-endereco" placeholder="Local da ocorrência">
             </div>
-            <div>
-                <label for="nit-reboque-acion-horario">Horário</label>
-                <input type="time" id="nit-reboque-acion-horario">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div>
+                    <label for="nit-reboque-acion-horario">Horário</label>
+                    <input type="time" id="nit-reboque-acion-horario">
+                </div>
+                <div>
+                    <label for="nit-reboque-acion-obs">Obs</label>
+                    <input type="text" id="nit-reboque-acion-obs" placeholder="Detalhes…">
+                </div>
             </div>
-            <div>
-                <label for="nit-reboque-acion-obs">Observações</label>
-                <textarea id="nit-reboque-acion-obs" rows="2" placeholder="Informações adicionais..."></textarea>
+        </div>
+        <!-- Drop zone: reboquistas -->
+        <div class="nit-reboque-dz-section">
+            <div class="nit-reboque-dz-label"><i class="fas fa-truck-pickup"></i> Reboquistas</div>
+            <div id="nit-reboque-acion-dz-reboques" class="nit-reboque-dropzone" data-tipo="reboquista">
+                <span id="nit-reboque-acion-tags-reboques" style="display:contents"></span>
+            </div>
+        </div>
+        <!-- Drop zone: viaturas -->
+        <div class="nit-reboque-dz-section">
+            <div class="nit-reboque-dz-label"><i class="fas fa-car-side"></i> Viaturas de Apoio</div>
+            <div id="nit-reboque-acion-dz-viaturas" class="nit-reboque-dropzone" data-tipo="viatura">
+                <span id="nit-reboque-acion-tags-viaturas" style="display:contents"></span>
             </div>
         </div>
         <div class="nit-reboque-form-footer">
-            <button id="nit-reboque-acion-btn-cancelar" class="btn btn-secundario">Cancelar</button>
-            <button id="nit-reboque-acion-btn-outro" class="btn btn-secundario">
-                <i class="fas fa-plus"></i> Acionar Outro
-            </button>
-            <button id="nit-reboque-acion-btn-confirmar" class="btn btn-primario">
-                <i class="fas fa-paper-plane"></i> Finalizar e Copiar
-            </button>
+            <button id="nit-reboque-acion-btn-cancelar"  class="btn btn-secundario">Cancelar</button>
+            <button id="nit-reboque-acion-btn-confirmar" class="btn btn-primario"><i class="fas fa-paper-plane"></i> Confirmar</button>
         </div>
     </div>
 
-    <!-- Modal: adicionar / editar reboquista -->
+    <!-- MODAL: processar plantão ──────────────────────────────────────── -->
+    <div id="nit-reboque-modal-processar" class="nit-reboque-modal-overlay">
+        <div class="nit-reboque-modal larga">
+            <div class="nit-reboque-painel-header">
+                <h3><i class="fas fa-paste"></i> Processar Plantão</h3>
+            </div>
+            <div class="nit-reboque-form">
+                <textarea id="nit-reboque-bruto-input" placeholder="Cole aqui a lista de viaturas e reboquistas do plantão…"></textarea>
+            </div>
+            <div class="nit-reboque-form-footer">
+                <button id="nit-reboque-modal-processar-fechar" class="btn btn-secundario">Fechar</button>
+                <button id="nit-reboque-btn-processar" class="btn btn-primario"><i class="fas fa-cogs"></i> Processar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: editar viatura ─────────────────────────────────────────── -->
+    <div id="nit-reboque-modal-viatura" class="nit-reboque-modal-overlay">
+        <div class="nit-reboque-modal">
+            <div class="nit-reboque-painel-header">
+                <h3 id="nit-reboque-viatura-titulo"><i class="fas fa-car-side"></i> Editar Viatura</h3>
+            </div>
+            <input type="hidden" id="nit-reboque-viatura-id">
+            <div class="nit-reboque-form">
+                <div><label>VT (número) *</label><input type="text" id="nit-reboque-viatura-vt" placeholder="Ex: 211"></div>
+                <div><label>Equipe / Condutores</label><input type="text" id="nit-reboque-viatura-equipe" placeholder="Ex: Nonato / João Lucas"></div>
+                <div><label>QRU (missão)</label><input type="text" id="nit-reboque-viatura-qru" placeholder="Ex: Apoio a evento"></div>
+                <div><label>QTH (local)</label><input type="text" id="nit-reboque-viatura-qth" placeholder="Ex: Av. Bezerra de Menezes"></div>
+                <div>
+                    <label>Status</label>
+                    <select id="nit-reboque-viatura-status">
+                        <option value="disponivel">🟢 Disponível</option>
+                        <option value="atuando">🟡 Atuando</option>
+                    </select>
+                </div>
+            </div>
+            <div class="nit-reboque-form-footer">
+                <button id="nit-reboque-viatura-btn-cancelar" class="btn btn-secundario">Cancelar</button>
+                <button id="nit-reboque-viatura-btn-salvar"   class="btn btn-primario"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: editar reboquista ──────────────────────────────────────── -->
     <div id="nit-reboque-modal-edicao" class="nit-reboque-modal-overlay">
         <div class="nit-reboque-modal">
             <div class="nit-reboque-painel-header">
@@ -403,57 +439,45 @@
             </div>
             <input type="hidden" id="nit-reboque-edit-id">
             <div class="nit-reboque-form">
-                <div>
-                    <label for="nit-reboque-edit-nome">Nome *</label>
-                    <input type="text" id="nit-reboque-edit-nome" placeholder="Nome do reboquista">
-                </div>
-                <div>
-                    <label for="nit-reboque-edit-vt">VT</label>
-                    <input type="text" id="nit-reboque-edit-vt" placeholder="Número da viatura">
-                </div>
-                <div>
-                    <label for="nit-reboque-edit-placa">Placa</label>
-                    <input type="text" id="nit-reboque-edit-placa" placeholder="Placa do veículo">
-                </div>
-                <div>
-                    <label for="nit-reboque-edit-plantao">Plantão até</label>
-                    <input type="text" id="nit-reboque-edit-plantao" placeholder="Ex: 18hs">
-                </div>
-                <div>
-                    <label for="nit-reboque-edit-smart">Smart</label>
-                    <input type="text" id="nit-reboque-edit-smart" placeholder="Ex: (85) 98765-4321">
-                </div>
+                <div><label>Nome *</label><input type="text" id="nit-reboque-edit-nome" placeholder="Nome do reboquista"></div>
+                <div><label>VT</label><input type="text" id="nit-reboque-edit-vt" placeholder="Número da viatura"></div>
+                <div><label>Placa</label><input type="text" id="nit-reboque-edit-placa" placeholder="Placa do veículo"></div>
+                <div><label>Plantão até</label><input type="text" id="nit-reboque-edit-plantao" placeholder="Ex: 18hs"></div>
+                <div><label>Smart</label><input type="text" id="nit-reboque-edit-smart" placeholder="Ex: (85) 98765-4321"></div>
             </div>
             <div class="nit-reboque-form-footer">
                 <button id="nit-reboque-edit-btn-cancelar" class="btn btn-secundario">Cancelar</button>
-                <button id="nit-reboque-edit-btn-salvar" class="btn btn-primario">
-                    <i class="fas fa-save"></i> Salvar
-                </button>
+                <button id="nit-reboque-edit-btn-salvar"   class="btn btn-primario"><i class="fas fa-save"></i> Salvar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal: relatório da frota -->
-    <div id="nit-reboque-modal-relatorio" class="nit-reboque-modal-overlay">
+    <!-- MODAL: relatório viaturas ─────────────────────────────────────── -->
+    <div id="nit-reboque-modal-rel-viaturas" class="nit-reboque-modal-overlay">
         <div class="nit-reboque-modal larga">
-            <div class="nit-reboque-painel-header">
-                <h3><i class="fab fa-whatsapp"></i> Relatório da Frota</h3>
-            </div>
-            <div class="nit-reboque-form">
-                <textarea id="nit-reboque-relatorio-texto" readonly></textarea>
-            </div>
+            <div class="nit-reboque-painel-header"><h3><i class="fas fa-car-side"></i> Relatório de Viaturas</h3></div>
+            <div class="nit-reboque-form"><textarea id="nit-reboque-rel-viaturas-texto" readonly></textarea></div>
             <div class="nit-reboque-form-footer">
-                <button id="nit-reboque-relatorio-btn-fechar" class="btn btn-secundario">Fechar</button>
-                <button id="nit-reboque-relatorio-btn-copiar" class="btn btn-primario">
-                    <i class="fas fa-copy"></i> Copiar
-                </button>
+                <button id="nit-reboque-rel-viaturas-fechar" class="btn btn-secundario">Fechar</button>
+                <button id="nit-reboque-rel-viaturas-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: relatório reboques ─────────────────────────────────────── -->
+    <div id="nit-reboque-modal-rel-reboques" class="nit-reboque-modal-overlay">
+        <div class="nit-reboque-modal larga">
+            <div class="nit-reboque-painel-header"><h3><i class="fas fa-truck-pickup"></i> Relatório de Reboques</h3></div>
+            <div class="nit-reboque-form"><textarea id="nit-reboque-rel-reboques-texto" readonly></textarea></div>
+            <div class="nit-reboque-form-footer">
+                <button id="nit-reboque-rel-reboques-fechar" class="btn btn-secundario">Fechar</button>
+                <button id="nit-reboque-rel-reboques-copiar" class="btn btn-primario"><i class="fas fa-copy"></i> Copiar</button>
             </div>
         </div>
     </div>
 
 </div>
 
-    </div>
 
     <!-- DATALISTS ──────────────────────────────────────────────────────── -->
     <datalist id="lista-operadores-datalist"></datalist>
