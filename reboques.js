@@ -162,7 +162,13 @@ const NitReboques = (() => {
         const primeira = linhas[0];
 
         // VT-first: "VT 211", "VT: 211", "VT-211", "VT.211", "VT211"
-        if (/^VT[\s\-:\.]*[\dA-Z]/i.test(primeira)) return _parseViatura(linhas);
+        if (/^VT[\s\-:\.]*[\dA-Z]/i.test(primeira)) {
+            // 🚨 na primeira linha = formato de reboque avulso ("VT 176 🚨 PML 3117 EM MANUTENÇÃO")
+            // → encaminha para _parseReboquista, que retorna null (sem nome = bloco descartado)
+            // Viaturas nunca têm 🚨 na linha do VT
+            if (primeira.includes('🚨')) return _parseReboquista(linhas);
+            return _parseViatura(linhas);
+        }
 
         // Reboquista: contém linha com VT+número, Plantão, ou palavra-chave de contato
         const temVT      = linhas.some(l => /VT[\s\-:\.]*\d+/i.test(l));
