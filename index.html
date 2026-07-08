@@ -49,6 +49,7 @@
     <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="nit.css?v=20260704">
+    <link rel="stylesheet" href="reboques.css?v=20260704">
 
 </head>
 <body data-theme="dark">
@@ -83,6 +84,7 @@
                         <i class="fas fa-bars"></i>
                     </button>
                     <button class="tab-button active" data-tab="tab-semaforo"> Semáforo</button>
+                    <button class="tab-button" data-tab="tab-reboques"><i class="fas fa-truck-pickup"></i> Reboques</button>
                 </div>
                 <div class="nav-pill-center">
                     <button id="btn-busca-global" title="Busca global (Ctrl+K)" aria-label="Abrir busca global">
@@ -265,6 +267,192 @@
 
             </div>
         </div>
+
+<div id="tab-reboques" class="tab-content">
+
+    <div class="nit-reboque-layout">
+
+        <!-- Coluna esquerda: entrada + balanço + ações -->
+        <aside class="nit-reboque-lateral">
+            <div class="nit-reboque-painel">
+                <div class="nit-reboque-painel-header">
+                    <h3><i class="fas fa-paste"></i> Processar Plantão</h3>
+                </div>
+                <div class="nit-reboque-painel-body">
+                    <textarea id="nit-reboque-bruto-input"
+                        placeholder="Cole aqui a lista de reboquistas de plantão (formato WhatsApp)..."></textarea>
+                    <button id="nit-reboque-btn-processar" class="btn btn-primario" style="width:100%">
+                        <i class="fas fa-cogs"></i> Processar Plantão
+                    </button>
+                </div>
+            </div>
+
+            <div class="nit-reboque-painel">
+                <div class="nit-reboque-painel-header">
+                    <h3><i class="fas fa-chart-pie"></i> Balanço da Frota</h3>
+                </div>
+                <div class="nit-reboque-painel-body">
+                    <div class="nit-reboque-balanco">
+                        <div class="nit-reboque-balanco-item">
+                            <span>Disponíveis</span>
+                            <strong id="nit-reboque-count-disponiveis">0</strong>
+                        </div>
+                        <div class="nit-reboque-balanco-item">
+                            <span>Atuando</span>
+                            <strong id="nit-reboque-count-atuando">0</strong>
+                        </div>
+                        <div class="nit-reboque-balanco-item">
+                            <span>Total</span>
+                            <strong id="nit-reboque-count-total">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nit-reboque-painel">
+                <div class="nit-reboque-painel-header">
+                    <h3><i class="fas fa-tools"></i> Ações</h3>
+                </div>
+                <div class="nit-reboque-painel-body">
+                    <button id="nit-reboque-btn-adicionar" class="btn btn-secundario" style="width:100%">
+                        <i class="fas fa-user-plus"></i> Adicionar Reboquista
+                    </button>
+                    <button id="nit-reboque-btn-relatorio" class="btn btn-secundario" style="width:100%">
+                        <i class="fab fa-whatsapp"></i> Relatório da Frota
+                    </button>
+                    <button id="nit-reboque-btn-limpar" class="btn btn-secundario" style="width:100%">
+                        <i class="fas fa-broom"></i> Limpar Plantão
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Centro: kanban Disponíveis | Atuando -->
+        <section class="nit-reboque-kanban">
+            <div class="nit-reboque-coluna" data-coluna="disponiveis">
+                <div class="nit-reboque-coluna-header">
+                    <i class="fas fa-circle"></i> Disponíveis
+                    <span id="nit-reboque-col-count-disponiveis" class="nit-reboque-col-count">0</span>
+                </div>
+                <div id="nit-reboques-disponiveis"></div>
+            </div>
+            <div class="nit-reboque-coluna" data-coluna="atuando">
+                <div class="nit-reboque-coluna-header">
+                    <i class="fas fa-circle"></i> Atuando
+                    <span id="nit-reboque-col-count-atuando" class="nit-reboque-col-count">0</span>
+                </div>
+                <div id="nit-reboques-atuando"></div>
+            </div>
+        </section>
+
+        <!-- Coluna direita: ocorrências em andamento -->
+        <aside class="nit-reboque-eventos-painel">
+            <div class="nit-reboque-painel crescer">
+                <div class="nit-reboque-painel-header">
+                    <h3><i class="fas fa-bullhorn"></i> Ocorrências em Andamento</h3>
+                    <span id="nit-reboque-eventos-count" class="nit-reboque-col-count">0</span>
+                </div>
+                <div class="nit-reboque-painel-body" id="nit-reboques-eventos"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Painel lateral de acionamento (fixo à direita, não bloqueia o kanban:
+         permite arrastar mais reboquistas durante o multi-acionamento) -->
+    <div id="nit-reboque-acionamento">
+        <div class="nit-reboque-painel-header">
+            <h3 id="nit-reboque-acion-titulo"><i class="fas fa-sign-out-alt"></i> Acionamento de Reboque</h3>
+        </div>
+        <div id="nit-reboque-acion-dropzone">
+            <span id="nit-reboque-acion-tags" style="display:contents"></span>
+        </div>
+        <div class="nit-reboque-form">
+            <div>
+                <label for="nit-reboque-acion-tipo">Tipo de Evento *</label>
+                <input type="text" id="nit-reboque-acion-tipo" placeholder="Ex: ACIDENTE, PANE, GUINCHO...">
+            </div>
+            <div>
+                <label for="nit-reboque-acion-endereco">Endereço *</label>
+                <input type="text" id="nit-reboque-acion-endereco" placeholder="Local da ocorrência">
+            </div>
+            <div>
+                <label for="nit-reboque-acion-horario">Horário</label>
+                <input type="time" id="nit-reboque-acion-horario">
+            </div>
+            <div>
+                <label for="nit-reboque-acion-obs">Observações</label>
+                <textarea id="nit-reboque-acion-obs" rows="2" placeholder="Informações adicionais..."></textarea>
+            </div>
+        </div>
+        <div class="nit-reboque-form-footer">
+            <button id="nit-reboque-acion-btn-cancelar" class="btn btn-secundario">Cancelar</button>
+            <button id="nit-reboque-acion-btn-outro" class="btn btn-secundario">
+                <i class="fas fa-plus"></i> Acionar Outro
+            </button>
+            <button id="nit-reboque-acion-btn-confirmar" class="btn btn-primario">
+                <i class="fas fa-paper-plane"></i> Finalizar e Copiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal: adicionar / editar reboquista -->
+    <div id="nit-reboque-modal-edicao" class="nit-reboque-modal-overlay">
+        <div class="nit-reboque-modal">
+            <div class="nit-reboque-painel-header">
+                <h3 id="nit-reboque-edit-titulo"><i class="fas fa-user-edit"></i> Editar Reboquista</h3>
+            </div>
+            <input type="hidden" id="nit-reboque-edit-id">
+            <div class="nit-reboque-form">
+                <div>
+                    <label for="nit-reboque-edit-nome">Nome *</label>
+                    <input type="text" id="nit-reboque-edit-nome" placeholder="Nome do reboquista">
+                </div>
+                <div>
+                    <label for="nit-reboque-edit-vt">VT</label>
+                    <input type="text" id="nit-reboque-edit-vt" placeholder="Número da viatura">
+                </div>
+                <div>
+                    <label for="nit-reboque-edit-placa">Placa</label>
+                    <input type="text" id="nit-reboque-edit-placa" placeholder="Placa do veículo">
+                </div>
+                <div>
+                    <label for="nit-reboque-edit-plantao">Plantão até</label>
+                    <input type="text" id="nit-reboque-edit-plantao" placeholder="Ex: 18hs">
+                </div>
+                <div>
+                    <label for="nit-reboque-edit-smart">Smart</label>
+                    <input type="text" id="nit-reboque-edit-smart" placeholder="Ex: (85) 98765-4321">
+                </div>
+            </div>
+            <div class="nit-reboque-form-footer">
+                <button id="nit-reboque-edit-btn-cancelar" class="btn btn-secundario">Cancelar</button>
+                <button id="nit-reboque-edit-btn-salvar" class="btn btn-primario">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: relatório da frota -->
+    <div id="nit-reboque-modal-relatorio" class="nit-reboque-modal-overlay">
+        <div class="nit-reboque-modal larga">
+            <div class="nit-reboque-painel-header">
+                <h3><i class="fab fa-whatsapp"></i> Relatório da Frota</h3>
+            </div>
+            <div class="nit-reboque-form">
+                <textarea id="nit-reboque-relatorio-texto" readonly></textarea>
+            </div>
+            <div class="nit-reboque-form-footer">
+                <button id="nit-reboque-relatorio-btn-fechar" class="btn btn-secundario">Fechar</button>
+                <button id="nit-reboque-relatorio-btn-copiar" class="btn btn-primario">
+                    <i class="fas fa-copy"></i> Copiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
     </div>
 
     <!-- DATALISTS ──────────────────────────────────────────────────────── -->
@@ -741,6 +929,7 @@
     <!-- APP LOGIC ──────────────────────────────────────────────────────── -->
     
     <script src="nit.js?v=20260704"></script>
+    <script src="reboques.js?v=20260704"></script>
 
 </body>
 </html>
