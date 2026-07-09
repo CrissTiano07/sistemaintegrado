@@ -342,20 +342,45 @@ const NitReboques = (() => {
         const bruto = g('nit-rb-bruto')?.value.trim();
         if (!bruto) { toast('Insira o relatório de plantão.','warning'); return; }
         const blocos = _splitBlocos(bruto);
-        const updates = {}; let novosV=0, novosR=0;
+        const updates = {}; let novosV=0, novosR=0, atualizados=0;
         let ordV = maxOrdem(S.viaturas), ordR = maxOrdem(S.reboquistas);
-        const vtKey     = d => d.vt === 'MT VL' ? `MT VL:${(d.equipe||'').slice(0,30)}` : d.vt;
-        const vtExiste  = key => Object.values(S.viaturas).some(v => (v?.vt==='MT VL'?`MT VL:${(v.equipe||'').slice(0,30)}`:v?.vt) === key);
-        const nomExiste = nome => Object.values(S.reboquistas ).some(r => r?.nome === nome);
+
+        // Chave de dedup: VT VL e MT VL usam vt+equipe (múltiplas VLs por tipo)
+        const _vtKey = d => (d.vt==='VT VL'||d.vt==='MT VL')
+            ? `${d.vt}:${(d.equipe||'').slice(0,30)}`
+            : d.vt;
+        const _vtKeyV = v => (v?.vt==='VT VL'||v?.vt==='MT VL')
+            ? `${v.vt}:${(v.equipe||'').slice(0,30)}`
+            : v?.vt;
+
+        const nomExiste = nome => Object.values(S.reboquistas).some(r => r?.nome === nome);
 
         blocos.forEach(bloco => {
             const d = _extrairBloco(bloco);
             if (!d) return;
-            if (d.tipoRecurso === 'viatura' && !vtExiste(vtKey(d))) {
-                const id = novoId('vt');
-                updates[`${PATH_VIATURAS}/${id}`] = { vt:d.vt, placa:d.placa||'', equipe:d.equipe, qru:d.qru, qth:d.qth, status:d.status, eventoId:'', ordem:++ordV };
-                S.viaturas[id] = updates[`${PATH_VIATURAS}/${id}`];
-                novosV++;
+
+            if (d.tipoRecurso === 'viatura') {
+                // Procura entrada existente pela chave principal (vt puro) OU
+                // pela chave VL (que inclui equipe — permite múltiplas VLs)
+                const existente = Object.entries(S.viaturas).find(([,v]) => v?.vt === d.vt);
+
+                if (!existente) {
+                    // Nova viatura — cria
+                    const id = novoId('vt');
+                    updates[`${PATH_VIATURAS}/${id}`] = { vt:d.vt, placa:d.placa||'', equipe:d.equipe||'', qru:d.qru||'', qth:d.qth||'', status:d.status, eventoId:'', ordem:++ordV };
+                    S.viaturas[id] = updates[`${PATH_VIATURAS}/${id}`];
+                    novosV++;
+                } else {
+                    // Viatura já existe: upsert de campos vazios
+                    const [eid, ev] = existente;
+                    let atualizado = false;
+                    const campos = { equipe:d.equipe, placa:d.placa, qru:d.qru, qth:d.qth };
+                    Object.entries(campos).forEach(([k,v]) => {
+                        if (v && !ev[k]) { updates[`${PATH_VIATURAS}/${eid}/${k}`] = v; atualizado = true; }
+                    });
+                    if (atualizado) atualizados++;
+                }
+
             } else if (d.tipoRecurso === 'reboquista' && !nomExiste(d.nome)) {
                 const id = novoId('reb');
                 updates[`${PATH_REBOQUISTAS}/${id}`] = { nome:d.nome, vt:d.vt, placa:d.placa, plantao:d.plantao, smart:d.smart, status:'disponivel', eventoId:'', ocorrencia:'', ordem:++ordR };
@@ -363,10 +388,16 @@ const NitReboques = (() => {
                 novosR++;
             }
         });
-        if (!novosV && !novosR) { toast('Nenhum recurso novo encontrado.','info'); return; }
+
+        if (!novosV && !novosR && !atualizados) { toast('Nenhum recurso novo ou atualização encontrada.','info'); return; }
         updates[`${PATH_CONFIG}/data`] = hojeISO();
+        const msg = [
+            novosV && `${novosV} viatura(s)`,
+            novosR && `${novosR} reboque(s)`,
+            atualizados && `${atualizados} atualização(ões)`,
+        ].filter(Boolean).join(', ');
         S.db.ref().update(updates)
-            .then(() => { toast(`Processado: ${novosV} viatura(s), ${novosR} reboquista(s).`,'success'); if (g('nit-rb-bruto')) g('nit-rb-bruto').value=''; _fecharModal(g('nit-reboque-modal-processar')); })
+            .then(() => { toast(`Processado: ${msg}.`,'success'); if (g('nit-rb-bruto')) g('nit-rb-bruto').value=''; _fecharModal(g('nit-reboque-modal-processar')); })
             .catch(e => { console.error(e); toast('Falha ao gravar no Firebase.','error'); });
     }
 
