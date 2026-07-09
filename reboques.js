@@ -69,6 +69,7 @@ const NitReboques = (() => {
         truck:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
         car:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v4"/><circle cx="18" cy="17" r="3"/><circle cx="10" cy="17" r="3"/></svg>`,
         save:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+        wa:      `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
     };
 
 
@@ -430,7 +431,7 @@ const NitReboques = (() => {
     /* ── Render ───────────────────────────────────────────────────────────── */
     function _cardViaturaHTML(id, v) {
         const atuando  = v.status === 'atuando';
-        const tagLabel = atuando ? 'Atuando' : 'Disponível';
+        const tagLabel = atuando ? 'EM QRU' : 'VIA LIVRE';
         const tagClass = atuando ? 'atuando' : 'disponivel';
         return `
         <div class="nit-reboque-card" draggable="true" data-id="${esc(id)}" data-tipo="viatura" data-status="${esc(v.status)}">
@@ -456,7 +457,7 @@ const NitReboques = (() => {
 
     function _cardReboquistaHTML(id, r) {
         const atuando  = r.status === 'atuando';
-        const tagLabel = atuando ? 'Atuando' : 'Disponível';
+        const tagLabel = atuando ? 'ATUANDO' : 'DISPONÍVEL';
         const tagClass = atuando ? 'atuando' : 'disponivel';
         return `
         <div class="nit-reboque-card" draggable="true" data-id="${esc(id)}" data-tipo="reboquista" data-status="${esc(r.status)}">
@@ -505,7 +506,7 @@ const NitReboques = (() => {
             <div class="nit-reboque-evento-secao"><span class="nit-reboque-evento-secao-label">${I.car} Viaturas</span><div class="nit-reboque-evento-tags">${vtTagsHTML}</div></div>
             <div class="nit-reboque-card-footer">
                 <button class="nit-reboque-acao js-ev-editar"    title="Editar">${I.pencil}</button>
-                <button class="nit-reboque-acao js-ev-relatorio" title="Copiar relatório">${I.copy}</button>
+                <button class="nit-reboque-acao js-ev-whatsapp" title="Enviar via WhatsApp">${I.wa}</button>
                 <span class="nit-reboque-spacer"></span>
                 <button class="nit-reboque-acao js-ev-finalizar" title="Finalizar e liberar recursos">${I.check}</button>
                 <button class="nit-reboque-acao js-ev-remover"   title="Cancelar ocorrência">${I.ban}</button>
@@ -871,16 +872,22 @@ const NitReboques = (() => {
         _abrirModal(g('nit-reboque-modal-rel-reboques'));
     }
 
-    function copiarRelatorioEvento(evId) {
+    function abrirWhatsAppEvento(evId) {
         const ev = S.eventos[evId]; if (!ev) return;
         let txt = `*${ev.tipo}*\n*Local:* ${ev.endereco}`;
         if (ev.horario) txt += `\n*Horário:* ${ev.horario}`;
         if (ev.obs)     txt += `\n*Obs:* ${ev.obs}`;
         const rebs = Object.entries(ev.reboquistas||{});
-        if (rebs.length) { txt+=`\n\n*Reboques:*`; rebs.forEach(([id,n])=>{ const r=S.reboquistas[id]||{}; txt+=`\n- ${n} (VT: ${r.vt||'N/I'})`; }); }
+        if (rebs.length) {
+            txt += `\n\n*Reboques acionados:*`;
+            rebs.forEach(([rid, n]) => { const r=S.reboquistas[rid]||{}; txt+=`\n- ${n} (VT: ${r.vt||'N/I'})`; });
+        }
         const viats = Object.entries(ev.viaturas||{});
-        if (viats.length) { txt+=`\n\n*Viaturas:*`; viats.forEach(([,n])=>{ txt+=`\n- ${n}`; }); }
-        copiarTexto(txt).then(ok=>toast(ok?'Relatório copiado!':'Falha ao copiar.',ok?'success':'error'));
+        if (viats.length) {
+            txt += `\n\n*Viaturas de apoio:*`;
+            viats.forEach(([, n]) => { txt += `\n- ${n}`; });
+        }
+        window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
     }
 
     function limparPlantao() {
@@ -1100,7 +1107,7 @@ const NitReboques = (() => {
             if (evCard) {
                 const evId = evCard.dataset.eventoId;
                 if (e.target.closest('.js-ev-editar'))    { abrirEdicaoEvento(evId); return; }
-                if (e.target.closest('.js-ev-relatorio')) { copiarRelatorioEvento(evId); return; }
+                if (e.target.closest('.js-ev-whatsapp'))   { abrirWhatsAppEvento(evId); return; }
                 if (e.target.closest('.js-ev-finalizar')) { finalizarEvento(evId); return; }
                 if (e.target.closest('.js-ev-remover'))   { removerEvento(evId); return; }
             }
