@@ -226,7 +226,7 @@
 .nit-reboque-acao.js-acionar:hover    { color: var(--color-primary); }
 .nit-reboque-acao.js-vt-finalizar:hover, .nit-reboque-acao.js-finalizar:hover,
 .nit-reboque-acao.js-ev-finalizar:hover { color: var(--color-success); }
-.nit-reboque-acao.js-ev-relatorio:hover { color: #25d366; }
+.nit-reboque-acao.js-ev-whatsapp:hover  { color: #25d366; }
 
 /* ── Evento card ─────────────────────────────────────────────────────────── */
 .nit-reboque-evento-card {
@@ -324,3 +324,25 @@
     border: 1px solid var(--color-border); border-radius: var(--radius-sm);
     padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; resize: vertical;
 }
+
+/* ── Botão compacto no header de coluna (Nova Ocorrência) ─────────────────── */
+.nit-rb-col-add {
+    margin-left: 6px;
+    display: flex; align-items: center; gap: 4px;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: .3px;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    transition: color .15s, border-color .15s, background .15s;
+}
+.nit-rb-col-add:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-accent);
+    background: rgba(88,166,255,.06);
+}
+/* Remove o espaço do col-count quando o botão está ao lado */
+.nit-reboque-coluna[data-coluna="ocorrencias"] .nit-reboque-col-count { margin-left: auto; }
+.nit-reboque-coluna[data-coluna="ocorrencias"] .nit-rb-col-add { margin-left: 6px; }
