@@ -110,20 +110,46 @@ const NitReboques = (() => {
 
     /* ── Parser v2 (resiliente) ───────────────────────────────────────────── */
 
-    // Pré-processa o texto bruto em blocos:
-    // • normaliza \r\n → \n
-    // • "//" inline → separador de bloco (padrão do WhatsApp AMC)
-    // • "---" como separador alternativo
-    // • múltiplas linhas em branco colapsam para uma
+    // Normaliza e divide o texto bruto em blocos de recursos.
+    // Passa por dois estágios:
+    //  1. Pré-split: normaliza separadores explícitos (//, ---)
+    //  2. Re-merge: re-junta fragmentos que são continuação do mesmo recurso
+    //     (blank lines dentro de um bloco não devem separar o bloco)
     function _splitBlocos(bruto) {
-        return bruto
-            .replace(/\r\n?/g, '\n')                 // normaliza line endings
-            .replace(/\/\//g, '\n\n')                // // → separador de bloco
-            .replace(/^-{3,}\s*$/gm, '\n')           // --- como separador
-            .replace(/\n{3,}/g, '\n\n')              // colapsa linhas em branco múltiplas
+        const raw = bruto
+            .replace(/\r\n?/g, '\n')           // normaliza line endings
+            .replace(/\/\//g, '\n\n')           // // → separador
+            .replace(/^-{3,}\s*$/gm, '\n')      // --- → separador
+            .replace(/\n{3,}/g, '\n\n')         // colapsa 3+ blank lines em 1
             .split(/\n\s*\n/)
             .map(b => b.trim())
             .filter(b => b.length > 0);
+
+        // Re-merge: fragmento sem "cabeçalho de recurso" → junta com o anterior
+        const merged = [];
+        for (const bloco of raw) {
+            const primLinha = bloco.split('\n')[0].trim();
+            if (merged.length > 0 && !_ehCabecalhoRecurso(primLinha)) {
+                merged[merged.length - 1] += '\n' + bloco;
+            } else {
+                merged.push(bloco);
+            }
+        }
+        return merged;
+    }
+
+    // Retorna true se a linha inicia um NOVO recurso (viatura ou reboquista).
+    // Linhas que NÃO iniciam novo recurso são continuação do bloco anterior.
+    function _ehCabecalhoRecurso(linha) {
+        // VT com 🚨 = linha VT de reboquista (NÃO é novo recurso, é continuação)
+        if (linha.includes('🚨')) return false;
+        // VT/MT identifier: "VT 211", "MT 45", "VT: via livre", "MTVL"
+        if (/^(?:VT|MT)[\s\-:\.]*[\dA-Za-z]/i.test(linha)) return true;
+        if (/^(?:VT|MT)?[\s\-]*(?:VIA\s*LIVRE|VL)\b/i.test(linha)) return true;
+        if (/^VL[\s\-]?(?:VT|MT)\b/i.test(linha)) return true;
+        // Nome de reboquista: TODO EM MAIÚSCULAS, mínimo 5 letras, sem dígitos
+        if (/^[A-ZÁÀÂÃÉÊÍÓÔÕÚÇÑ][A-ZÁÀÂÃÉÊÍÓÔÕÚÇÑ\s]{4,}$/.test(linha) && !/\d/.test(linha)) return true;
+        return false;
     }
 
     // Descarta linhas de ruído: saudações, emojis soltos, datas, horários soltos
