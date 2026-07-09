@@ -171,11 +171,14 @@ const NitReboques = (() => {
         if (!linhas.length) return null;
         const primeira = linhas[0];
 
-        // VT-first: "VT 211", "VT: 211", "VT-211", "VT.211", "VT211"
-        if (/^VT[\s\-:\.]*[\dA-Z]/i.test(primeira)) {
-            // 🚨 na primeira linha = formato de reboque avulso ("VT 176 🚨 PML 3117 EM MANUTENÇÃO")
-            // → encaminha para _parseReboquista, que retorna null (sem nome = bloco descartado)
-            // Viaturas nunca têm 🚨 na linha do VT
+        // ── Viatura / Moto: VT-first, MT-first ou variantes de VL ─────────────
+        // Aceita: VT 180, MT 123, VT VL, VTVL, VLVT, MT VL, MTVL, VLMT, VL VT, VL MT
+        const ehViatura = /^(?:VT|MT)[\s\-:\.]*[\dA-Za-z]/i.test(primeira)
+                       || /^(?:VT|MT)?[\s\-]*(?:VIA\s*LIVRE|VL)\b/i.test(primeira)
+                       || /^VL[\s\-]?(?:VT|MT)\b/i.test(primeira);
+
+        if (ehViatura) {
+            // 🚨 na linha = formato reboque avulso (sem nome → descartado por _parseReboquista)
             if (primeira.includes('🚨')) return _parseReboquista(linhas);
             return _parseViatura(linhas);
         }
@@ -188,19 +191,48 @@ const NitReboques = (() => {
         return null;
     }
 
-    function _parseViatura(linhas) {
-        const lPrimClean = linhas[0].replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
+    // Detecta "via livre" em todas as variações
+    function _ehViaLivre(linhaBruta) {
+        const up = linhaBruta.toUpperCase();
+        if (/VIA\s*LIVRE/.test(up)) return true;
+        // Remove prefixo (VT/MT) e separadores, testa o restante
+        const resto = up.replace(/^(VT|MT)[\s\-:\.']*/,'').replace(/[\s\-]/g,'');
+        if (/^(VL|VTVL|VLVT|MTVL|VLMT)$/.test(resto)) return true;
+        // Linha inteira compacta
+        const tudo = up.replace(/[\s\-:\.]/g,'');
+        if (/^(VTVL|VLVT|MTVL|VLMT|VTVLMT|VL)$/.test(tudo)) return true;
+        return false;
+    }
 
-        // Extrai só o número da VT
-        const vtNumM = lPrimClean.match(/VT[\s\-:\.]*(\d+)/i);
+    function _parseViatura(linhas) {
+        const lPrimRaw   = linhas[0];
+        const lPrimClean = lPrimRaw.replace(/[\u{1F000}-\u{1FFFF}]/gu, ' ');
+
+        // Detecta prefixo: VT (viatura) ou MT (moto)
+        // "VL MT" / "VLMT" começa com VL, não MT → detectar MT explicitamente
+        const prefM   = lPrimClean.match(/^(VT|MT)/i);
+        const prefixo = prefM
+            ? prefM[1].toUpperCase()
+            : /^VL\s*MT\b/i.test(lPrimClean) ? 'MT' : 'VT';
+
+        // Detecta "via livre" (todas variações)
+        const ehVL = _ehViaLivre(lPrimClean);
+
+        // Extrai número (presente só quando NÃO é via livre)
+        const vtNumM = ehVL ? null : lPrimClean.match(/(?:VT|MT)[\s\-:\.]*(\d+)/i);
         const vtNum  = vtNumM ? vtNumM[1] : '';
 
-        // Detecta MT VL (motorista via livre sem VT)
-        const vtTudo = lPrimClean.replace(/^VT[\s\-:\.']*/i, '').trim().toUpperCase();
-        const ehVL   = !vtNum && /^(MT\.?\s*V\.?L\.?|MT\.?\s*VIA\s*LIVRE|MOTO\s*VIA\s*LIVRE|MOTORISTA\s*VIA\s*LIVRE|MTVL|VIA\s*LIVRE)$/.test(vtTudo);
-        const vt     = ehVL ? 'MT VL' : (vtNum || 'N/I');
+        // Monta identificador:
+        // - Via livre     → "VT VL" ou "MT VL"
+        // - MT com número → "MT 123"  (armazena identificador completo)
+        // - VT com número → "123"     (card prefixa "VT " p/ números puros — compat. retroativa)
+        const vt = ehVL
+            ? `${prefixo} VL`
+            : vtNum
+                ? (prefixo === 'MT' ? `MT ${vtNum}` : vtNum)
+                : 'N/I';
 
-        // Placa inline (ex: "VT 176 PML3117")
+        // Placa inline na primeira linha (ex: "VT 176 PML3117")
         let placaInline = '', notaInline = '';
         if (vtNumM) {
             const apos   = lPrimClean.slice(vtNumM.index + vtNumM[0].length).trim();
@@ -209,8 +241,7 @@ const NitReboques = (() => {
             else { notaInline = apos; }
         }
 
-        // ── Fix 1: QTH/QRU em linhas separadas sem separador ───────────────
-        // "QTH\nav a x av f" → "QTH: av a x av f"
+        // QTH/QRU em linhas separadas sem ":" → funde
         const linhasResto = [];
         for (let i = 1; i < linhas.length; i++) {
             const l = linhas[i];
@@ -222,7 +253,7 @@ const NitReboques = (() => {
             }
         }
 
-        // ── Fix 2: extrai QRU/QTH dos labels (inclui nota inline) ──────────
+        // Extrai QRU/QTH dos labels
         let qru = notaInline, qth = '';
         linhasResto.forEach(l => {
             const qruM = l.match(/^Q[\.\s]*R[\.\s]*[UQ][\.\s]*[:\-\s]+(.+)/i);
@@ -231,17 +262,13 @@ const NitReboques = (() => {
             if (qthM) qth = qthM[1].trim();
         });
 
-        // ── Fix 2b: endereço implícito (sem label) → QTH ───────────────────
+        // Endereço implícito (sem label) → QTH
         if (!qth) {
-            const endImpl = linhasResto.find(l =>
-                !_isRuido(l) &&
-                !/^Q[\.\s]*[RT]/i.test(l) &&
-                _ehEndereco(l)
-            );
+            const endImpl = linhasResto.find(l => !_isRuido(l) && !/^Q[\.\s]*[RT]/i.test(l) && _ehEndereco(l));
             if (endImpl) qth = endImpl;
         }
 
-        // ── Fix 3: equipe inclui MT VL; exclui ruído, labels e endereços ───
+        // Equipe: exclui ruído, labels e endereços
         const equipeLinhas = linhasResto.filter(l => {
             if (_isRuido(l)) return false;
             if (/^(Q[\.\s]*[RT][\.\s]*[UH]|LOCAL|ENDERE[ÇC]O|MISS[AÃ]O|EQUIPE\s*:)/i.test(l)) return false;
@@ -251,7 +278,7 @@ const NitReboques = (() => {
         const equipe = equipeLinhas.join(' / ').replace(/\s{2,}/g, ' ').trim();
 
         const status = (qru || qth) ? 'atuando' : 'disponivel';
-        return { tipoRecurso: 'viatura', vt, placa: placaInline, equipe, qru, qth, status };
+        return { tipoRecurso: 'viatura', prefixo, vt, placa: placaInline, equipe, qru, qth, status };
     }
 
     function _parseReboquista(linhas) {
@@ -351,7 +378,7 @@ const NitReboques = (() => {
         return `
         <div class="nit-reboque-card" draggable="true" data-id="${esc(id)}" data-tipo="viatura" data-status="${esc(v.status)}">
             <div class="nit-reboque-card-header">
-                <strong class="nit-reboque-mono">VT ${esc(v.vt||'N/I')}${v.placa ? ` · ${esc(v.placa)}` : ''}</strong>
+                <strong class="nit-reboque-mono">${/^\d+$/.test(v.vt||'') ? 'VT '+v.vt : esc(v.vt||'N/I')}${v.placa ? ` · ${esc(v.placa)}` : ''}</strong>
                 <span class="nit-reboque-status-tag ${tagClass}">${tagLabel}</span>
             </div>
             <div class="nit-reboque-card-info">
