@@ -267,9 +267,11 @@ const NitReboques = (() => {
         const rebs = Object.entries(ev.reboquistas||{});
         const tagsHTML = rebs.length
             ? rebs.map(([rid,n])=>{
-                const r=S.reboquistas[rid]||{};
-                const vt=(r.vt&&r.vt!=='N/I')?`<span class="nit-reb-tag-vt">${esc(r.vt)}</span>`:'';
-                return `<span class="nit-reb-ev-tag">${esc(n)}${vt}</span>`;
+                const r  = S.reboquistas[rid]||{};
+                const vt = r.vt   && r.vt   !=='N/I' ? `VT${r.vt}`   : '';
+                const pl = r.placa && r.placa!=='N/I' ? r.placa       : '';
+                const badge = [vt,pl].filter(Boolean).join(' · ');
+                return `<span class="nit-reb-ev-tag">${esc(n)}${badge?`<span class="nit-reb-tag-vt">${esc(badge)}</span>`:''}</span>`;
               }).join('')
             : `<span class="nit-reb-ev-tag vazio">Nenhum reboquista</span>`;
         return `
@@ -304,6 +306,17 @@ const NitReboques = (() => {
     }
     function _atualizarBalanco() {
         // chamado via _render → já atualizado em _renderKanban
+    }
+
+
+    // Monta linha de mensagem por reboquista: *NOME* VT078 🚨 PLACA \n*Smart:* número
+    function _linhaReb(nome, rebData) {
+        const r = rebData || {};
+        let linha = `*${nome}*`;
+        if (r.vt   && r.vt   !== 'N/I') linha += ` VT ${r.vt}`;
+        if (r.placa && r.placa !== 'N/I') linha += ` 🚨 ${r.placa}`;
+        if (r.smart && r.smart !== 'N/I') linha += `\n*Smart:* ${r.smart}`;
+        return linha;
     }
 
     // ── CRUD Reboquista ──────────────────────────────────────────────────────
@@ -412,8 +425,8 @@ const NitReboques = (() => {
             if (hor) msg += `\n*Horário:* ${hor}`;
             if (obs) msg += `\n*Obs:* ${obs}`;
         } else {
-            const nomes = Object.values(snapRebs).join(', ');
-            msg = `*${tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${end}`;
+            const linhasRebs = S.multi.ids.map(id=>_linhaReb(snapRebs[id]||'?',S.reboquistas[id])).join('\n');
+            msg = `*${tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${end}`;
             if (hor) msg += `\n*Horário:* ${hor}`;
             if (obs) msg += `\n*Obs:* ${obs}`;
         }
@@ -501,8 +514,8 @@ const NitReboques = (() => {
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
         } else {
-            const nomes = rebs.map(([,n])=>n).join(', ');
-            msg = `*${ev.tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${ev.endereco}`;
+            const linhasRebs = rebs.map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n');
+            msg = `*${ev.tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
         }
@@ -571,8 +584,8 @@ const NitReboques = (() => {
         S.db.ref().update(updates).then(()=>{
             // Monta nomes completos do evento após a atribuição
             const todosRebs = { ...(ev.reboquistas||{}), [id]: r.nome };
-            const nomes = Object.values(todosRebs).join(', ');
-            let msg = `*${ev.tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${ev.endereco}`;
+            const linhasRebs = Object.entries(todosRebs).map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n');
+            let msg = `*${ev.tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
             copiarTexto(msg).then(ok=>toast(ok?`${r.nome} alocado — mensagem copiada!`:`${r.nome} alocado.`,ok?'success':'success'));
