@@ -284,3 +284,16 @@
     margin-left: 5px;
     border: 1px solid rgba(88,166,255,.2);
 }
+
+/* Botão de Relatório — destaque visual na sidebar */
+.nit-rb-sb-btn-destaque {
+    color: var(--color-accent);
+    border-color: rgba(88,166,255,.3);
+    background: rgba(88,166,255,.06);
+    font-weight: 600;
+}
+.nit-rb-sb-btn-destaque:hover {
+    background: rgba(88,166,255,.14);
+    border-color: var(--color-accent);
+    color: #fff;
+}
