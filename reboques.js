@@ -21,7 +21,7 @@ const NitReboques = (() => {
         draggedId: null, isDragging: false, pendingRender: false,
         multi: { ids: [] },
         editandoEventoId: null,
-        buscaEventos: '',
+        buscaEventos: '', buscaDisponiveis: '', buscaAtuando: '',
     };
 
     // ── Utils ────────────────────────────────────────────────────────────────
@@ -78,6 +78,8 @@ const NitReboques = (() => {
         if (!g('tab-reboques')) { console.error('[NitReboques] markup ausente'); return; }
         S.db = db;
         if (!S.uiBound) { _bindUI(); _bindTabsFallback(); S.uiBound = true; }
+        // Estado inicial: se a aba Reboques já estiver ativa, oculta a busca global
+        if (g('tab-reboques')?.classList.contains('active')) _toggleBuscaGlobal(false);
         _iniciarListeners();
         S.inicializado = true;
         console.log('[NitReboques] inicializado.');
@@ -218,10 +220,17 @@ const NitReboques = (() => {
     }
 
     // ── Render ───────────────────────────────────────────────────────────────
-    function _sorted(status) {
-        return Object.entries(S.reboquistas)
+    function _sorted(status, busca) {
+        let lista = Object.entries(S.reboquistas)
             .filter(([,r])=>r&&r.status===status)
             .sort((a,b)=>(a[1].ordem??0)-(b[1].ordem??0)||String(a[1].nome).localeCompare(String(b[1].nome)));
+        if (busca) {
+            const q = busca.toLowerCase();
+            lista = lista.filter(([,r])=>
+                [r.nome,r.vt,r.placa,r.smart,r.plantao].some(v=>String(v||'').toLowerCase().includes(q))
+            );
+        }
+        return lista;
     }
     function _cardReboquistaHTML(id, r) {
         const atuando  = r.status==='atuando';
@@ -250,12 +259,12 @@ const NitReboques = (() => {
         </div>`;
     }
     function _renderKanban() {
-        const disp = _sorted('disponivel');
-        const atua = _sorted('atuando');
+        const disp = _sorted('disponivel', S.buscaDisponiveis);
+        const atua = _sorted('atuando',    S.buscaAtuando);
         const colD = g('nit-reb-cards-disponiveis');
         const colA = g('nit-reb-cards-atuando');
-        if (colD) colD.innerHTML = disp.length ? disp.map(([id,r])=>_cardReboquistaHTML(id,r)).join('') : `<div class="nit-reb-vazio">Nenhum reboquista disponível.</div>`;
-        if (colA) colA.innerHTML = atua.length ? atua.map(([id,r])=>_cardReboquistaHTML(id,r)).join('') : `<div class="nit-reb-vazio">Nenhum em atendimento.</div>`;
+        if (colD) colD.innerHTML = disp.length ? disp.map(([id,r])=>_cardReboquistaHTML(id,r)).join('') : `<div class="nit-reb-vazio">${S.buscaDisponiveis?'Nenhum resultado para a busca.':'Nenhum reboquista disponível.'}</div>`;
+        if (colA) colA.innerHTML = atua.length ? atua.map(([id,r])=>_cardReboquistaHTML(id,r)).join('') : `<div class="nit-reb-vazio">${S.buscaAtuando?'Nenhum resultado para a busca.':'Nenhum em atendimento.'}</div>`;
         const set=(id,v)=>{const el=g(id);if(el)el.textContent=v;};
         set('nit-reb-count-disponiveis', disp.length);
         set('nit-reb-count-atuando',     atua.length);
@@ -310,12 +319,13 @@ const NitReboques = (() => {
 
 
     // Monta linha de mensagem por reboquista: *NOME* VT078 🚨 PLACA \n*Smart:* número
+    // 2 espaços de recuo criam hierarquia visual no WhatsApp
     function _linhaReb(nome, rebData) {
         const r = rebData || {};
-        let linha = `*${nome}*`;
+        let linha = `  *${nome}*`;
         if (r.vt   && r.vt   !== 'N/I') linha += ` VT ${r.vt}`;
         if (r.placa && r.placa !== 'N/I') linha += ` 🚨 ${r.placa}`;
-        if (r.smart && r.smart !== 'N/I') linha += `\n*Smart:* ${r.smart}`;
+        if (r.smart && r.smart !== 'N/I') linha += `\n  *Smart:* ${r.smart}`;
         return linha;
     }
 
@@ -610,7 +620,10 @@ const NitReboques = (() => {
         on('nit-reboque-btn-limpar',        'click', limparPlantao);
         on('nit-reboque-btn-nova-ocorrencia','click', abrirNovaOcorrencia);
         // busca eventos
-        on('nit-reboque-busca-eventos','input',e=>{S.buscaEventos=e.target.value.trim();_renderEventos();});
+        on('nit-reboque-busca-eventos',    'input',e=>{S.buscaEventos    =e.target.value.trim();_renderEventos();});
+        // busca nas colunas do kanban
+        on('nit-reb-search-disponiveis',   'input',e=>{S.buscaDisponiveis=e.target.value.trim();_renderKanban();});
+        on('nit-reb-search-atuando',       'input',e=>{S.buscaAtuando    =e.target.value.trim();_renderKanban();});
         // acionamento
         on('nit-reboque-acion-btn-confirmar','click',confirmarAcionamento);
         on('nit-reboque-acion-btn-cancelar','click',()=>{g('nit-reboque-acionamento')?.classList.remove('aberto');_resetAcionamento();});
@@ -660,12 +673,18 @@ const NitReboques = (() => {
     }
 
     // ── Tabs fallback & Bootstrap ────────────────────────────────────────────
+    function _toggleBuscaGlobal(visivel) {
+        const el = document.getElementById('btn-busca-global');
+        if (el) el.style.visibility = visivel ? '' : 'hidden';
+    }
     function _bindTabsFallback() {
         document.querySelector('.tab-navigation')?.addEventListener('click',e=>{
             const btn=e.target.closest('.tab-button[data-tab]'); if(!btn) return;
             const alvo=document.getElementById(btn.dataset.tab); if(!alvo) return;
             document.querySelectorAll('.tab-button[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));
             document.querySelectorAll('.tab-content').forEach(t=>t.classList.toggle('active',t===alvo));
+            // Busca global pertence ao Semáforo — oculta quando a aba Reboques está ativa
+            _toggleBuscaGlobal(btn.dataset.tab !== 'tab-reboques');
         });
     }
     function _bootstrap() {
