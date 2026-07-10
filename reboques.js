@@ -266,7 +266,11 @@ const NitReboques = (() => {
     function _cardEventoHTML(id, ev) {
         const rebs = Object.entries(ev.reboquistas||{});
         const tagsHTML = rebs.length
-            ? rebs.map(([rid,n])=>`<span class="nit-reb-ev-tag">${esc(n)}</span>`).join('')
+            ? rebs.map(([rid,n])=>{
+                const r=S.reboquistas[rid]||{};
+                const vt=(r.vt&&r.vt!=='N/I')?`<span class="nit-reb-tag-vt">${esc(r.vt)}</span>`:'';
+                return `<span class="nit-reb-ev-tag">${esc(n)}${vt}</span>`;
+              }).join('')
             : `<span class="nit-reb-ev-tag vazio">Nenhum reboquista</span>`;
         return `
         <div class="nit-reb-ev-card" data-evento-id="${esc(id)}">
@@ -409,7 +413,7 @@ const NitReboques = (() => {
             if (obs) msg += `\n*Obs:* ${obs}`;
         } else {
             const nomes = Object.values(snapRebs).join(', ');
-            msg = `*${tipo}* enviado para: *${nomes}*\n*Endereço:* ${end}`;
+            msg = `*${tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${end}`;
             if (hor) msg += `\n*Horário:* ${hor}`;
             if (obs) msg += `\n*Obs:* ${obs}`;
         }
@@ -498,7 +502,7 @@ const NitReboques = (() => {
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
         } else {
             const nomes = rebs.map(([,n])=>n).join(', ');
-            msg = `*${ev.tipo}* enviado para: *${nomes}*\n*Endereço:* ${ev.endereco}`;
+            msg = `*${ev.tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
         }
@@ -568,7 +572,7 @@ const NitReboques = (() => {
             // Monta nomes completos do evento após a atribuição
             const todosRebs = { ...(ev.reboquistas||{}), [id]: r.nome };
             const nomes = Object.values(todosRebs).join(', ');
-            let msg = `*${ev.tipo}* enviado para: *${nomes}*\n*Endereço:* ${ev.endereco}`;
+            let msg = `*${ev.tipo}* enviado para: \n*${nomes}*\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
             copiarTexto(msg).then(ok=>toast(ok?`${r.nome} alocado — mensagem copiada!`:`${r.nome} alocado.`,ok?'success':'success'));
@@ -585,7 +589,6 @@ const NitReboques = (() => {
         g('nit-rb-sec-balanco-header')?.addEventListener('click',()=>g('nit-rb-sec-balanco')?.classList.toggle('collapsed-sec'));
         g('nit-rb-sec-acoes-header')?.addEventListener('click',()=>g('nit-rb-sec-acoes')?.classList.toggle('collapsed-sec'));
         // processar modal
-        on('nit-reboque-btn-processar-open','click',()=>_abrirModal(g('nit-reboque-modal-processar')));
         on('nit-reboque-modal-processar-fechar','click',()=>_fecharModal(g('nit-reboque-modal-processar')));
         g('nit-reboque-modal-processar')?.addEventListener('click',e=>{if(e.target===g('nit-reboque-modal-processar'))_fecharModal(g('nit-reboque-modal-processar'));});
         // barra de ações
