@@ -620,7 +620,10 @@ const NitReboques = (() => {
         on('nit-reboque-edit-btn-cancelar','click',()=>_fecharModal(g('nit-reboque-modal-edicao')));
         g('nit-reboque-modal-edicao')?.addEventListener('click',e=>{if(e.target===g('nit-reboque-modal-edicao'))_fecharModal(g('nit-reboque-modal-edicao'));});
         // modal relatório
-        on('nit-reboque-rel-copiar','click',()=>copiarTexto(g('nit-reboque-rel-texto')?.value||'').then(ok=>toast(ok?'Copiado!':'Falha.',ok?'success':'error')));
+        on('nit-reboque-rel-copiar','click',()=>copiarTexto(g('nit-reboque-rel-texto')?.value||'').then(ok=>{
+            toast(ok?'Copiado! Cole no WhatsApp.':'Falha ao copiar.',ok?'success':'error');
+            if (ok) _fecharModal(g('nit-reboque-modal-relatorio'));
+        }));
         on('nit-reboque-rel-fechar','click',()=>_fecharModal(g('nit-reboque-modal-relatorio')));
         // ESC
         document.addEventListener('keydown',e=>{
