@@ -225,15 +225,24 @@
 /* Vazio */
 .nit-reb-vazio { padding: 20px 12px; text-align: center; font-size: 12px; color: var(--color-text-tertiary); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); }
 
-/* ── Painel de acionamento (flutuante) ───────────────────────────────────── */
+/* ── Painel de acionamento → MODAL CENTRALIZADO ──────────────────────────── */
 #nit-reboque-acionamento {
-    position: fixed; top: 70px; right: 16px; width: 320px;
-    max-height: calc(100vh - 90px); display: none; flex-direction: column;
-    background: var(--color-surface); border: 1px solid var(--color-accent);
-    border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(0,0,0,.55);
-    z-index: 900; overflow: hidden; backdrop-filter: blur(6px);
+    position: fixed; inset: 0;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(3,8,15,.65);
+    z-index: 950;
 }
 #nit-reboque-acionamento.aberto { display: flex; }
+.nit-reb-acion-box {
+    width: min(480px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    display: flex; flex-direction: column;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 16px 48px rgba(0,0,0,.6);
+    overflow: hidden;
+}
 .nit-reb-panel-header { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
 .nit-reb-panel-header span { font-size: 13px; font-weight: 600; color: var(--color-text-primary); }
 
@@ -255,7 +264,6 @@
     padding: 8px 10px; font-family: 'Inter', sans-serif; font-size: 13px; resize: vertical;
 }
 .nit-reb-form input:focus, .nit-reb-form textarea:focus { outline: none; border-color: var(--color-accent); }
-.nit-reb-form textarea { min-height: 120px; }
 .nit-reb-form-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--color-border); flex-shrink: 0; }
 
 /* ── Modais ──────────────────────────────────────────────────────────────── */
