@@ -584,8 +584,6 @@ const NitReboques = (() => {
         const id=S.draggedId; if(!id||!S.reboquistas[id]) return;
         e.preventDefault();
         const r=S.reboquistas[id];
-        const dz=e.target.closest('.nit-reboque-dropzone');
-        if(dz&&_acionamentoAberto()&&!S.editandoEventoId){_adicionarAoAcionamento(id);return;}
         const evCard=e.target.closest('.nit-reb-ev-card');
         if(evCard){ _alocarAoEvento(id,evCard.dataset.eventoId); return;}
         const colD=e.target.closest('#nit-reb-cards-disponiveis');
@@ -638,7 +636,7 @@ const NitReboques = (() => {
         // acionamento
         on('nit-reboque-acion-btn-confirmar','click',confirmarAcionamento);
         on('nit-reboque-acion-btn-cancelar','click',()=>{g('nit-reboque-acionamento')?.classList.remove('aberto');_resetAcionamento();});
-        g('nit-reboque-acion-tags')?.addEventListener('click',e=>{const x=e.target.closest('.nit-reb-tag-x');if(!x)return;S.multi.ids=S.multi.ids.filter(i=>i!==x.dataset.id);_renderTagsAcionamento();});
+        g('nit-reboque-acion-tags')?.addEventListener('click',e=>{const x=e.target.closest('.nit-reb-tag-x');if(!x)return;S.multi.ids=S.multi.ids.filter(i=>i!==x.dataset.id);});
         // modal reboquista
         on('nit-reboque-edit-btn-salvar','click',salvarReboquista);
         on('nit-reboque-edit-btn-cancelar','click',()=>_fecharModal(g('nit-reboque-modal-edicao')));
