@@ -118,14 +118,8 @@
     .nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header { background: rgba(251,191,36,.07); }
     .nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header { background: rgba(88,166,255,.07); }
 }
-/* Texto do header: cor sutil como o Semáforo faz com .header-text cor-* */
-.nit-reb-col-header .nit-reb-col-label {
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 0.8px; text-transform: uppercase;
-}
-.nit-reb-col-header .nit-reb-col-label.cor-disponivel { color: var(--color-success); }
-.nit-reb-col-header .nit-reb-col-label.cor-atuando    { color: var(--color-warning); }
-.nit-reb-col-header .nit-reb-col-label.cor-ocorrencias{ color: var(--color-accent);  }
+/* cor-atuando: âmbar (ausente no nit.css — único cor-* exclusivo do módulo) */
+.cor-atuando { color: var(--color-warning); }
 
 /* Badge contador — mesmo .card-count do Semáforo */
 .nit-reb-count {
