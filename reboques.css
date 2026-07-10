@@ -274,13 +274,13 @@
 .nit-reb-modal-header { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--color-border); font-size: 14px; font-weight: 600; color: var(--color-text-primary); flex-shrink: 0; }
 #nit-reboque-rel-texto { width: 100%; box-sizing: border-box; min-height: 240px; background: var(--color-bg); color: var(--color-text-primary); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; resize: vertical; }
 
-/* VT em destaque nas tags do card de evento */
+/* VT + placa em destaque nas tags do card de evento */
 .nit-reb-tag-vt {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9.5px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     color: var(--color-accent);
     background: rgba(88,166,255,.15);
-    padding: 1px 5px; border-radius: 4px;
-    margin-left: 4px;
+    padding: 1px 6px; border-radius: 4px;
+    margin-left: 5px;
     border: 1px solid rgba(88,166,255,.2);
 }
