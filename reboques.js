@@ -415,7 +415,8 @@ const NitReboques = (() => {
         }
 
         S.db.ref().update(updates)
-            .then(()=>{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); toast('Ocorrência registrada!','success'); })
+            .then(()=>copiarTexto(msg))
+            .then(ok=>toast(ok?'Ocorrência registrada e mensagem copiada!':'Registrada (falha ao copiar).',ok?'success':'warning'))
             .catch(e=>{console.error(e);toast('Falha ao registrar.','error');});
         g('nit-reboque-acionamento')?.classList.remove('aberto');
         _resetAcionamento();
@@ -501,7 +502,7 @@ const NitReboques = (() => {
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
         }
-        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+        copiarTexto(msg).then(ok=>toast(ok?'Mensagem copiada! Cole no WhatsApp.':'Falha ao copiar.',ok?'success':'error'));
     }
     function limparPlantao() {
         if(!confirm('Limpar TODOS os dados de reboquistas e ocorrências deste plantão?')) return;
@@ -570,8 +571,7 @@ const NitReboques = (() => {
             let msg = `*${ev.tipo}* enviado para: *${nomes}*\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
             if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
-            window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-            toast(`${r.nome} alocado.`,'success');
+            copiarTexto(msg).then(ok=>toast(ok?`${r.nome} alocado — mensagem copiada!`:`${r.nome} alocado.`,ok?'success':'success'));
         }).catch(()=>{});
     }
 
