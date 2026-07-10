@@ -319,13 +319,13 @@ const NitReboques = (() => {
 
 
     // Monta linha de mensagem por reboquista: *NOME* VT078 🚨 PLACA \n*Smart:* número
-    // 2 espaços de recuo criam hierarquia visual no WhatsApp
+    // Convenção de indentação: 2 espaços + · para o nome, 4 espaços para sub-item Smart
     function _linhaReb(nome, rebData) {
         const r = rebData || {};
-        let linha = `  *${nome}*`;
+        let linha = `  · *${nome}*`;
         if (r.vt   && r.vt   !== 'N/I') linha += ` VT ${r.vt}`;
         if (r.placa && r.placa !== 'N/I') linha += ` 🚨 ${r.placa}`;
-        if (r.smart && r.smart !== 'N/I') linha += `\n  *Smart:* ${r.smart}`;
+        if (r.smart && r.smart !== 'N/I') linha += `\n    *Smart:* ${r.smart}`;
         return linha;
     }
 
