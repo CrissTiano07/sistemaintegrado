@@ -509,8 +509,19 @@ const NitReboques = (() => {
         const disp=_sorted('disponivel'); const atua=_sorted('atuando');
         let txt=`*RELATÓRIO DE REBOQUES*\n*Data:* ${hojeBR()}\n\n`;
         txt+=`🟢 Disponíveis: ${disp.length}   🟡 Atuando: ${atua.length}   Total: ${disp.length+atua.length}\n`;
-        if(atua.length){ const grupos={}; atua.forEach(([,r])=>{const k=r.ocorrencia||'N/I';(grupos[k]=grupos[k]||[]).push(r);}); txt+=`\n---\n🟡 *EM ATENDIMENTO:*\n`; Object.entries(grupos).forEach(([oc,l])=>{txt+=`\n*${oc}*\n`;l.forEach(r=>{txt+=`- ${r.nome} (VT: ${r.vt||'N/I'})\n`;});}); }
-        if(disp.length){ txt+=`\n---\n🟢 *DISPONÍVEIS:*\n`; disp.forEach(([,r])=>{txt+=`- ${r.nome} (VT: ${r.vt||'N/I'})\n`;}); }
+        if(atua.length){
+            const grupos={};
+            atua.forEach(([,r])=>{const k=r.ocorrencia||'N/I';(grupos[k]=grupos[k]||[]).push(r);});
+            txt+=`\n---\n🟡 *EM ATENDIMENTO:*\n`;
+            Object.entries(grupos).forEach(([oc,l])=>{
+                txt+=`\n*${oc}*\n`;
+                l.forEach(r=>{ txt+=`  · ${r.nome} (VT: ${r.vt||'N/I'})\n`; });
+            });
+        }
+        if(disp.length){
+            txt+=`\n---\n🟢 *DISPONÍVEIS:*\n\n`;
+            disp.forEach(([,r])=>{ txt+=`  · ${r.nome} (VT: ${r.vt||'N/I'})\n`; });
+        }
         const ta=g('nit-reboque-rel-texto'); if(ta) ta.value=txt.trim();
         _abrirModal(g('nit-reboque-modal-relatorio'));
     }
