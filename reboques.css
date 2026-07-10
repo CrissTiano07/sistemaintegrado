@@ -36,7 +36,8 @@
 #nit-rb-sidebar.collapsed .sb-circulo-wrap  { display: none; }
 #nit-rb-sidebar.collapsed .nit-rb-collapsed-icons { display: flex; }
 #nit-rb-btn-toggle {
-    position: absolute; top: 8px; right: -12px; z-index: 10;
+    position: absolute; top: 50%; right: -12px; z-index: 10;
+    transform: translateY(-50%);
     width: 24px; height: 24px;
     background: var(--color-surface); border: 1px solid var(--color-border);
     border-radius: 50%; cursor: pointer; display: flex;
