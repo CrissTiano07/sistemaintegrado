@@ -100,26 +100,30 @@
     display: flex; align-items: center; gap: 8px;
     padding: 10px 14px; flex-shrink: 0;
     border-bottom: 1px solid var(--color-border);
-    background: var(--color-bg); /* base mais escura, como no Semáforo */
+    background: var(--color-bg);
+    position: relative; /* necessário para o ::before funcionar */
 }
-/* Tint sutil por coluna — espelha o padrão cor-* do Semáforo */
-.nit-reb-board .nit-reb-column:nth-child(1) .nit-reb-col-header {
-    background: color-mix(in srgb, var(--color-success) 7%, var(--color-bg));
+/* Técnica idêntica ao Semáforo: radial-gradient via ::before por coluna */
+.nit-reb-board .nit-reb-column:nth-child(1) .nit-reb-col-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(86,211,100,0.12), transparent 70%);
+    pointer-events: none;
 }
-.nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header {
-    background: color-mix(in srgb, var(--color-warning) 7%, var(--color-bg));
+.nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(255,166,87,0.12), transparent 70%);
+    pointer-events: none;
 }
-.nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header {
-    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-bg));
+.nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 30% 50%, rgba(59,130,246,0.12), transparent 70%);
+    pointer-events: none;
 }
-/* Fallback rgba para browsers sem color-mix */
-@supports not (background: color-mix(in srgb, red 1%, blue)) {
-    .nit-reb-board .nit-reb-column:nth-child(1) .nit-reb-col-header { background: rgba(56,189,107,.07); }
-    .nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header { background: rgba(251,191,36,.07); }
-    .nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header { background: rgba(88,166,255,.07); }
-}
-/* cor-atuando: âmbar (ausente no nit.css — único cor-* exclusivo do módulo) */
-.cor-atuando { color: var(--color-warning); }
+/* cor-atuando: âmbar — mapeado ao mesmo #ffa657 do cor-via-livre do Semáforo */
+.cor-atuando { color: #ffa657; }
 
 /* Badge contador — mesmo .card-count do Semáforo */
 .nit-reb-count {
