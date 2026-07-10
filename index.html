@@ -385,30 +385,33 @@
     </div>
 </div>
 
-    <!-- ═══ PAINEL DE ACIONAMENTO ════════════════════════════════════════ -->
+    <!-- ═══ MODAL DE ACIONAMENTO (centralizado) ════════════════════════════ -->
     <div id="nit-reboque-acionamento">
-        <div class="nit-reb-panel-header">
-            <span id="nit-reboque-acion-titulo">Registrar Ocorrência</span>
-        </div>
-        <div class="nit-reb-form">
-            <div><label>Tipo de Evento *</label><input type="text" id="nit-reboque-acion-tipo" placeholder="Ex: ACIDENTE, PANE…"></div>
-            <div><label>Endereço *</label><input type="text" id="nit-reboque-acion-endereco" placeholder="Local da ocorrência"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="nit-reb-acion-box">
+            <div class="nit-reb-modal-header">
+                <span id="nit-reboque-acion-titulo">Registrar Ocorrência</span>
+            </div>
+            <div class="nit-reb-form">
+                <div><label>Tipo de Evento *</label><input type="text" id="nit-reboque-acion-tipo" placeholder="Ex: ACIDENTE, PANE, REMOÇÃO…" autocomplete="off"></div>
+                <div><label>Endereço *</label><input type="text" id="nit-reboque-acion-endereco" placeholder="Local da ocorrência" autocomplete="off"></div>
                 <div><label>Horário</label><input type="time" id="nit-reboque-acion-horario"></div>
-                <div><label>Obs</label><input type="text" id="nit-reboque-acion-obs" placeholder="Detalhes…"></div>
+                <div><label>Observações</label><textarea id="nit-reboque-acion-obs" rows="3" placeholder="Informações adicionais…"></textarea></div>
             </div>
-        </div>
-        <div class="nit-reb-dz-section">
-            <div class="nit-reb-dz-label"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Reboquistas</div>
-            <div id="nit-reboque-dropzone" class="nit-reboque-dropzone">
-                <span id="nit-reboque-acion-tags" style="display:contents"></span>
+            <div class="nit-reb-dz-section">
+                <div class="nit-reb-dz-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    Reboquistas <span style="font-weight:400;letter-spacing:0;text-transform:none;color:var(--color-text-tertiary)">(opcional — arraste ou clique em acionar)</span>
+                </div>
+                <div id="nit-reboque-dropzone" class="nit-reboque-dropzone">
+                    <span id="nit-reboque-acion-tags" style="display:contents"></span>
+                </div>
             </div>
-        </div>
-        <div class="nit-reb-form-footer">
-            <button id="nit-reboque-acion-btn-cancelar"  class="btn btn-secundario">Cancelar</button>
-            <button id="nit-reboque-acion-btn-confirmar" class="btn btn-primario" style="display:flex;align-items:center;gap:6px">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Confirmar
-            </button>
+            <div class="nit-reb-form-footer">
+                <button id="nit-reboque-acion-btn-cancelar" class="btn btn-secundario">Cancelar</button>
+                <button id="nit-reboque-acion-btn-confirmar" class="btn btn-primario" style="display:flex;align-items:center;gap:6px">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Confirmar
+                </button>
+            </div>
         </div>
     </div>
 
