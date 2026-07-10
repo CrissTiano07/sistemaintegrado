@@ -100,7 +100,23 @@
     display: flex; align-items: center; gap: 8px;
     padding: 10px 14px; flex-shrink: 0;
     border-bottom: 1px solid var(--color-border);
-    background: var(--color-surface);
+    background: var(--color-bg); /* base mais escura, como no Semáforo */
+}
+/* Tint sutil por coluna — espelha o padrão cor-* do Semáforo */
+.nit-reb-board .nit-reb-column:nth-child(1) .nit-reb-col-header {
+    background: color-mix(in srgb, var(--color-success) 7%, var(--color-bg));
+}
+.nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header {
+    background: color-mix(in srgb, var(--color-warning) 7%, var(--color-bg));
+}
+.nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header {
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-bg));
+}
+/* Fallback rgba para browsers sem color-mix */
+@supports not (background: color-mix(in srgb, red 1%, blue)) {
+    .nit-reb-board .nit-reb-column:nth-child(1) .nit-reb-col-header { background: rgba(56,189,107,.07); }
+    .nit-reb-board .nit-reb-column:nth-child(2) .nit-reb-col-header { background: rgba(251,191,36,.07); }
+    .nit-reb-board .nit-reb-column:nth-child(3) .nit-reb-col-header { background: rgba(88,166,255,.07); }
 }
 /* Texto do header: cor sutil como o Semáforo faz com .header-text cor-* */
 .nit-reb-col-header .nit-reb-col-label {
