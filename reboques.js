@@ -386,7 +386,6 @@ const NitReboques = (() => {
         const tipo=g('nit-reboque-acion-tipo')?.value.trim().toUpperCase()||'';
         const end =g('nit-reboque-acion-endereco')?.value.trim().toUpperCase()||'';
         if (!tipo||!end) { toast('Tipo e Endereço são obrigatórios.','warning'); return; }
-        if (!S.multi.ids.length) { toast('Adicione ao menos um reboquista.','warning'); return; }
         const hor=g('nit-reboque-acion-horario')?.value||'';
         const obs=g('nit-reboque-acion-obs')?.value.trim()||'';
         const evId=novoId('evt');
@@ -399,12 +398,24 @@ const NitReboques = (() => {
             updates[`${PATH_REBOQUISTAS}/${id}/eventoId`]=evId;
             updates[`${PATH_REBOQUISTAS}/${id}/ocorrencia`]=ocorrencia;
         });
-        const nomes=Object.values(snapRebs).join(', ');
-        let msg=`*${tipo}* enviado para: *${nomes}*\n*Endereço:* ${end}`;
-        if(hor) msg+=`\n*Horário:* ${hor}`;
+
+        // Mensagem WhatsApp bifurcada:
+        // Sem reboquista → "Tem preferência?" (agendamento aguardando designação)
+        // Com reboquista → "EVENTO enviado para: NOME(S)"
+        let msg;
+        if (S.multi.ids.length === 0) {
+            msg = `*Tem preferência de reboquista para este evento?*\n*Evento:* ${tipo}\n*Endereço:* ${end}`;
+            if (hor) msg += `\n*Horário:* ${hor}`;
+            if (obs) msg += `\n*Obs:* ${obs}`;
+        } else {
+            const nomes = Object.values(snapRebs).join(', ');
+            msg = `*${tipo}* enviado para: *${nomes}*\n*Endereço:* ${end}`;
+            if (hor) msg += `\n*Horário:* ${hor}`;
+            if (obs) msg += `\n*Obs:* ${obs}`;
+        }
+
         S.db.ref().update(updates)
-            .then(()=>copiarTexto(msg))
-            .then(ok=>toast(ok?'Acionamento registrado e mensagem copiada!':'Registrado (falha ao copiar).',ok?'success':'warning'))
+            .then(()=>{ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank'); toast('Ocorrência registrada!','success'); })
             .catch(e=>{console.error(e);toast('Falha ao registrar.','error');});
         g('nit-reboque-acionamento')?.classList.remove('aberto');
         _resetAcionamento();
@@ -477,12 +488,20 @@ const NitReboques = (() => {
     }
     function abrirWhatsAppEvento(evId) {
         const ev=S.eventos[evId]; if(!ev) return;
-        let txt=`*${ev.tipo}*\n*Local:* ${ev.endereco}`;
-        if(ev.horario) txt+=`\n*Horário:* ${ev.horario}`;
-        if(ev.obs)     txt+=`\n*Obs:* ${ev.obs}`;
         const rebs=Object.entries(ev.reboquistas||{});
-        if(rebs.length){ txt+=`\n\n*Reboques acionados:*`; rebs.forEach(([rid,n])=>{const r=S.reboquistas[rid]||{};txt+=`\n- ${n} (VT: ${r.vt||'N/I'})`;});}
-        window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+        let msg;
+        if (rebs.length === 0) {
+            // Evento sem reboquista — agendamento aguardando designação
+            msg = `*Tem preferência de reboquista para este evento?*\n*Evento:* ${ev.tipo}\n*Endereço:* ${ev.endereco}`;
+            if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
+            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+        } else {
+            const nomes = rebs.map(([,n])=>n).join(', ');
+            msg = `*${ev.tipo}* enviado para: *${nomes}*\n*Endereço:* ${ev.endereco}`;
+            if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
+            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+        }
+        window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
     }
     function limparPlantao() {
         if(!confirm('Limpar TODOS os dados de reboquistas e ocorrências deste plantão?')) return;
@@ -544,7 +563,16 @@ const NitReboques = (() => {
         updates[`${PATH_REBOQUISTAS}/${id}/status`]='atuando';
         updates[`${PATH_REBOQUISTAS}/${id}/eventoId`]=evId;
         updates[`${PATH_REBOQUISTAS}/${id}/ocorrencia`]=`${ev.tipo} @ ${ev.endereco}`;
-        S.db.ref().update(updates).then(()=>toast(`${r.nome} alocado.`,'success')).catch(()=>{});
+        S.db.ref().update(updates).then(()=>{
+            // Monta nomes completos do evento após a atribuição
+            const todosRebs = { ...(ev.reboquistas||{}), [id]: r.nome };
+            const nomes = Object.values(todosRebs).join(', ');
+            let msg = `*${ev.tipo}* enviado para: *${nomes}*\n*Endereço:* ${ev.endereco}`;
+            if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
+            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+            window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+            toast(`${r.nome} alocado.`,'success');
+        }).catch(()=>{});
     }
 
     // ── Bind UI ──────────────────────────────────────────────────────────────
