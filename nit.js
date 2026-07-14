@@ -538,7 +538,10 @@ const NitData = {
     const tipoFromPrefixo = TIPOS.find(t => prefixo.includes(t));
 
     const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
-    const m = linha.match(re);
+    // Fallback: formato onde o código precede um único 🚦 (ex: planilha CEMOB copiada)
+    // "ENEL \t\t 1183 \t 🚦 \t AV. BERNARDO ● TRAVADO ●"
+    const re2 = /\b([A-Z0-9]{2,8})\t🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
+    const m = linha.match(re) || linha.match(re2);
     if (!m) return null;
 
     // Tipo: prefixo tem prioridade; fallback em m[3] (campo problema do CEMOB)
@@ -2687,11 +2690,54 @@ const NitCentral = {
     // ── Timers ───────────────────────────────────────────────────────
     _iniciarTimers(card) {
         this._pararTimers();
-        const sv       = this._sv;
+        const sv      = this._sv;
+        const coluna  = sv(card.dataset.coluna);
+        const status  = sv(card.dataset.status);
+        const isNorm  = coluna === 'coluna-normalizados' || status === 'NORMALIZADO';
+        const elSLA   = document.getElementById('central-tempo-sla');
+        const elOp    = document.getElementById('central-tempo-op');
+        const elRes   = document.getElementById('central-resultado');
+
+        if (isNorm) {
+            // ── Normalizado: tempos finais estáticos (sem interval) ───────
+            const tsInicio = this._parseBR(sv(card.dataset.inicio));
+            const fimRaw   = `${sv(card.dataset.data_fim)} ${sv(card.dataset.hora_fim)}`.trim();
+            const tsFim    = this._parseBR(fimRaw) || 0;
+            const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;
+            const duracao  = tsInicio && tsFim ? tsFim - tsInicio : 0;
+            const duracaoOp = tsOp && tsFim ? tsFim - tsOp : 0;
+
+            if (elSLA) {
+                elSLA.textContent = duracao > 0 ? this._formatDelta(duracao) : '--:--';
+                elSLA.className   = 'nit-central-tempo-valor sla-ok';
+            }
+            if (elOp) {
+                elOp.textContent = duracaoOp > 0 ? this._formatDelta(duracaoOp) : '--:--';
+                elOp.className   = 'nit-central-tempo-valor nit-central-tempo-op' +
+                    (duracaoOp > 0 ? ' sla-ok' : '');
+            }
+
+            // ── Resultado final ───────────────────────────────────────────
+            if (elRes && tsInicio && tsFim && duracao > 0) {
+                const fmt = ts => {
+                    const d = new Date(ts);
+                    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                };
+                document.getElementById('central-resultado-periodo').textContent =
+                    `${fmt(tsInicio)} → ${fmt(tsFim)}`;
+                document.getElementById('central-resultado-total').textContent =
+                    this._formatDelta(duracao) + ' total';
+                elRes.style.display = '';
+            } else if (elRes) {
+                elRes.style.display = 'none';
+            }
+            return; // não inicia interval
+        }
+
+        // ── Ativo: timers em tempo real ───────────────────────────────────
+        if (elRes) elRes.style.display = 'none';
         const tsInicio = this._parseBR(sv(card.dataset.inicio));
-        const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;   // despacho atual, não o primeiro
-        const elSLA    = document.getElementById('central-tempo-sla');
-        const elOp     = document.getElementById('central-tempo-op');
+        const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;
 
         const tick = () => {
             const now = Date.now();
