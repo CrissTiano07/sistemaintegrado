@@ -1320,7 +1320,33 @@
     font-weight: 500;
 }
 
-/* Zona 2c — observação colapsável */
+/* Resultado final — normalizado */
+.nit-central-resultado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 7px 10px;
+    background: rgba(56,189,107,0.08);
+    border: 1px solid rgba(56,189,107,0.2);
+    border-radius: 6px;
+    gap: 8px;
+}
+.nit-central-resultado-periodo {
+    font-size: 11px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -0.2px;
+}
+.nit-central-resultado-total {
+    font-size: 12px;
+    font-weight: 800;
+    color: #38bd6b;
+    white-space: nowrap;
+    letter-spacing: -0.3px;
+}
+
+
 .nit-central-obs-faixa {
     margin-top: 6px;
     border: 1px solid rgba(255,255,255,0.07);
