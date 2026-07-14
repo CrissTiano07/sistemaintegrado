@@ -2703,7 +2703,7 @@ const NitCentral = {
             const tsInicio = this._parseBR(sv(card.dataset.inicio));
             const fimRaw   = `${sv(card.dataset.data_fim)} ${sv(card.dataset.hora_fim)}`.trim();
             const tsFim    = this._parseBR(fimRaw) || 0;
-            const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;
+            const tsOp     = parseInt(sv(card.dataset.tsDespacho)) || 0;
             const duracao  = tsInicio && tsFim ? tsFim - tsInicio : 0;
             const duracaoOp = tsOp && tsFim ? tsFim - tsOp : 0;
 
@@ -2737,7 +2737,7 @@ const NitCentral = {
         // ── Ativo: timers em tempo real ───────────────────────────────────
         if (elRes) elRes.style.display = 'none';
         const tsInicio = this._parseBR(sv(card.dataset.inicio));
-        const tsOp     = parseInt(sv(card.dataset.tsdespacho)) || 0;
+        const tsOp     = parseInt(sv(card.dataset.tsDespacho)) || 0;
 
         const tick = () => {
             const now = Date.now();
@@ -2799,7 +2799,7 @@ const NitCentral = {
                         const ev = {
                             tipo: 'despacho', sub, equipe: eq,
                             vt: sv(card.dataset.viatura),
-                            ts: parseInt(sv(card.dataset.tsdespacho)) || 0,
+                            ts: parseInt(sv(card.dataset.tsDespacho)) || 0,
                             operador: '', _legado: true
                         };
                         lista.innerHTML = this._renderEventoHTML(ev);
