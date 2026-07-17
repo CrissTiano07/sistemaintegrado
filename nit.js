@@ -647,7 +647,7 @@ const NitData = {
                     // Firebase child_changed entrega o estado COMPLETO do nó.
                     // Campos ausentes em dados foram deletados do Firebase → limpar dataset.
                     const campos = ['equipe','viatura','pl','sub','status','observacoes',
-                                    'inicio','endereco','tsDespacho','tsFirstDispatch',
+                                    'inicio','endereco','tsDespacho','tsFirstDispatch','tsChegada',
                                     'equipeApoio','viaturaApoio',
                                     'data_fim','hora_fim','fim','coluna'];
                     campos.forEach(k => {
@@ -2725,8 +2725,8 @@ const NitCentral = {
                 };
                 document.getElementById('central-resultado-periodo').textContent =
                     `${fmt(tsInicio)} → ${fmt(tsFim)}`;
-                document.getElementById('central-resultado-total').textContent =
-                    this._formatDelta(duracao) + ' total';
+                const elTotal = document.getElementById('central-resultado-total');
+                if (elTotal) elTotal.style.display = 'none'; // duração já está no timer REGISTRO
                 elRes.style.display = '';
             } else if (elRes) {
                 elRes.style.display = 'none';
@@ -2736,8 +2736,11 @@ const NitCentral = {
 
         // ── Ativo: timers em tempo real ───────────────────────────────────
         if (elRes) elRes.style.display = 'none';
-        const tsInicio = this._parseBR(sv(card.dataset.inicio));
-        const tsOp     = parseInt(sv(card.dataset.tsDespacho)) || 0;
+        const tsInicio   = this._parseBR(sv(card.dataset.inicio));
+        const tsChegada  = parseInt(sv(card.dataset.tsChegada))  || 0;
+        const tsDespacho = parseInt(sv(card.dataset.tsDespacho)) || 0;
+        // OPERAÇÃO conta desde a chegada ao local; fallback para despacho se ainda não chegou
+        const tsOp = tsChegada || tsDespacho;
 
         const tick = () => {
             const now = Date.now();
@@ -2858,12 +2861,40 @@ const NitCentral = {
 
     // ── Aba inicial ───────────────────────────────────────────────────
     _determinarAbaInicial(card) {
-        const sv  = this._sv;
-        const sub = sv(card.dataset.sub);
+        const sv         = this._sv;
+        const sub        = sv(card.dataset.sub);
+        const tsChegada  = parseInt(sv(card.dataset.tsChegada)) || 0;
+        const coluna     = sv(card.dataset.coluna);
+        const isNorm     = coluna === 'coluna-normalizados' || sv(card.dataset.status) === 'NORMALIZADO';
         this._abrirAba(sub ? 'apoio' : 'despacho');
 
-        const btnEncerrar = document.getElementById('btn-central-encerrar');
+        const btnEncerrar    = document.getElementById('btn-central-encerrar');
+        const chegadaBloco   = document.getElementById('central-chegada-bloco');
+        const chegadaHora    = document.getElementById('central-chegada-hora');
+        const btnChegada     = document.getElementById('btn-central-chegada');
+
         if (btnEncerrar) btnEncerrar.style.display = sub ? 'flex' : 'none';
+
+        // Bloco chegada: visível se despachado e não normalizado
+        if (chegadaBloco) {
+            const mostrar = !!sub && !isNorm;
+            chegadaBloco.style.display = mostrar ? '' : 'none';
+
+            if (mostrar) {
+                if (tsChegada && chegadaHora) {
+                    // Chegada já registrada — mostrar hora e ocultar botão
+                    const d = new Date(tsChegada);
+                    chegadaHora.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                    chegadaBloco.classList.add('chegada-registrada');
+                    if (btnChegada) btnChegada.style.display = 'none';
+                } else {
+                    // Aguardando chegada
+                    if (chegadaHora) chegadaHora.textContent = '—';
+                    chegadaBloco.classList.remove('chegada-registrada');
+                    if (btnChegada) btnChegada.style.display = '';
+                }
+            }
+        }
     },
 
     // ── Tabs ──────────────────────────────────────────────────────────
@@ -3214,6 +3245,37 @@ const NitCentral = {
         });
     },
 
+    // ── Registrar chegada ao local ────────────────────────────────────
+    confirmarChegada() {
+        const card = this._card; if (!card) return;
+        const sv   = this._sv;
+        if (parseInt(sv(card.dataset.tsChegada)) > 0) {
+            showToast('Chegada já registrada.', 'info'); return;
+        }
+        const eventoId  = sv(card.dataset.eventoid) || card.id;
+        const tsAgora   = Date.now();
+
+        NitFirebase.exec((db, ref, update) =>
+            update(ref(db, `kanban/${eventoId}`), {
+                tsChegada: tsAgora,
+                operador:  NitLogin.operador || 'anon',
+            })
+        );
+        // Atualiza dataset e UI imediatamente (otimista)
+        card.dataset.tsChegada = String(tsAgora);
+        const d = new Date(tsAgora);
+        const horaStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const horaEl  = document.getElementById('central-chegada-hora');
+        const btnEl   = document.getElementById('btn-central-chegada');
+        const bloco   = document.getElementById('central-chegada-bloco');
+        if (horaEl) horaEl.textContent = horaStr;
+        if (btnEl)  btnEl.style.display = 'none';
+        if (bloco)  bloco.classList.add('chegada-registrada');
+        // Reinicia timer para usar tsChegada no OPERAÇÃO
+        this._iniciarTimers(card);
+        showToast(`Chegada registrada às ${horaStr}.`, 'success');
+    },
+
     confirmarEncerrar() {
         const card = this._card; if (!card) return;
         nitConfirm('⏹️ Encerrar Operação',
@@ -3307,6 +3369,7 @@ const NitCentral = {
         const bind = (id, fn) => document.getElementById(id)?.addEventListener('click', () => fn.call(this));
         bind('btn-central-despachar',         this.confirmarDespacho);
         bind('btn-central-encerrar',          this.confirmarEncerrar);
+        bind('btn-central-chegada',           this.confirmarChegada);
         bind('btn-central-apoio',             this.confirmarApoio);
         bind('btn-central-rendicao',          this.confirmarRendicao);
         bind('btn-central-executar-rendicao', this.confirmarExecutarRendicao);
