@@ -1320,7 +1320,55 @@
     font-weight: 500;
 }
 
-/* Resultado final — normalizado */
+/* ── Registrar Chegada ───────────────────────────────────────────── */
+.nit-central-chegada {
+    margin: 10px 0 6px;
+    padding: 10px 12px;
+    background: rgba(251,191,36,0.07);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    transition: background .3s, border-color .3s;
+}
+.nit-central-chegada.chegada-registrada {
+    background: rgba(56,189,107,0.07);
+    border-color: rgba(56,189,107,0.2);
+}
+.nit-central-chegada-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+.nit-chegada-label { color: #94a3b8; }
+.nit-chegada-hora  {
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: #fbbf24;
+    font-size: 13px;
+}
+.chegada-registrada .nit-chegada-hora { color: #38bd6b; }
+
+.nit-central-btn-chegada {
+    background: rgba(251,191,36,0.15);
+    border: 1px solid rgba(251,191,36,0.3);
+    color: #fbbf24;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+}
+.nit-central-btn-chegada:hover {
+    background: rgba(251,191,36,0.25);
+}
+
+
 .nit-central-resultado {
     display: flex;
     align-items: center;
