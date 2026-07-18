@@ -318,15 +318,19 @@ const NitReboques = (() => {
     }
 
 
-    // Monta linha de mensagem por reboquista: *NOME* VT078 🚨 PLACA \n*Smart:* número
-    // Convenção de indentação: 2 espaços + · para o nome, 4 espaços para sub-item Smart
+    // Monta bloco de mensagem por reboquista — formato exato confirmado pelo operador:
+    //   · *NOME*
+    //     *VT 080 🚨  ORS8A02*
+    //     *Smart:* (85) ...
     function _linhaReb(nome, rebData) {
         const r = rebData || {};
-        let linha = `  · *${nome}*`;
-        if (r.vt   && r.vt   !== 'N/I') linha += ` VT ${r.vt}`;
-        if (r.placa && r.placa !== 'N/I') linha += ` 🚨 ${r.placa}`;
-        if (r.smart && r.smart !== 'N/I') linha += `\n    *Smart:* ${r.smart}`;
-        return linha;
+        let bloco = `  · *${nome}*`;
+        if (r.vt && r.vt !== 'N/I') {
+            const pl = r.placa && r.placa !== 'N/I' ? ` 🚨  ${r.placa}` : '';
+            bloco += `\n    *VT ${r.vt}${pl}*`;
+        }
+        if (r.smart && r.smart !== 'N/I') bloco += `\n    *Smart:* ${r.smart}`;
+        return bloco;
     }
 
     // ── CRUD Reboquista ──────────────────────────────────────────────────────
@@ -433,12 +437,12 @@ const NitReboques = (() => {
         if (S.multi.ids.length === 0) {
             msg = `*Tem preferência de reboquista para este evento?*\n*Evento:* ${tipo}\n*Endereço:* ${end}`;
             if (hor) msg += `\n*Horário:* ${hor}`;
-            if (obs) msg += `\n*Obs:* ${obs}`;
+            if (obs) msg += `\n*Obs:*\n${obs}`;
         } else {
-            const linhasRebs = S.multi.ids.map(id=>_linhaReb(snapRebs[id]||'?',S.reboquistas[id])).join('\n');
-            msg = `*${tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${end}`;
+            const linhasRebs = S.multi.ids.map(id=>_linhaReb(snapRebs[id]||'?',S.reboquistas[id])).join('\n\n');
+            msg = `*${tipo}* enviado para:\n\n${linhasRebs}\n\n*Endereço:* ${end}`;
             if (hor) msg += `\n*Horário:* ${hor}`;
-            if (obs) msg += `\n*Obs:* ${obs}`;
+            if (obs) msg += `\n*Obs:*\n${obs}`;
         }
 
         S.db.ref().update(updates)
@@ -533,12 +537,12 @@ const NitReboques = (() => {
             // Evento sem reboquista — agendamento aguardando designação
             msg = `*Tem preferência de reboquista para este evento?*\n*Evento:* ${ev.tipo}\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
-            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+            if (ev.obs)     msg += `\n*Obs:*\n${ev.obs}`;
         } else {
-            const linhasRebs = rebs.map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n');
-            msg = `*${ev.tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${ev.endereco}`;
+            const linhasRebs = rebs.map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n\n');
+            msg = `*${ev.tipo}* enviado para:\n\n${linhasRebs}\n\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
-            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+            if (ev.obs)     msg += `\n*Obs:*\n${ev.obs}`;
         }
         copiarTexto(msg).then(ok=>toast(ok?'Mensagem copiada! Cole no WhatsApp.':'Falha ao copiar.',ok?'success':'error'));
     }
@@ -603,10 +607,10 @@ const NitReboques = (() => {
         S.db.ref().update(updates).then(()=>{
             // Monta nomes completos do evento após a atribuição
             const todosRebs = { ...(ev.reboquistas||{}), [id]: r.nome };
-            const linhasRebs = Object.entries(todosRebs).map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n');
-            let msg = `*${ev.tipo}* enviado para: \n${linhasRebs}\n*Endereço:* ${ev.endereco}`;
+            const linhasRebs = Object.entries(todosRebs).map(([rid,n])=>_linhaReb(n,S.reboquistas[rid])).join('\n\n');
+            let msg = `*${ev.tipo}* enviado para:\n\n${linhasRebs}\n\n*Endereço:* ${ev.endereco}`;
             if (ev.horario) msg += `\n*Horário:* ${ev.horario}`;
-            if (ev.obs)     msg += `\n*Obs:* ${ev.obs}`;
+            if (ev.obs)     msg += `\n*Obs:*\n${ev.obs}`;
             copiarTexto(msg).then(ok=>toast(ok?`${r.nome} alocado — mensagem copiada!`:`${r.nome} alocado.`,ok?'success':'success'));
         }).catch(()=>{});
     }
