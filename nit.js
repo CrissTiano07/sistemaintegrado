@@ -537,10 +537,10 @@ const NitData = {
                    'IMPROCEDENTE','FURTO','ENEL','VANDALISMO','AGENTE DA NATUREZA'];
     const tipoFromPrefixo = TIPOS.find(t => prefixo.includes(t));
 
-    const re = /🚦[\s*]*([A-Z0-9]{2,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
+    const re = /🚦[\s*]*([A-Z0-9]{1,8})[\s*]*🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
     // Fallback: formato onde o código precede um único 🚦 (ex: planilha CEMOB copiada)
     // "ENEL \t\t 1183 \t 🚦 \t AV. BERNARDO ● TRAVADO ●"
-    const re2 = /\b([A-Z0-9]{2,8})\t🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
+    const re2 = /\b([A-Z0-9]{1,8})\t🚦[\t ]*\*?(.*?)\*?[\t ]*●[\t ]*\*?([A-ZÀ-Ú][A-ZÀ-Ú\s/]+?)\*?[\t ]*●(.*)/isu;
     const m = linha.match(re) || linha.match(re2);
     if (!m) return null;
 
