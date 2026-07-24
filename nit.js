@@ -355,14 +355,16 @@ const NitData = {
 
     // ── CONFIRM MODAL ─────────────────────────────────────────────────────────
     let _confirmCb = null;
-    function nitConfirm(titulo, mensagem, onConfirm) {
+    let _cancelCb  = null;
+    function nitConfirm(titulo, mensagem, onConfirm, onCancel) {
         const modal = document.getElementById('modal-confirmar-generico');
         const titEl = document.getElementById('modal-confirmar-titulo');
         const msgEl = document.getElementById('modal-confirmar-msg');
-        if (!modal) { if (confirm(mensagem)) onConfirm(); return; }
+        if (!modal) { if (confirm(mensagem)) onConfirm(); else if (onCancel) onCancel(); return; }
         titEl.textContent = titulo;
-        msgEl.innerHTML   = mensagem;
+        msgEl.innerHTML   = mensagem.replace(/\n/g, '<br>').replace(/\*(.*?)\*/g, '<strong>$1</strong>');
         _confirmCb = onConfirm;
+        _cancelCb  = onCancel || null;
         abrirModal(modal);
     }
 
@@ -688,6 +690,37 @@ const NitData = {
             if (!texto.trim()) { showToast('Insira o relatório bruto para processar.', 'warning'); return; }
             const eventos = this._parsearRelatorio(texto);
             if (!eventos.length) { showToast('Nenhuma ocorrência encontrada.', 'warning'); return; }
+
+            // ── Validação: códigos de 1 dígito são incomuns e podem ser erro de formatação ──
+            const suspeitos = eventos.filter(ev => /^[A-Z0-9]$/.test(ev.codigo));
+            if (suspeitos.length) {
+                const codigos = suspeitos.map(ev => ev.codigo).join(', ');
+                const plural  = suspeitos.length > 1 ? 'códigos suspeitos' : 'código suspeito';
+                nitConfirm(
+                    `⚠️ ${plural.charAt(0).toUpperCase() + plural.slice(1)} detectado${suspeitos.length > 1 ? 's' : ''}`,
+                    `Os seguintes códigos têm apenas 1 dígito:\n\n*${codigos}*\n\nIsso pode ser um semáforo real (ex: SCN 4) ou erro de formatação no relatório.\n\nDeseja processar mesmo assim?`,
+                    () => {
+                        // Confirmado → processa normalmente incluindo suspeitos
+                        const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
+                        temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
+                        this.atualizarPainel();
+                        NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
+                    },
+                    () => {
+                        // Cancelado → processa sem os suspeitos
+                        const eventosFiltrados = eventos.filter(ev => !/^[A-Z0-9]$/.test(ev.codigo));
+                        if (!eventosFiltrados.length) { showToast('Nenhuma ocorrência restante após filtro.', 'warning'); return; }
+                        const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
+                        temCards ? this._reprocessar(eventosFiltrados) : this._cargaInicial(eventosFiltrados);
+                        this.atualizarPainel();
+                        NitProcessamento.registrar(texto, eventosFiltrados, eventosFiltrados[0]?.dataReferencia || '');
+                        showToast(`${suspeitos.length} código(s) suspeito(s) ignorado(s).`, 'info');
+                    }
+                );
+                return; // aguarda resposta do confirm
+            }
+
+            // ── Processamento normal (sem suspeitos) ──
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
             this.atualizarPainel();
@@ -1875,11 +1908,13 @@ const NitData = {
         ok.addEventListener('click', function() {
             fecharModal(mc);
             if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+            _cancelCb = null;
         });
     }
     if (can) {
         can.addEventListener('click', function() {
             fecharModal(mc);
+            if (_cancelCb) { _cancelCb(); _cancelCb = null; }
             _confirmCb = null;
         });
     }
@@ -1887,6 +1922,7 @@ const NitData = {
         mc.addEventListener('click', function(e) {
             if (e.target === mc) {
                 fecharModal(mc);
+                if (_cancelCb) { _cancelCb(); _cancelCb = null; }
                 _confirmCb = null;
             }
         });
