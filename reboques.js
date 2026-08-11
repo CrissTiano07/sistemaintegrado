@@ -115,17 +115,26 @@ const NitReboques = (() => {
             .split(/\n\s*\n/)
             .map(b => b.trim())
             .filter(b => b.length > 0);
-        // Re-merge: fragmento sem cabeçalho de recurso → continuação do anterior
         const merged = [];
         for (const bloco of raw) {
             const prim = bloco.split('\n')[0].trim();
             if (merged.length > 0 && !_ehCabecalhoReboquista(prim)) {
                 merged[merged.length - 1] += '\n' + bloco;
-            } else {
-                merged.push(bloco);
-            }
+            } else { merged.push(bloco); }
         }
-        return merged;
+        // Split secundário por nomes ALL-CAPS — resolve relatórios sem linha em branco
+        const final = [];
+        for (const bloco of merged) {
+            const linhas = bloco.split('\n').map(l => l.trim()).filter(l => l);
+            let sub = [];
+            for (const linha of linhas) {
+                if (sub.length > 0 && _ehCabecalhoReboquista(linha)) {
+                    final.push(sub.join('\n')); sub = [linha];
+                } else { sub.push(linha); }
+            }
+            if (sub.length > 0) final.push(sub.join('\n'));
+        }
+        return final;
     }
     function _ehCabecalhoReboquista(linha) {
         if (linha.includes('🚨')) return false; // linha VT de reboquista = continuação
@@ -135,13 +144,15 @@ const NitReboques = (() => {
     }
     function _isRuido(l) {
         if (!l || l.length < 2) return true;
-        if (/^(boa\s+(?:tarde|noite|manh[ãa])|bom\s+dia|ol[aá]\b|oi\b|ok\b)/i.test(l)) return true;
+        if (/boa\s+(?:tarde|noite|manh[ãa])|bom\s+dia/i.test(l)) return true;
+        if (/\bQRV\b/i.test(l)) return true;
         if ((l.match(/[a-zA-ZÀ-ÿ]/g)||[]).length < 3) return true;
         if (/^\d{1,2}[\/\-]\d{1,2}([\/\-]\d{2,4})?$/.test(l)) return true;
         return false;
     }
     function _normHorario(raw) {
-        const s = raw.trim().replace(/\s+/g,'').replace(/;/g,':');
+        let s = raw.trim().replace(/\s+/g,'').replace(/;/g,':');
+        s = s.replace(/^(\d{1,2})h(\d{2})$/i, '$1:$2');
         if (/^\d{1,2}:\d{2}/.test(s)) return s.replace(/h.*$/i,'').trim()+'hs';
         return s.replace(/h.*$/i,'').trim()+'hs';
     }
@@ -172,15 +183,19 @@ const NitReboques = (() => {
         if (!linhaNome) return null;
         const d = { tipoRecurso:'reboquista', nome:linhaNome.trim().toUpperCase().replace(/\s+/g,' '), vt:'N/I', placa:'N/I', plantao:'N/I', smart:'N/I' };
         linhas.forEach(l => {
-            const pm = l.match(/plant[aã]o\s*[:\-]?\s*(?:at[eé]?\s+)?(?:[àas]+\s*)?([\d:;]+\s*h[ro]?[sa]?)/i)
-                    || l.match(/at[eé]?\s+[àas]?\s*([\d:;]+\s*h[ro]?[sa]?)/i);
+            // Plantão: aceita "18h00" (NNhNN) além dos formatos anteriores
+            const pm = l.match(/plant[aã]o\s*[:\-]?\s*(?:at[eé]?\s+)?(?:[àas]+\s*)?([\d:;]+\s*h\d*[ro]?[sa]?)/i)
+                    || l.match(/at[eé]?\s+[àas]?\s*([\d:;]+\s*h\d*[ro]?[sa]?)/i);
             if (pm) d.plantao = _normHorario(pm[1]);
             const sm = l.match(/(?:smart|celular|tel[ef]\.?|fone|whats(?:app)?|zap|contato)\s*[:\-]?\s*\(?\s*(\d{2})\s*\)?\s*[\s.\-]?([\d\s.\-]{8,})/i);
             if (sm) d.smart = _normTelefone(sm[1],sm[2]);
             if (!sm) { const tel=l.match(/^\(?\s*(\d{2})\s*\)?\s*[\s.\-]?(9?\d{4}[\s.\-]?\d{4})\s*$/); if(tel) d.smart=_normTelefone(tel[1],tel[2]); }
-            const lSem = l.replace(/[\u{1F000}-\u{1FFFF}]/gu,' ');
-            const vm = lSem.match(/VT[\s\-:\.]*(\d+)\s*[\s\/\-]*([A-Z]{2,3}\s*[\dA-Z]{3,7})?/i);
-            if (vm) { d.vt=vm[1].trim(); d.placa=vm[2]?.replace(/\s/g,'').toUpperCase()||'N/I'; }
+            // VT: usa apenas a PRIMEIRA ocorrência — evita sobrescrever com VT de bloco de manutenção adjacente
+            if (d.vt === 'N/I') {
+                const lSem = l.replace(/[\u{1F000}-\u{1FFFF}]/gu,' ');
+                const vm = lSem.match(/VT[\s\-:\.]*(\d+)\s*[\s\/\-]*([A-Z]{2,3}\s*[\dA-Z]{3,7})?/i);
+                if (vm) { d.vt=vm[1].trim(); d.placa=vm[2]?.replace(/\s/g,'').toUpperCase()||'N/I'; }
+            }
         });
         return d;
     }
