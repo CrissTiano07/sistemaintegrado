@@ -1460,6 +1460,7 @@ const NitData = {
 
             if (incluirNorm && norm.length) {
                 linhas.push('');
+                linhas.push('');
                 linhas.push(`✅ *NORMALIZADOS (${norm.length}):*`);
                 norm.forEach(c => linhas.push(fmt(c)));
             }
