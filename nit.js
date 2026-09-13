@@ -585,13 +585,32 @@ const NitData = {
 
         // ── Firebase listener ─────────────────────────────────────────────
         _kanbanListenerAtivo: false,
+
+        // Janela de sincronização ao vivo — dias cobertos pelo listener principal.
+        // 2 = hoje + ontem, suficiente para a herança cross-day em _reprocessar().
+        // Histórico mais antigo continua no RTDB, só não trafega no listener.
+        _JANELA_DIAS_SYNC: 2,
+
+        _datasJanela(dias) {
+            const arr = [];
+            for (let i = 0; i < dias; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                arr.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
+            }
+            return arr;
+        },
+
         inicializarListenerFirebase() {
             if (this._kanbanListenerAtivo) return;
             this._kanbanListenerAtivo = true;
             NitFirebase.exec((db, ref) => {
-                const kanbanRef = ref(db, 'kanban');
+                const datas = this._datasJanela(this._JANELA_DIAS_SYNC);
 
-                kanbanRef.on('child_added', snap => {
+                datas.forEach(data => {
+                    const kanbanRef = ref(db, 'kanban').orderByChild('dataReferencia').equalTo(data);
+
+                    kanbanRef.on('child_added', snap => {
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
