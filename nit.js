@@ -698,9 +698,11 @@ const NitData = {
                 kanbanRef.on('child_removed', snap => {
                     const el = document.querySelector(`[data-eventoid="${snap.key}"]`);
                     if (el) { NitLazy.liberar(el); el.remove(); Semaforo.atualizarPainel(); }
-                });
-            });
-        },
+                }); // fecha kanbanRef.on('child_removed')
+
+            });     // fecha datas.forEach(...)
+        });         // fecha NitFirebase.exec(...)
+    },              // fecha inicializarListenerFirebase()
 
         // ── Processar relatório ───────────────────────────────────────────
         handleProcessarClick() {
