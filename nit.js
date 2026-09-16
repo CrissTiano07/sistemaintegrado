@@ -476,104 +476,6 @@ const NitData = {
     window.NitLogger = NitLogger;
 
     // ═════════════════════════════════════════════════════════════════════════
-    // NIT DESFAZER — reverte o último "Processar Relatório"
-    // Captura o estado anterior (por eventoId) antes de cada processamento;
-    // "Desfazer" restaura exatamente esse estado (remove o que era novo,
-    // restaura o que foi alterado). Nível único — sempre o processamento
-    // mais recente, não uma pilha. Persiste em localStorage para sobreviver
-    // a um F5 acidental; expira em 30min para não reverter algo já
-    // sobreposto por ações legítimas de outros operadores.
-    // ═════════════════════════════════════════════════════════════════════════
-    const NitDesfazer = {
-        _KEY: 'nit-desfazer-snapshot-v1',
-        _MAX_IDADE_MS: 30 * 60 * 1000,
-        _snapshot: null,
-
-        // ── Captura estado atual (Firebase) de cada chave candidata ───────
-        // "chaves" já inclui tanto os eventoId novos quanto quaisquer
-        // eventoId existentes no DOM com o mesmo código (possíveis alvos
-        // de herança cross-day em _reprocessar).
-        async capturarAntes(chaves) {
-            const antes = [];
-            for (const eventoId of chaves) {
-                try {
-                    const snap = await firebase.database().ref(`kanban/${eventoId}`).get();
-                    antes.push({ eventoId, dados: snap.exists() ? snap.val() : null });
-                } catch (e) {
-                    console.warn('[NitDesfazer] Falha ao capturar', eventoId, e.message);
-                }
-            }
-            return antes;
-        },
-
-        salvar(antes) {
-            this._snapshot = { antes, ts: Date.now(), totalEventos: antes.length };
-            try { localStorage.setItem(this._KEY, JSON.stringify(this._snapshot)); } catch (e) {}
-            this._atualizarBotao();
-        },
-
-        limpar() {
-            this._snapshot = null;
-            try { localStorage.removeItem(this._KEY); } catch (e) {}
-            this._atualizarBotao();
-        },
-
-        _carregarDoStorage() {
-            try {
-                const raw = localStorage.getItem(this._KEY);
-                if (!raw) return;
-                const snap = JSON.parse(raw);
-                if (Date.now() - (snap.ts || 0) > this._MAX_IDADE_MS) {
-                    localStorage.removeItem(this._KEY); // expirado — descarta silenciosamente
-                    return;
-                }
-                this._snapshot = snap;
-            } catch (e) {}
-        },
-
-        _atualizarBotao() {
-            const btn = document.getElementById('btn-desfazer-processamento');
-            if (!btn) return;
-            btn.style.display = this._snapshot ? 'flex' : 'none';
-        },
-
-        executar() {
-            if (!this._snapshot) { showToast('Nada para desfazer.', 'info'); return; }
-            const n = this._snapshot.totalEventos;
-            nitConfirm(
-                '↩️ Desfazer Último Processamento',
-                `Reverter <strong>${n} ocorrência(s)</strong> ao estado anterior ao último processamento?\n\n` +
-                `*Atenção:* se algum operador despachou ou alterou manualmente alguma dessas ocorrências depois do processamento, essa alteração também será desfeita.`,
-                () => this._aplicar()
-            );
-        },
-
-        _aplicar() {
-            const snap = this._snapshot;
-            if (!snap) return;
-            NitFirebase.exec((db, ref, update) => {
-                const updates = {};
-                snap.antes.forEach(({ eventoId, dados }) => {
-                    // dados === null → update com null remove o nó (mesmo efeito de .remove())
-                    updates[`kanban/${eventoId}`] = dados;
-                });
-                update(ref(db, '/'), updates);
-            });
-            registrarAcao(`Desfeito último processamento — ${snap.totalEventos} ocorrência(s) revertida(s).`);
-            showToast(`${snap.totalEventos} ocorrência(s) revertida(s).`, 'success');
-            this.limpar();
-        },
-
-        inicializar() {
-            this._carregarDoStorage();
-            document.getElementById('btn-desfazer-processamento')
-                ?.addEventListener('click', () => this.executar());
-            this._atualizarBotao();
-        },
-    };
-    window.NitDesfazer = NitDesfazer;
-
-    // ═════════════════════════════════════════════════════════════════════════
     // SEMAFORO
     // ═════════════════════════════════════════════════════════════════════════
     const Semaforo = {
@@ -683,33 +585,13 @@ const NitData = {
 
         // ── Firebase listener ─────────────────────────────────────────────
         _kanbanListenerAtivo: false,
-
-        // Janela de sincronização ao vivo — dias cobertos pelo listener principal.
-        // 2 = hoje + ontem, suficiente para a herança cross-day em _reprocessar().
-        // Histórico mais antigo continua no RTDB, só não trafega no listener,
-        // o que corta drasticamente o consumo de download por reconexão.
-        _JANELA_DIAS_SYNC: 2,
-
-        _datasJanela(dias) {
-            const arr = [];
-            for (let i = 0; i < dias; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                arr.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`);
-            }
-            return arr;
-        },
-
         inicializarListenerFirebase() {
             if (this._kanbanListenerAtivo) return;
             this._kanbanListenerAtivo = true;
             NitFirebase.exec((db, ref) => {
-                const datas = this._datasJanela(this._JANELA_DIAS_SYNC);
+                const kanbanRef = ref(db, 'kanban');
 
-                datas.forEach(data => {
-                    const kanbanRef = ref(db, 'kanban').orderByChild('dataReferencia').equalTo(data);
-
-                    kanbanRef.on('child_added', snap => {
+                kanbanRef.on('child_added', snap => {
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
@@ -749,9 +631,9 @@ const NitData = {
                         container.appendChild(el);
                     }
                     Semaforo.atualizarPainel();
-                    });
+                });
 
-                    kanbanRef.on('child_changed', snap => {
+                kanbanRef.on('child_changed', snap => {
                     const eventoId = snap.key;
                     const dados    = snap.val();
                     if (!dados) return;
@@ -792,41 +674,17 @@ const NitData = {
                         NitCentral._iniciarTimers(el);
                     }
                     Semaforo.atualizarPainel();
-                    });
+                });
 
-                    kanbanRef.on('child_removed', snap => {
+                kanbanRef.on('child_removed', snap => {
                     const el = document.querySelector(`[data-eventoid="${snap.key}"]`);
                     if (el) { NitLazy.liberar(el); el.remove(); Semaforo.atualizarPainel(); }
-                    });
                 });
             });
         },
 
-        // ── Desfazer: coleta as chaves que este lote pode tocar no Firebase ──
-        // Inclui o eventoId novo de cada evento parseado E qualquer eventoId
-        // já existente no DOM com o mesmo código — espelha exatamente os
-        // alvos de escrita que _reprocessar() pode resolver via codigosMap
-        // (inclusive herança cross-day, que grava em eventoIdAnterior, não em ev.eventoId).
-        _coletarChavesAlvo(eventos) {
-            const chaves    = new Set();
-            const porCodigo = new Map();
-            document.querySelectorAll('#tab-semaforo .kanban-card').forEach(el => {
-                const cod = el.dataset.codigo;
-                const eid = el.dataset.eventoid;
-                if (cod && eid) {
-                    if (!porCodigo.has(cod)) porCodigo.set(cod, []);
-                    porCodigo.get(cod).push(eid);
-                }
-            });
-            eventos.forEach(ev => {
-                chaves.add(ev.eventoId);
-                (porCodigo.get(ev.codigo) || []).forEach(eid => chaves.add(eid));
-            });
-            return [...chaves];
-        },
-
         // ── Processar relatório ───────────────────────────────────────────
-        async handleProcessarClick() {
+        handleProcessarClick() {
             this.ultimoLoteNormalizado = [];
             const texto = DOM.relatorioBrutoInput.value;
             if (!texto.trim()) { showToast('Insira o relatório bruto para processar.', 'warning'); return; }
@@ -841,21 +699,17 @@ const NitData = {
                 nitConfirm(
                     `⚠️ ${plural.charAt(0).toUpperCase() + plural.slice(1)} detectado${suspeitos.length > 1 ? 's' : ''}`,
                     `Os seguintes códigos têm apenas 1 dígito:\n\n*${codigos}*\n\nIsso pode ser um semáforo real (ex: SCN 4) ou erro de formatação no relatório.\n\nDeseja processar mesmo assim?`,
-                    async () => {
+                    () => {
                         // Confirmado → processa normalmente incluindo suspeitos
-                        const antes = await NitDesfazer.capturarAntes(this._coletarChavesAlvo(eventos));
-                        NitDesfazer.salvar(antes);
                         const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
                         temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
                         this.atualizarPainel();
                         NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
                     },
-                    async () => {
+                    () => {
                         // Cancelado → processa sem os suspeitos
                         const eventosFiltrados = eventos.filter(ev => !/^[A-Z0-9]$/.test(ev.codigo));
                         if (!eventosFiltrados.length) { showToast('Nenhuma ocorrência restante após filtro.', 'warning'); return; }
-                        const antes = await NitDesfazer.capturarAntes(this._coletarChavesAlvo(eventosFiltrados));
-                        NitDesfazer.salvar(antes);
                         const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
                         temCards ? this._reprocessar(eventosFiltrados) : this._cargaInicial(eventosFiltrados);
                         this.atualizarPainel();
@@ -867,8 +721,6 @@ const NitData = {
             }
 
             // ── Processamento normal (sem suspeitos) ──
-            const antes = await NitDesfazer.capturarAntes(this._coletarChavesAlvo(eventos));
-            NitDesfazer.salvar(antes);
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
             this.atualizarPainel();
@@ -1589,19 +1441,12 @@ const NitData = {
                 if (amc.length) { linhas.push(`🚔🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
                 linhas.push('---');
-                linhas.push('');
                 linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
-                linhas.push('');
-                linhas.push('');
                 linhas.push(`*- Aguardando atendimento:*`);
-                linhas.push('');
                 espera.forEach(c => linhas.push(fmt(c)));
 
                 if (sn.length) {
-                    linhas.push('');
-                    linhas.push('');
                     linhas.push(`*- Sem necessidade de operação:*`);
-                    linhas.push('');
                     sn.forEach(c => linhas.push(fmt(c)));
                 }
             }
@@ -2137,7 +1982,6 @@ const NitData = {
     NitSidebar.inicializar();
     NitNormalizar.inicializar();
     NitNormalizados.inicializar();
-    NitDesfazer.inicializar();
     inicializarBuscasPorColuna();
 
     // Toggle campos de apoio no modal de despacho
