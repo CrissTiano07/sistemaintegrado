@@ -655,6 +655,11 @@ const NitData = {
                     campos.forEach(k => {
                         el.dataset[k] = (dados[k] != null) ? dados[k] : '';
                     });
+                    // ✅ fix bug herança: dataReferencia não está na lista "campos" acima
+                    // (chave camelCase vs dataset.datareferencia minúsculo não combinam
+                    // automaticamente) — sem isso, outros operadores nunca recebem a
+                    // correção de data via sincronização em tempo real.
+                    el.dataset.datareferencia = (dados.dataReferencia != null) ? dados.dataReferencia : '';
                     // Agendamento de rendição (objeto aninhado)
                     el.dataset.agendamentohora   = dados.agendamento?.horaAgendada || '';
                     el.dataset.agendamentoequipe = dados.agendamento?.equipe        || '';
@@ -854,6 +859,12 @@ const NitData = {
                             setTimeout(() => cardEl.classList.remove('card-foi-normalizado'), 2000);
                             this.ultimoLoteNormalizado.push(cardEl.id);
 
+                            // ✅ fix bug herança: sem isso, o card fica com a
+                            // dataReferencia antiga e some do painel (some.style.display
+                            // filtra por data de hoje), mesmo aparecendo na busca global
+                            // e estando correto no Firebase/planilha.
+                            cardEl.dataset.datareferencia = ev.dataReferencia;
+
                             const fimPartes = (ev.fim || '').trim().split(' ');
                             const dataFim   = fimPartes[0] || '';
                             const horaFim   = fimPartes[1] || '';
@@ -867,6 +878,7 @@ const NitData = {
                                     data_fim: dataFim,
                                     hora_fim: horaFim,
                                     ts_norm:  Date.now(),
+                                    dataReferencia: ev.dataReferencia,
                                     // preserva observacoes do relatório mais recente
                                     ...(ev.observacoes && { observacoes: ev.observacoes }),
                                 })
