@@ -212,6 +212,12 @@ Não altere código com base apenas em nome de função, comentário antigo ou a
 
 Não invente dados operacionais ausentes. O sistema é assistido pelo operador.
 
+### Governança de alterações
+
+> Acesso técnico de escrita ao repositório não constitui autorização para modificá-lo.
+
+Qualquer agente de IA, independentemente da ferramenta utilizada, deve seguir o protocolo estabelecido em `AI-INSTRUCTIONS.md`: analisar, apresentar o plano, obter aprovação explícita para o escopo proposto, alterar, validar e documentar.
+
 ---
 
 ## 9. Mapa da documentação
