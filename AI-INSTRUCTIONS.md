@@ -56,6 +56,24 @@ questões abertas
 
 Não é necessário carregar todos os documentos em toda tarefa.
 
+## 2.1 Protocolo agnóstico de fornecedor
+
+Este protocolo é independente da IA, agente, IDE, integração ou fornecedor utilizado.
+
+ChatGPT, Claude, Gemini, Copilot, Cursor ou qualquer outro agente com acesso ao repositório deve adotar:
+
+```text
+CONTEXT.MD
+      ↓
+AI-INSTRUCTIONS.md
+      ↓
+documentação específica da tarefa
+      ↓
+código
+```
+
+Arquivos ou mecanismos específicos de uma ferramenta podem funcionar como porta de entrada, mas não devem duplicar nem substituir o protocolo canônico deste arquivo.
+
 ---
 
 # 3. Fonte de verdade
@@ -200,6 +218,43 @@ Google Sheets
 Antes de renomear, remover ou mudar semântica de campo/função/endpoint, pesquise todos os consumidores.
 
 Não conclua que algo é inútil porque não aparece no fluxo que você abriu primeiro.
+
+## 5.6 Governança de acesso e alterações no repositório
+
+A existência de acesso técnico de escrita ao GitHub, ao clone local ou a qualquer workspace **não constitui autorização para alterar o projeto**.
+
+A IA pode usar o acesso disponível para leitura, busca, auditoria e diagnóstico. Para escrever, deve respeitar o protocolo de aprovação.
+
+Antes de editar, apresente de forma objetiva:
+
+```text
+OBJETIVO
+ARQUIVOS AFETADOS
+ALTERAÇÕES PROPOSTAS
+IMPACTO E RISCOS
+VALIDAÇÃO PREVISTA
+```
+
+Regras obrigatórias:
+
+1. Alterações exigem aprovação explícita do usuário.
+2. A aprovação vale somente para o escopo apresentado e aprovado.
+3. Permissão técnica de escrita não amplia o escopo autorizado.
+4. Se durante a execução surgir necessidade de alteração fora do escopo aprovado, interrompa essa parte e solicite nova aprovação.
+5. Não faça refatorações, limpezas, renomeações ou correções paralelas apenas porque foram descobertas durante uma tarefa aprovada.
+6. Após a execução, informe quais arquivos foram modificados, o que mudou, quais validações foram executadas e quais documentos foram atualizados.
+7. `commit`, `push`, criação ou merge de Pull Request, exclusão de arquivos, alteração de branches e outras ações sobre o repositório exigem autorização explícita quando não estiverem claramente incluídas no escopo já aprovado.
+8. Ações destrutivas ou irreversíveis continuam sujeitas às regras adicionais de segurança deste documento, mesmo quando a escrita já tiver sido autorizada.
+
+Em resumo:
+
+```text
+capacidade técnica de escrever
+            ≠
+autorização para escrever
+            ≠
+autorização para qualquer alteração
+```
 
 ---
 
