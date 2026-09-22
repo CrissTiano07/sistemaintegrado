@@ -1454,7 +1454,9 @@ const NitData = {
 
                 linhas.push('---');
                 linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
+                linhas.push('---');
                 linhas.push(`*- Aguardando atendimento:*`);
+                linhas.push('---');
                 espera.forEach(c => linhas.push(fmt(c)));
 
                 if (sn.length) {
