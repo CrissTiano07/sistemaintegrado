@@ -1459,7 +1459,10 @@ const NitData = {
                 linhas.push(`*- Aguardando atendimento:*`);
                 linhas.push('')
                 espera.forEach(c => linhas.push(fmt(c)));
+                linhas.push('')
 
+                linhas.push('-----------------------------');
+                linhas.push('')
                 if (sn.length) {
                     linhas.push(`*- Sem necessidade de operação:*`);
                     linhas.push('')
@@ -1469,6 +1472,8 @@ const NitData = {
 
             if (incluirNorm && norm.length) {
                 linhas.push('');
+                linhas.push('-----------------------------');
+                linhas.push('')
                 linhas.push(`✅ *NORMALIZADOS (${norm.length}):*`);
                 norm.forEach(c => linhas.push(fmt(c)));
             }
