@@ -1452,15 +1452,17 @@ const NitData = {
                 if (vl.length)  { linhas.push(`🚔🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
                 if (amc.length) { linhas.push(`🚔🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
-                linhas.push('---');
+                linhas.push('-----------------------------');
+                linhas.push('')
                 linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
-                linhas.push('---');
+                linhas.push('')
                 linhas.push(`*- Aguardando atendimento:*`);
-                linhas.push('---');
+                linhas.push('')
                 espera.forEach(c => linhas.push(fmt(c)));
 
                 if (sn.length) {
                     linhas.push(`*- Sem necessidade de operação:*`);
+                    linhas.push('')
                     sn.forEach(c => linhas.push(fmt(c)));
                 }
             }
