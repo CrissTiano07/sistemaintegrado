@@ -1522,7 +1522,7 @@ const NitData = {
                 return t;
             };
 
-                        linhas.push('');
+                        
                         const linhas = [
                 `${emoji} *STATUS SEMAFÓRICO* ${emoji}`,
                 `---------- ${data} - ${hora} ----------`,
