@@ -1522,41 +1522,63 @@ const NitData = {
                 return t;
             };
 
-            const linhas = [
+                        linhas.push('');
+                        const linhas = [
                 `${emoji} *STATUS SEMAFÓRICO* ${emoji}`,
                 `---------- ${data} - ${hora} ----------`,
                 '',
                 `*Ocorrências (${totalOcorr})*`,
-                `*Pendentes (${totalPend})* ${emojiPendentes}`,  // ← USANDO emojiPendentes
+                `*Pendentes (${totalPend})* ${emojiPendentes}`,
                 `*Normalizados (${totalNorm})*`,
                 '',
             ];
+            
             if (totalAtivos > 0) {
-                if (vl.length)  { linhas.push(`🚔🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
-                if (amc.length) { linhas.push(`🚔🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
-
+                if (vl.length) {
+                    linhas.push(`🚔🟠 *VIA LIVRE (${vl.length}):*`);
+                    linhas.push('');
+                    vl.forEach(c => linhas.push(fmt(c)));
+                    linhas.push('');
+                }
+            
+                if (amc.length) {
+                    linhas.push(`🚔🔵 *AMC (${amc.length}):*`);
+                    linhas.push('');
+                    amc.forEach(c => linhas.push(fmt(c)));
+                    linhas.push('');
+                }
+            
                 linhas.push('---');
+                linhas.push('');
                 linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
+                linhas.push('');
                 linhas.push(`*- Aguardando atendimento:*`);
+                linhas.push('');
                 espera.forEach(c => linhas.push(fmt(c)));
-
+            
                 if (sn.length) {
+                    linhas.push('');
                     linhas.push(`*- Sem necessidade de operação:*`);
+                    linhas.push('');
                     sn.forEach(c => linhas.push(fmt(c)));
                 }
             }
-
+            
             if (incluirNorm && norm.length) {
                 linhas.push('');
                 linhas.push(`✅ *NORMALIZADOS (${norm.length}):*`);
+                linhas.push('');
                 norm.forEach(c => linhas.push(fmt(c)));
             }
-
+            
             const texto = linhas.join('\n');
-            if (DOM.relatorioFinalPreview) DOM.relatorioFinalPreview.value = texto;
+            
+            if (DOM.relatorioFinalPreview) {
+                DOM.relatorioFinalPreview.value = texto;
+            }
+            
             return texto;
-        },
-
+            
         // ── Ações de card ─────────────────────────────────────────────────
         handleKanbanBoardClick(e) {
             const card = e.target.closest('.kanban-card');
