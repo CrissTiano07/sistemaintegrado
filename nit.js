@@ -1893,26 +1893,120 @@ const NitData = {
             }, {}).element;
         },
 
-        handleDrop(e) {
+                handleDrop(e) {
             e.preventDefault();
+
             const container = e.target.closest('.kanban-cards-container');
             if (!container || !AppState.draggedCard) return;
+
             AppState.placeholder?.remove();
-            document.querySelectorAll('.kanban-cards-container.drag-over').forEach(c => c.classList.remove('drag-over'));
+            document.querySelectorAll('.kanban-cards-container.drag-over')
+                .forEach(c => c.classList.remove('drag-over'));
+
             const card     = AppState.draggedCard;
             const coluna   = container.closest('.kanban-column')?.id || 'desconhecido';
             const eventoId = card.dataset.eventoid || card.dataset.codigo;
-            const origem   = card.dataset.coluna   || 'desconhecido';
-            NitFirebase.exec((db, ref, update) =>
-                update(ref(db, `kanban/${eventoId}`), {
-                    coluna, operador: NitLogin.operador || 'anon', turno: NitLogin.turno || '',
-                    ts: firebase.database.ServerValue.TIMESTAMP,
-                })
-            );
-            gravarHistoricoFirebase(eventoId, origem, coluna, null, null, null, NitLogin.operador);
-            registrarAcao(`'${card.dataset.codigo}' movido: ${origem} → ${coluna}.`);
-        },
+            const origem   = card.dataset.coluna || 'desconhecido';
 
+            // VIA LIVRE / AMC:
+            // o arraste passa a registrar também a trajetória operacional (Coluna N).
+            const tipoDestino = {
+                'coluna-vl':  'vl',
+                'coluna-amc': 'amc',
+            }[coluna] || null;
+
+            if (tipoDestino) {
+                const tsNow = Date.now();
+
+                firebase.database()
+                    .ref(`kanban/${eventoId}/historico`)
+                    .get()
+                    .then(snap => {
+                        const hist = snap.exists() ? snap.val() : {};
+
+                        // Primeiro movimento operacional = despacho.
+                        // Mudança posterior entre VL/AMC = rendição.
+                        const temTrajetoria = Object.values(hist).some(ev =>
+                            ['despacho', 'apoio', 'rendição'].includes(ev?.tipo) &&
+                            ['vl', 'amc'].includes(ev?.sub)
+                        );
+
+                        const tipoEvento = temTrajetoria ? 'rendição' : 'despacho';
+
+                        const colunaN = NitCentral._derivarColunaN(hist, {
+                            tipo: tipoEvento,
+                            sub: tipoDestino,
+                            ts: tsNow + 1,
+                        });
+
+                        NitFirebase.exec((db, ref, update) => {
+                            const pushKey = ref(
+                                db,
+                                `kanban/${eventoId}/historico`
+                            ).push().key;
+
+                            const updates = {};
+
+                            updates[`kanban/${eventoId}/historico/${pushKey}`] = {
+                                tipo: tipoEvento,
+                                sub: tipoDestino,
+                                equipe: '',
+                                vt: '',
+                                ts: tsNow,
+                                operador: NitLogin.operador || 'anon',
+                            };
+
+                            updates[`kanban/${eventoId}/coluna`]   = coluna;
+                            updates[`kanban/${eventoId}/sub`]      = tipoDestino;
+                            updates[`kanban/${eventoId}/colunaN`]  = colunaN || '';
+                            updates[`kanban/${eventoId}/operador`] = NitLogin.operador || 'anon';
+                            updates[`kanban/${eventoId}/turno`]    = NitLogin.turno || '';
+                            updates[`kanban/${eventoId}/ts`]       =
+                                firebase.database.ServerValue.TIMESTAMP;
+
+                            update(ref(db, '/'), updates);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('[NIT] Falha ao registrar Coluna N pelo arraste:', err);
+
+                        // Mantém o comportamento antigo caso a leitura do histórico falhe.
+                        NitFirebase.exec((db, ref, update) =>
+                            update(ref(db, `kanban/${eventoId}`), {
+                                coluna,
+                                operador: NitLogin.operador || 'anon',
+                                turno: NitLogin.turno || '',
+                                ts: firebase.database.ServerValue.TIMESTAMP,
+                            })
+                        );
+                    });
+
+            } else {
+                // Demais colunas continuam com o comportamento original.
+                NitFirebase.exec((db, ref, update) =>
+                    update(ref(db, `kanban/${eventoId}`), {
+                        coluna,
+                        operador: NitLogin.operador || 'anon',
+                        turno: NitLogin.turno || '',
+                        ts: firebase.database.ServerValue.TIMESTAMP,
+                    })
+                );
+            }
+
+            gravarHistoricoFirebase(
+                eventoId,
+                origem,
+                coluna,
+                null,
+                null,
+                null,
+                NitLogin.operador
+            );
+
+            registrarAcao(
+                `'${card.dataset.codigo}' movido: ${origem} → ${coluna}.`
+            );
+        },
         // ── Limpar painel ─────────────────────────────────────────────────
         limparPainel() {
             nitConfirm('🗑️ Limpar Painel', '⚠️ Remove <strong>TODOS os dados</strong> para todos os operadores conectados.', () => {
