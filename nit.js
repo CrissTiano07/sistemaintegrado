@@ -708,6 +708,7 @@ const NitData = {
                         // Confirmado → processa normalmente incluindo suspeitos
                         const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
                         temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
+                        this._verificarIntegridadeProcessamento(eventos);
                         this.atualizarPainel();
                         NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
                     },
@@ -717,6 +718,7 @@ const NitData = {
                         if (!eventosFiltrados.length) { showToast('Nenhuma ocorrência restante após filtro.', 'warning'); return; }
                         const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
                         temCards ? this._reprocessar(eventosFiltrados) : this._cargaInicial(eventosFiltrados);
+                        this._verificarIntegridadeProcessamento(eventosFiltrados);
                         this.atualizarPainel();
                         NitProcessamento.registrar(texto, eventosFiltrados, eventosFiltrados[0]?.dataReferencia || '');
                         showToast(`${suspeitos.length} código(s) suspeito(s) ignorado(s).`, 'info');
@@ -728,10 +730,91 @@ const NitData = {
             // ── Processamento normal (sem suspeitos) ──
             const temCards = !!document.querySelector('#tab-semaforo .kanban-card');
             temCards ? this._reprocessar(eventos) : this._cargaInicial(eventos);
+            this._verificarIntegridadeProcessamento(eventos);
             this.atualizarPainel();
             // ✅ Registra metadados do processamento para rastreabilidade e verificação de turno
             NitProcessamento.registrar(texto, eventos, eventos[0]?.dataReferencia || '');
             DOM.relatorioBrutoInput.value = '';
+        },
+
+        // ── Plano A: conferência de integridade do processamento ──────────────
+        // Observa o resultado já materializado no DOM sem alterar o motor,
+        // Firebase, eventoId ou qualquer ocorrência.
+        _verificarIntegridadeProcessamento(eventos) {
+            const esperados = Array.isArray(eventos) ? eventos.filter(ev => ev?.eventoId) : [];
+            if (!esperados.length) return;
+
+            // As mutações de cards feitas por _cargaInicial/_reprocessar são síncronas no DOM.
+            // Portanto, esta conferência não depende do retorno assíncrono do Firebase.
+            const materializados = new Set(
+                Array.from(document.querySelectorAll('#tab-semaforo .kanban-card[data-eventoid]'))
+                    .map(el => el.dataset.eventoid)
+                    .filter(Boolean)
+            );
+
+            const ausentes = esperados.filter(ev => !materializados.has(ev.eventoId));
+            this._exibirIntegridadeProcessamento(esperados.length, ausentes);
+        },
+
+        _exibirIntegridadeProcessamento(total, ausentes) {
+            const tab = document.querySelector('#tab-semaforo');
+            if (!tab) return;
+
+            // Cada novo processamento substitui o resultado de integridade anterior.
+            document.getElementById('nit-integridade-processamento')?.remove();
+
+            if (!ausentes.length) {
+                showToast(`✓ Processamento conferido — ${total}/${total} ocorrências.`, 'success', 4000);
+                return;
+            }
+
+            const painel = document.createElement('div');
+            painel.id = 'nit-integridade-processamento';
+            painel.setAttribute('role', 'alert');
+            painel.style.cssText = [
+                'margin:10px 0',
+                'padding:12px 14px',
+                'border:1px solid #d97706',
+                'border-left:5px solid #d97706',
+                'border-radius:8px',
+                'background:#fff7ed',
+                'color:#7c2d12',
+                'font-size:14px',
+                'line-height:1.35'
+            ].join(';');
+
+            const detalhes = ausentes.map(ev => {
+                const codigo = String(ev.codigo || 'N/I').replace(/[<>&\"']/g, c => ({
+                    '<':'&lt;', '>':'&gt;', '&':'&amp;', '\"':'&quot;', "'":'&#39;'
+                })[c]);
+                return `
+                    <div style="margin-top:8px">
+                        <strong>⚠️ SCN ${codigo} não processado</strong>
+                        <div style="margin-top:5px"><strong>Verifique:</strong></div>
+                        <div>• <strong>Início/Fim:</strong> datas e horários</div>
+                        <div>• <strong>Texto:</strong> alteração ou formato fora do padrão</div>
+                    </div>`;
+            }).join('');
+
+            painel.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <strong>Processamento com divergência — ${total - ausentes.length}/${total}</strong>
+                    <button type="button" data-integridade-recolher
+                        style="border:0;background:transparent;cursor:pointer;font-weight:700;color:inherit;padding:3px 6px"
+                        aria-expanded="true">Recolher</button>
+                </div>
+                <div data-integridade-detalhes>${detalhes}</div>`;
+
+            const btn = painel.querySelector('[data-integridade-recolher]');
+            const corpo = painel.querySelector('[data-integridade-detalhes]');
+            btn?.addEventListener('click', () => {
+                const recolhido = corpo.style.display === 'none';
+                corpo.style.display = recolhido ? '' : 'none';
+                btn.textContent = recolhido ? 'Recolher' : `⚠ ${total - ausentes.length}/${total}`;
+                btn.setAttribute('aria-expanded', recolhido ? 'true' : 'false');
+            });
+
+            tab.prepend(painel);
         },
 
         _ehCabecalho(linha) {
@@ -1452,28 +1535,19 @@ const NitData = {
                 if (vl.length)  { linhas.push(`🚔🟠 *VIA LIVRE (${vl.length}):*`);  vl.forEach(c => linhas.push(fmt(c)));  linhas.push(''); }
                 if (amc.length) { linhas.push(`🚔🔵 *AMC (${amc.length}):*`); amc.forEach(c => linhas.push(fmt(c))); linhas.push(''); }
 
-                linhas.push('-----------------------------');
-                linhas.push('')
+                linhas.push('---');
                 linhas.push(`⏳ *PENDENTES / OUTROS MOTIVOS*`);
-                linhas.push('')
                 linhas.push(`*- Aguardando atendimento:*`);
-                linhas.push('')
                 espera.forEach(c => linhas.push(fmt(c)));
-                linhas.push('')
 
-                linhas.push('-----------------------------');
-                linhas.push('')
                 if (sn.length) {
                     linhas.push(`*- Sem necessidade de operação:*`);
-                    linhas.push('')
                     sn.forEach(c => linhas.push(fmt(c)));
                 }
             }
 
             if (incluirNorm && norm.length) {
                 linhas.push('');
-                linhas.push('-----------------------------');
-                linhas.push('')
                 linhas.push(`✅ *NORMALIZADOS (${norm.length}):*`);
                 norm.forEach(c => linhas.push(fmt(c)));
             }
