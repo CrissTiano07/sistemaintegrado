@@ -75,31 +75,74 @@
 
         // ── Converte email para chave Firebase (. e @ → |) ──────────────
         _emailParaChave(email) {
-            return email.replace(/\./g, '|').replace(/@/g, '|');
-        },
+    if (typeof email !== 'string' || !email.trim()) {
+        return null;
+    }
 
+    return email.trim().toLowerCase()
+        .replace(/\./g, '|')
+        .replace(/@/g, '|');
+},
         // ── Verifica se email está na whitelist /usuarios_autorizados ────
         async _verificarAutorizacao(user) {
-            const chave = this._emailParaChave(user.email);
-            const snap  = await firebase.database()
-                .ref(`usuarios_autorizados/${chave}`)
-                .get();
+    try {
+        // Estado de autenticação incompleto ou inválido:
+        // nunca deixa uma exceção derrubar o fluxo de login.
+        if (!user) {
+            console.warn('[NitLogin] Usuário ausente na verificação de autorização.');
+            this._setStatus('Sessão inválida. Entre novamente.');
+            document.getElementById('btn-login-google')?.removeAttribute('disabled');
+            return false;
+        }
 
-            if (!snap.exists() || snap.val().ativo === false) {
+        const chave = this._emailParaChave(user.email);
+
+        if (!chave) {
+            console.warn('[NitLogin] Usuário autenticado sem e-mail válido.', {
+                uid: user.uid || null,
+                providerId: user.providerData?.[0]?.providerId || null
+            });
+
+            try {
                 await firebase.auth().signOut();
-                this._setStatus('Acesso não autorizado. Procure o administrador.');
-                document.getElementById('btn-login-google').disabled = false;
-                return false;
+            } catch (e) {
+                console.warn('[NitLogin] Falha ao encerrar sessão inválida:', e);
             }
 
-            const dados = snap.val();
-            this.operador = dados.nome || user.displayName || user.email;
-            this.turno    = dados.turno || '';
-            this.uid      = user.uid;
-            this.email    = user.email;
-            return true;
-        },
+            this._setStatus('Não foi possível validar sua conta. Entre novamente.');
+            document.getElementById('btn-login-google')?.removeAttribute('disabled');
+            return false;
+        }
 
+        const snap = await firebase.database()
+            .ref(`usuarios_autorizados/${chave}`)
+            .get();
+
+        if (!snap.exists() || snap.val().ativo === false) {
+            await firebase.auth().signOut();
+            this._setStatus('Acesso não autorizado. Procure o administrador.');
+            document.getElementById('btn-login-google')?.removeAttribute('disabled');
+            return false;
+        }
+
+        const dados = snap.val();
+
+        this.operador = dados.nome || user.displayName || user.email;
+        this.turno    = dados.turno || '';
+        this.uid      = user.uid;
+        this.email    = user.email;
+
+        return true;
+
+    } catch (err) {
+        console.error('[NitLogin] Falha ao verificar autorização:', err);
+
+        this._setStatus('Falha ao verificar acesso. Tente novamente.');
+        document.getElementById('btn-login-google')?.removeAttribute('disabled');
+
+        return false;
+    }
+},
         // ── Exibe mensagem de status na tela de login ────────────────────
         _setStatus(msg) {
             const el = document.getElementById('nit-login-status');
