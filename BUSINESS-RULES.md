@@ -1,6 +1,6 @@
 # BUSINESS-RULES.md — NIT
 
-> Regras de negócio e contratos consolidados a partir da auditoria dos ciclos 1–8.
+> Regras de negócio e contratos consolidados a partir da auditoria dos ciclos 1–8 e das decisões posteriormente validadas durante a investigação de integridade do processamento CEMOB.
 >
 > Este documento separa explicitamente **contratos que devem ser preservados**, **comportamentos confirmados pelo código** e **pontos ainda sujeitos a validação**. Encontrar um comportamento no código não basta, por si só, para transformá-lo em regra normativa.
 
@@ -48,6 +48,8 @@ eventoId = identidade forte
 
 O fluxo de reprocessamento/reincidência permite que o mesmo `codigo` produza outro `eventoId` quando o início é diferente.
 
+Isso não autoriza tratar automaticamente toda alteração de `inicio` como nova ocorrência quando já existe uma ocorrência conhecida e a nova entrada contradiz dados anteriormente recebidos. Nesses casos, a situação pode exigir reconciliação antes da criação de nova identidade.
+
 ## BR-ID-004 — Herança preserva identidade
 **Estado:** 🔵 CONTRATO
 
@@ -57,6 +59,15 @@ Quando uma ocorrência é reconhecida como continuidade/herança, seu `eventoId`
 **Estado:** 🟢 CONFIRMADO
 
 A exportação não deve substituir `eventoId` por `codigo`.
+
+## BR-ID-006 — Contradição da fonte não autoriza troca silenciosa de identidade
+**Estado:** 🔵 CONTRATO
+
+Quando uma ocorrência conhecida recebe posteriormente informação incompatível capaz de alterar sua identidade, o NIT não deve concluir silenciosamente que se trata de nova ocorrência, retificação ou continuidade.
+
+Enquanto a contradição não estiver reconciliada, a identidade operacional conhecida deve ser protegida.
+
+Uma reconciliação confirmada deve privilegiar a preservação da ocorrência e de seu histórico quando ficar estabelecido que a nova informação representa retificação da mesma ocorrência.
 
 ---
 
@@ -108,6 +119,30 @@ pl  = condição simplificada usada pelo estado
 ```
 
 Alterações devem preservar a diferença semântica entre os campos.
+
+## BR-OP-005 — Retificação do estado da ocorrência não reescreve automaticamente o estado operacional
+**Estado:** 🔵 CONTRATO
+
+Uma reconciliação CEMOB pode alterar o estado atual da ocorrência sem tornar falsos os fatos operacionais anteriormente registrados.
+
+Portanto, uma transição confirmada:
+
+```text
+NORMALIZADO → PENDENTE
+```
+
+não deve, por si só:
+
+- reativar automaticamente equipe anteriormente encerrada;
+- restaurar automaticamente viatura;
+- apagar ou recriar despacho;
+- apagar chegada;
+- apagar apoio;
+- apagar rendição;
+- restaurar agendamento;
+- reescrever silenciosamente a trajetória operacional.
+
+O estado operacional corrente deve ser tratado separadamente conforme o fluxo operacional aplicável.
 
 ---
 
@@ -288,9 +323,23 @@ rendição → fecha segmento e inicia outro
 
 Compatibilidade com registros antigos não deve ser removida sem verificar consumidores e dados existentes.
 
+## BR-HIS-006 — Retificação não apaga fatos históricos
+**Estado:** 🔵 CONTRATO
+
+Uma correção posterior da fonte CEMOB ou uma decisão de reconciliação não deve apagar silenciosamente eventos operacionais que efetivamente foram registrados.
+
+A correção do estado atual deve coexistir com a preservação da trajetória anterior.
+
+## BR-HIS-007 — Reversão de decisão não apaga a decisão anterior
+**Estado:** 🔵 CONTRATO
+
+Quando uma decisão humana de reconciliação for posteriormente corrigida ou revertida, a decisão original e sua reversão devem permanecer auditáveis.
+
+Reverter estado não significa apagar história.
+
 ---
 
-# 8. Normalização
+# 8. Normalização e reconciliação
 
 ## BR-NOR-001 — Data e hora de fim são obrigatórias na normalização manual
 **Estado:** 🟢 CONFIRMADO
@@ -337,10 +386,114 @@ Isso é diferente da normalização manual posterior.
 
 No fluxo de continuidade auditado, apenas ocorrência não normalizada é candidata à herança.
 
-## BR-NOR-007 — NORMALIZADO → PENDENTE
-**Estado:** 🟡 VALIDAR
+A reconciliação explícita prevista em `BR-NOR-007` não constitui herança e não altera este contrato.
 
-A auditoria não comprovou uma regra que “desfaça” a normalização. Não implementar essa transição como comportamento esperado sem decisão explícita.
+## BR-NOR-007 — NORMALIZADO → PENDENTE pode ocorrer por reconciliação explícita
+**Estado:** 🔵 CONTRATO
+
+Uma ocorrência normalizada pode retornar a `PENDENTE` quando nova evidência CEMOB contradiz a normalização anterior e uma decisão humana confirma que a nova representação corresponde à mesma ocorrência.
+
+Exemplo:
+
+```text
+VERSÃO ANTERIOR
+Início: 10:00
+Fim:    10:40
+Estado: NORMALIZADO
+
+NOVA VERSÃO
+Início: 10:00
+Fim:    ausente
+```
+
+A retirada de `Fim` deve ser tratada como possível retificação da fonte.
+
+Essa situação:
+
+- não constitui automaticamente reincidência;
+- não constitui herança;
+- não autoriza criação silenciosa de novo `eventoId`;
+- não autoriza criação silenciosa de segundo card;
+- não autoriza apagamento do histórico.
+
+Antes da decisão humana, a contradição deve ser diagnosticada e o estado conhecido deve permanecer protegido.
+
+## BR-NOR-008 — Reconciliação preserva identidade quando confirmada como retificação
+**Estado:** 🔵 CONTRATO
+
+Quando o operador confirmar que a contradição representa retificação da mesma ocorrência:
+
+```text
+eventoId anterior = eventoId posterior
+```
+
+A ocorrência permanece a mesma.
+
+Devem ser preservados, quando existentes:
+
+- `eventoId`;
+- card;
+- histórico operacional;
+- trajetória já registrada;
+- fatos operacionais anteriores.
+
+A representação CEMOB atual pode ser corrigida sem recriar a ocorrência.
+
+## BR-NOR-009 — Consequência deve ser apresentada antes da decisão
+**Estado:** 🔵 CONTRATO
+
+Quando a reconciliação exigir decisão humana, o NIT deve apresentar o impacto projetado antes da persistência.
+
+A apresentação deve priorizar os indicadores utilizados operacionalmente pelo usuário, incluindo, quando aplicável:
+
+```text
+Ocorrências
+Pendentes
+Normalizados
+```
+
+Exemplo conceitual:
+
+```text
+ANTES                 APÓS CONFIRMAR
+
+Ocorrências   24      24
+Pendentes      3       4
+Normalizados  21      20
+```
+
+A interface deve responder de forma intuitiva à pergunta operacional:
+
+```text
+"O que aconteceu aqui?"
+```
+
+## BR-NOR-010 — Decisão humana resolve o caso, não ensina o motor
+**Estado:** 🔵 CONTRATO
+
+Uma escolha realizada pelo operador durante uma reconciliação:
+
+- pode resolver o estado daquela ocorrência;
+- pode ser registrada para auditoria;
+- pode gerar evidência para investigação posterior;
+
+mas não deve:
+
+- alterar automaticamente contratos;
+- alterar regras determinísticas;
+- modificar invariantes;
+- ensinar automaticamente ao sistema que casos futuros equivalentes devem receber a mesma decisão.
+
+Produção gera evidência para avaliação; não modifica diretamente aquilo que define o comportamento correto do motor.
+
+## BR-NOR-011 — Decisão incorreta deve ser recuperável quando tecnicamente seguro
+**Estado:** 🔵 CONTRATO
+
+Nas operações protegidas pelo mecanismo de reconciliação, uma decisão humana incorreta deve poder ser corrigida pelo próprio NIT sem exigir, como procedimento normal, exclusão manual de registros no Firebase.
+
+Quando uma reversão simples puder destruir ou sobrescrever fatos operacionais posteriores, o sistema não deve restaurar cegamente um estado antigo.
+
+Nesse caso, deve preservar os fatos posteriores e encaminhar a situação para nova reconciliação.
 
 ---
 
@@ -381,10 +534,14 @@ A identidade forte tem prioridade.
 
 Quando não há correspondência exata por `eventoId`, o código pode participar da tentativa de continuidade/herança.
 
+O uso auxiliar de `codigo` não autoriza colapsar silenciosamente identidades incompatíveis.
+
 ## BR-CON-003 — Somente ocorrência não normalizada é candidata à herança
 **Estado:** 🔵 CONTRATO
 
 Normalizados não devem ser reabertos implicitamente pelo mecanismo de herança.
+
+Uma eventual volta de `NORMALIZADO → PENDENTE` deve ocorrer pelo fluxo explícito de reconciliação definido na seção 8.
 
 ## BR-CON-004 — Herança mantém identidade
 **Estado:** 🔵 CONTRATO
@@ -410,6 +567,23 @@ O sistema pode indicar possível lacuna, mas o operador continua responsável po
 **Estado:** 🟢 CONFIRMADO
 
 Não assumir integração automática com a fonte externa quando ela não existe.
+
+## BR-CON-009 — Contradição não resolvida deve falhar de forma segura
+**Estado:** 🔵 CONTRATO
+
+Quando o NIT encontrar uma situação incompatível que não consiga classificar com segurança como continuidade, reincidência ou retificação, não deve inventar silenciosamente uma solução.
+
+O comportamento esperado é:
+
+```text
+detectar
+→ preservar estado conhecido
+→ diagnosticar
+→ impedir alteração estrutural perigosa
+→ solicitar revisão/decisão quando necessária
+```
+
+Uma situação não compreendida é preferível a uma decisão automática capaz de corromper identidade, histórico ou contagem.
 
 ---
 
@@ -544,7 +718,110 @@ Reordenar, alocar e transferir podem gravar alterações reais no Firebase. Não
 
 ---
 
-# 13. Componentes legados e compatibilidade
+# 13. Guardião e integridade do processamento
+
+## BR-GUA-001 — Estado projetado deve preceder persistência protegida
+**Estado:** 🔵 CONTRATO
+
+Nos fluxos protegidos pelo Guardião, o NIT deve determinar o resultado projetado da operação antes de persistir uma alteração capaz de afetar integridade.
+
+Conceitualmente:
+
+```text
+entrada
+→ interpretação
+→ estado projetado
+→ validação
+→ apresentação ao operador
+→ decisão quando necessária
+→ persistência
+```
+
+## BR-GUA-002 — Confirmação humana complementa proteção automática
+**Estado:** 🔵 CONTRATO
+
+A confirmação do operador não substitui invariantes automáticos.
+
+Uma decisão humana não deve ser utilizada como autorização genérica para produzir silenciosamente:
+
+- duplicidade;
+- perda de ocorrência;
+- troca indevida de identidade;
+- apagamento de histórico;
+- corrupção estrutural.
+
+## BR-GUA-003 — Divergência deve ser explicável
+**Estado:** 🔵 CONTRATO
+
+Diferenças entre a entrada CEMOB e o estado projetado pelo NIT devem ser identificadas antes da persistência sempre que puderem afetar a integridade do processamento.
+
+Comparação apenas de totais não é suficiente quando conjuntos diferentes podem produzir a mesma quantidade.
+
+## BR-GUA-004 — Operação deve permanecer intuitiva
+**Estado:** 🔵 CONTRATO
+
+A apresentação do Guardião deve acompanhar o modelo mental já utilizado pelo operador:
+
+```text
+olhar totais CEMOB
+→ olhar NIT
+→ comparar
+→ perceber diferença
+→ perguntar "o que aconteceu?"
+→ receber explicação
+→ decidir quando necessário
+```
+
+O Guardião não deve exigir que o operador aprenda um método paralelo de conferência para realizar uma atividade já conhecida.
+
+## BR-GUA-005 — Casos relevantes do Guardião devem ser auditáveis
+**Estado:** 🔵 CONTRATO
+
+Toda intervenção do Guardião que exija decisão humana deve gerar um registro permanente e auditável da:
+
+- detecção;
+- situação relevante;
+- decisão;
+- consequência;
+- eventual reversão.
+
+Ruídos de representação absorvidos automaticamente pelo parser não precisam gerar caso de integridade.
+
+O schema físico do Registro de Integridade deve ser definido na implementação/documentação de dados correspondente; esta regra estabelece apenas o contrato funcional.
+
+## BR-GUA-006 — Produção gera evidência, não regra automática
+**Estado:** 🔵 CONTRATO
+
+Casos detectados em produção podem alimentar investigação, testes e evolução posterior do NIT.
+
+O fluxo correto é:
+
+```text
+produção
+→ evidência
+→ investigação
+→ validação
+→ gabarito/teste
+→ eventual alteração do motor
+```
+
+Nunca:
+
+```text
+decisão do operador
+→ alteração automática da regra determinística
+```
+
+## BR-GUA-007 — Erro tratável é preferível a dano estrutural
+**Estado:** 🔵 CONTRATO
+
+O sistema não precisa eliminar todos os erros possíveis antes de entrar em operação.
+
+Quando não for possível tratar uma inconsistência com segurança, deve privilegiar preservação, observabilidade e recuperação em vez de uma correção automática que possa comprometer identidade, histórico ou estado persistido.
+
+---
+
+# 14. Componentes legados e compatibilidade
 
 Os itens abaixo **não são regras de negócio**, mas impõem uma regra de manutenção: não remover sem provar ausência de consumidores.
 
@@ -574,7 +851,7 @@ Antes de remover:
 
 ---
 
-# 14. Regras de segurança para mudanças
+# 15. Regras de segurança para mudanças
 
 Qualquer alteração funcional deve preservar, até decisão explícita em contrário:
 
@@ -589,17 +866,26 @@ Qualquer alteração funcional deve preservar, até decisão explícita em contr
 9. continuidade sem herdar ocorrências normalizadas;
 10. consistência bidirecional de Reboques;
 11. separação operacional entre Semáforo e Reboques;
-12. ausência de remoção automática de legado sem auditoria de consumidores.
+12. ausência de remoção automática de legado sem auditoria de consumidores;
+13. ausência de criação silenciosa de novo `eventoId` durante reconciliação de retificação;
+14. ausência de duplicação silenciosa de card;
+15. ausência de perda silenciosa de ocorrência;
+16. preservação do histórico durante retificação e reversão;
+17. separação entre decisão operacional pontual e alteração das regras determinísticas;
+18. falha segura diante de situação não compreendida.
+
+Para a entrega do Guardião destinada à expansão operacional do NIT, aplica-se adicionalmente o seguinte critério:
+
+> **A entrega não exige eliminar todos os erros possíveis. Exige impedir que erros não tratados provoquem silenciosamente dano estrutural, garantindo integridade, observabilidade, recuperabilidade, falha segura e operação intuitiva.**
 
 ---
 
-# 15. Questões abertas
+# 16. Questões abertas
 
 Estas questões permanecem fora do conjunto de contratos até validação:
 
 ```text
 VALIDAR:
-- NORMALIZADO pode voltar a PENDENTE?
 - Evento finalizado de Reboques deve ser removido ou arquivado?
 - Deve existir histórico permanente de Reboques?
 - Qual deve ser a persistência entre plantões de Reboques?
@@ -607,11 +893,29 @@ VALIDAR:
 - Qual infraestrutura deve executar cron_export.py?
 ```
 
-Uma IA ou desenvolvedor não deve responder essas perguntas por inferência a partir do comportamento atual.
+A questão:
+
+```text
+NORMALIZADO pode voltar a PENDENTE?
+```
+
+não permanece aberta.
+
+A decisão consolidada é:
+
+```text
+SIM, por reconciliação explícita de retificação,
+com preservação de identidade e histórico,
+sem reabertura implícita por herança,
+sem reativação automática do estado operacional
+e com decisão humana quando a contradição exigir interpretação.
+```
+
+Uma IA ou desenvolvedor não deve responder as demais questões abertas por inferência a partir do comportamento atual.
 
 ---
 
-# 16. Protocolo para nova regra
+# 17. Protocolo para nova regra
 
 Antes de acrescentar uma regra a este documento:
 
@@ -636,19 +940,23 @@ A regra fundamental é:
 "O sistema deve fazer X"
 ```
 
+Casos encontrados em produção não alteram esse protocolo. Um novo incidente aumenta a evidência disponível; não altera automaticamente o contrato.
+
 ---
 
-# 17. Documentos relacionados
+# 18. Documentos relacionados
 
 - `ARCHITECTURE.md` — arquitetura e responsabilidades.
 - `DATA-MODEL.md` — entidades, campos, IDs e relações.
-- `WORKFLOW.md` — **próxima etapa do plano**; fluxos operacionais ponta a ponta.
-- `CONTEXT.MD` — visão curta de entrada, a ser revisada após os documentos estruturais.
+- `WORKFLOW.md` — fluxos operacionais ponta a ponta.
+- `CONTEXT.MD` — visão curta de entrada e estado geral.
 - `DECISIONS.md` / ADRs — decisões arquiteturais.
 - `AI-INSTRUCTIONS.md` — protocolo de atuação de agentes de IA.
 - `TODO.md` — questões abertas, investigações e próximas ações.
+- Contrato de Entrada CEMOB — tolerâncias, validações e casos adversos da entrada CEMOB.
 
 ---
 
-**Status:** regras e contratos consolidados a partir da auditoria disponível.  
-**Próxima etapa:** `WORKFLOW.md`.
+**Status:** regras e contratos consolidados a partir da auditoria disponível e das decisões validadas para integridade/reconciliação do processamento CEMOB.
+
+**Próxima etapa da entrega:** refletir os contratos consolidados no `WORKFLOW.md` e, em seguida, transformá-los em casos de teste de aceitação antes da implementação.
