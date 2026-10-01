@@ -1,5 +1,24 @@
 # NIT --- Diagnóstico de Divergência no Processamento CEMOB
 
+ATUALIZAÇÃO — 01/10/2026
+
+Este documento permanece preservado como registro da investigação
+que originou a frente de integridade do processamento CEMOB.
+
+Desde sua elaboração, a investigação avançou e algumas propostas
+iniciais foram consolidadas ou substituídas por contratos posteriores.
+
+Estado atual deve ser consultado prioritariamente em:
+- BUSINESS-RULES.md
+- WORKFLOW.md
+- DATA-MODEL.md
+- Contrato de Entrada CEMOB
+- TODO.md
+
+Este documento não deve ser utilizado isoladamente como
+especificação funcional da implementação atual.
+
+
 **Data:** 21/09/2026\
 **Status:** investigação documentada --- sem alteração funcional em
 produção\
