@@ -1,655 +1,584 @@
-TODO.md — NIT
+# ATUALIZAÇÃO DO TODO — ENTREGA DO NOVO TURNO
 
-Registro controlado de questões abertas, investigações, pendências e melhorias já identificadas.
+## Objetivo operacional atual
 
-Este arquivo não é um depósito de ideias. Um item só entra aqui quando existe evidência, dúvida concreta, risco conhecido ou trabalho necessário derivado do sistema auditado.
+Liberar o NIT para operação no novo turno com proteção suficiente para que uma anomalia conhecida ou desconhecida não produza silenciosamente:
 
-1. Como usar este arquivo
+```text
+perda de ocorrência
+duplicidade
+identidade indevida
+herança indevida
+contagem falsa não explicada
+apagamento de histórico
+corrupção estrutural
+```
 
-Estados:
+Não é requisito eliminar todos os erros possíveis antes da liberação.
 
-[VALIDAR]     intenção/regra ainda precisa ser confirmada
-[INVESTIGAR] evidência técnica ainda insuficiente
-[DECIDIR]    evidência existe, mas falta decisão consciente
-[PENDENTE]   trabalho necessário já identificado
+---
 
-Ao resolver um item:
+# BLOQUEANTES DA ENTREGA
 
-registrar a conclusão no documento correto;
+## TODO-020 — Transformar o Contrato de Entrada CEMOB em testes de aceitação
 
-criar ADR se houver decisão arquitetural significativa;
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / testes  
+**Prioridade:** BLOQUEANTE
 
-atualizar código/testes somente após aprovação quando necessário;
+### Origem
 
-remover o item deste arquivo quando ele deixar de ser pendência.
+Contrato de Entrada CEMOB consolidado após investigação com relatórios reais.
 
-2. Prioridade alta — decisões que bloqueiam mudanças seguras
+### Trabalho necessário
 
-TODO-001 — Definir comportamento NORMALIZADO → PENDENTE
+Converter as classes já aprovadas em cenários reproduzíveis:
 
-Estado: [DECIDIR]
-Domínio: Semáforo
-Origem: auditoria de continuidade/reprocessamento
-
-Evidência atual
-
-A auditoria confirmou:
-
-ocorrência NORMALIZADA
-→ não é candidata à herança
-
-Não foi localizada promoção automática explícita:
-
+```text
+ESTABILIDADE
+ENRIQUECIMENTO
+NORMALIZAÇÃO
+NORMALIZADO DIRETO
+MUDANÇA DE CLASSIFICAÇÃO
+INÍCIO AUSENTE → INFORMADO
+INÍCIO A → INÍCIO B
+FIM → AUSENTE
 NORMALIZADO → PENDENTE
+REINCIDÊNCIA REAL
+REPROCESSAMENTO DO MESMO BRUTO
+CASO INCONCLUSIVO
+```
 
-Decisão necessária
+Incluir os casos reais já estudados, quando aplicáveis:
 
-Determinar se uma ocorrência já normalizada pode voltar a pendente quando um relatório posterior apresentar novamente necessidade ativa para o mesmo contexto.
+```text
+685
+468/790
+1430
+normalizado direto
+continuidade entre relatórios/dias
+```
 
-Não fazer antes da decisão
+### Cada teste deve verificar
 
-Não implementar reabertura automática por inferência.
+```text
+quantidade esperada
+eventoId
+quantidade de cards
+estado
+histórico
+estado operacional
+resultado projetado
+persistência
+```
 
-Após decisão
+### Critério de conclusão
 
-Atualizar, conforme aplicável:
+Existe suíte suficiente para demonstrar os contratos necessários à liberação do novo turno.
 
+---
+
+## TODO-021 — Implementar Guardião mínimo de integridade
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / processamento  
+**Prioridade:** BLOQUEANTE
+
+### Objetivo
+
+Inserir proteção entre interpretação e persistência:
+
+```text
+PARSER
+  ↓
+INTERPRETAÇÃO
+  ↓
+ESTADO PROJETADO
+  ↓
+GUARDIÃO
+  ↓
+PERSISTÊNCIA
+```
+
+### Primeira versão deve
+
+```text
+DETECTAR
+COMPARAR
+EXPLICAR
+PROJETAR CONSEQUÊNCIA
+BLOQUEAR ALTERAÇÃO PERIGOSA
+ENCAMINHAR RECONCILIAÇÃO
+```
+
+Não precisa resolver automaticamente todas as anomalias.
+
+### Invariantes mínimos
+
+O Guardião não pode permitir silenciosamente:
+
+```text
+N → N-1 indevido
+N → N+1 indevido
+duplicidade
+colapso de reincidência
+nova identidade por retificação
+transferência indevida de estado operacional
+```
+
+### Critério de conclusão
+
+Os testes bloqueantes do Contrato de Entrada passam e casos desconhecidos falham de maneira segura e observável.
+
+---
+
+## TODO-022 — Implementar prévia antes da persistência
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / interface / integridade  
+**Prioridade:** BLOQUEANTE
+
+### Objetivo
+
+Antes da confirmação do processamento, mostrar ao operador como ficará o resultado.
+
+A referência visual deve acompanhar a forma como o operador já confere o relatório CEMOB:
+
+```text
+Ocorrências de Apagados/Piscantes
+Pendentes
+Furtos
+Outros motivos
+Investigando
+Normalizados
+```
+
+Exemplo:
+
+```text
+CEMOB
+
+Ocorrências:    24
+Pendentes:       4
+Normalizados:   20
+
+NIT APÓS PROCESSAR
+
+Ocorrências:    24
+Pendentes:       4
+Normalizados:   20
+```
+
+Quando houver divergência, responder imediatamente:
+
+```text
+O QUE MUDOU?
+POR QUÊ?
+O QUE O NIT VAI FAZER?
+COMO OS NÚMEROS FICARÃO?
+```
+
+### Critério de conclusão
+
+O operador consegue comparar CEMOB × NIT antes da persistência e compreender uma divergência sem precisar investigar o Firebase.
+
+---
+
+## TODO-023 — Implementar reconciliação mínima
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / integridade  
+**Prioridade:** BLOQUEANTE
+
+### Casos mínimos
+
+Suportar as decisões já aprovadas para:
+
+```text
+retificação de Início
+enriquecimento de Início ausente
+Fim removido
+NORMALIZADO → PENDENTE
+caso inconclusivo
+```
+
+### Regra
+
+Reconciliação deve preservar:
+
+```text
+eventoId quando confirmada mesma ocorrência
+card
+histórico operacional
+fatos operacionais existentes
+```
+
+e não criar silenciosamente segunda ocorrência.
+
+### Decisão humana
+
+Quando necessária, mostrar consequência antes da aplicação.
+
+Exemplo:
+
+```text
+SE VOLTAR PARA PENDENTE
+
+Ocorrências:    24 → 24
+Pendentes:       3 → 4
+Normalizados:   21 → 20
+```
+
+Deve existir opção de não decidir imediatamente:
+
+```text
+[ NÃO SEI — DEIXAR PARA REVISÃO ]
+```
+
+---
+
+## TODO-024 — Recuperação mínima de decisão incorreta
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / integridade  
+**Prioridade:** BLOQUEANTE PARA AUTONOMIA OPERACIONAL
+
+### Objetivo
+
+Reduzir a necessidade de:
+
+```text
+abrir Firebase
+→ localizar nó
+→ excluir manualmente
+→ reprocessar
+```
+
+### Comportamento
+
+Se a decisão puder ser revertida sem destruir fatos posteriores:
+
+```text
+DESFAZER
+→ mostrar consequência
+→ confirmar
+→ corrigir
+```
+
+Se existirem fatos posteriores:
+
+```text
+NÃO restaurar snapshot cegamente
+→ explicar
+→ preservar fatos
+→ nova reconciliação
+```
+
+### Critério de conclusão
+
+Erro recuperável comum não exige desenvolvedor nem edição manual do Firebase.
+
+---
+
+## TODO-025 — Registro mínimo de Integridade
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / auditoria  
+**Prioridade:** NECESSÁRIO, IMPLEMENTAÇÃO MÍNIMA
+
+### Registrar
+
+```text
+detecção
+ocorrência relacionada
+problema encontrado
+decisão
+resultado
+eventual reversão
+```
+
+### Restrição
+
+Não transformar esta entrega em projeto completo de observabilidade.
+
+Implementar apenas o necessário para:
+
+```text
+auditoria
+diagnóstico
+recuperação
+evolução posterior
+```
+
+---
+
+## TODO-026 — Validar processamento completo Bruto × NIT
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / integridade  
+**Origem:** evolução do TODO-018  
+**Prioridade:** BLOQUEANTE
+
+### Verificar
+
+Não apenas:
+
+```text
+totalBruto == totalNIT
+```
+
+mas:
+
+```text
+expectedEventIds
+representedEventIds
+
+missing
+unexpected
+```
+
+Cobrir explicitamente:
+
+```text
+Bruto N → NIT N
+Bruto N → NIT N-1
+Bruto N → NIT N+1
+N == N com membros diferentes
+desaparecimento
+reaparecimento
+herança legítima
+normalização
+```
+
+### Critério de conclusão
+
+Nenhuma divergência estrutural conhecida passa silenciosamente.
+
+---
+
+# PROTEÇÃO DA PUBLICAÇÃO
+
+## TODO-017 — Implantar publicação segura e rollback operacional
+
+**Estado:** [PENDENTE]  
+**Prioridade:** BLOQUEANTE ANTES DA PUBLICAÇÃO
+
+Mantém-se o conteúdo já aprovado.
+
+Antes da versão destinada ao novo turno:
+
+```text
+validar sintaxe
+→ teste mínimo
+→ publicar
+→ smoke test
+→ rollback disponível
+```
+
+Funções essenciais para smoke test:
+
+```text
+carregamento
+login
+processamento
+Kanban
+relatório
+```
+
+Uma falha de publicação não pode transformar um problema de software em paralisação operacional.
+
+---
+
+# VALIDAÇÃO PARA LIBERAÇÃO
+
+## TODO-027 — Executar modo sombra
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / validação  
+**Prioridade:** BLOQUEANTE
+
+Executar o novo fluxo com relatórios reais sem permitir inicialmente que decisões novas alterem o estado operacional real.
+
+Comparar:
+
+```text
+resultado atual
+×
+resultado projetado pelo Guardião
+```
+
+Registrar divergências.
+
+---
+
+## TODO-028 — Teste controlado no turno atual
+
+**Estado:** [PENDENTE]  
+**Domínio:** operação  
+**Prioridade:** BLOQUEANTE
+
+Após aprovação dos testes e modo sombra:
+
+```text
+produção controlada
+→ seu turno
+→ relatórios reais
+→ observar
+→ corrigir somente bloqueantes
+```
+
+Não transformar toda nova observação em requisito de liberação.
+
+---
+
+## TODO-029 — Liberar novo turno
+
+**Estado:** [PENDENTE]  
+**Domínio:** operação
+
+### Critério de liberação
+
+Liberar quando houver evidência suficiente de que:
+
+```text
+anomalia conhecida
+→ tratamento correto
+
+anomalia desconhecida
+→ falha segura
+
+divergência
+→ visível e explicada
+
+decisão humana
+→ consequência visível
+
+erro humano recuperável
+→ correção operacional disponível
+
+falha de publicação
+→ rollback disponível
+```
+
+Não exigir ausência absoluta de bugs.
+
+---
+
+# NÃO BLOQUEANTES DA ENTREGA ATUAL
+
+Permanecem registrados, mas não entram no caminho crítico:
+
+```text
+TODO-002 — histórico permanente de Reboques
+TODO-003 — persistência de Reboques entre plantões
+TODO-004 — Limpar Plantão
+TODO-005 — executor cron_export.py
+TODO-006 — ambiente da exportação
+TODO-007 — rendição agendada
+TODO-008 — /api/v1/despacho
+TODO-009 — /api/v1/normalizar
+TODO-010 — NitNormalizar
+TODO-011 — modal antigo
+TODO-012 — routes/config.py
+TODO-013 — Recursos/Equipes
+TODO-019 — refinamento textual do alerta
+```
+
+Eles não são descartados.
+
+Apenas não podem atrasar a liberação do novo turno sem nova evidência de impacto bloqueante.
+
+---
+
+# ITENS RESOLVIDOS
+
+## TODO-001 — NORMALIZADO → PENDENTE
+
+**RESOLVIDO. REMOVER DO TODO ativo.**
+
+Decisão consolidada:
+
+```text
+NORMALIZADO
+      ↓
+nova evidência contraditória
+      ↓
+Guardião
+      ↓
+reconciliação explícita
+      ↓
+decisão humana quando necessária
+      ↓
+mesmo eventoId / histórico preservado
+      ↓
+PENDENTE
+```
+
+Não constitui herança automática.
+
+Documentado em:
+
+```text
 BUSINESS-RULES.md
 WORKFLOW.md
 DATA-MODEL.md
-novo ADR, se arquiteturalmente relevante
-testes de reprocessamento
+CONTRATO-ENTRADA-CEMOB.md
+```
 
-TODO-002 — Definir política de histórico permanente de Reboques
+---
 
-Estado: [DECIDIR]
-Domínio: Reboques
+# DOCUMENTAÇÃO
 
-Evidência atual
+## TODO-014 / TODO-015 — revisão cruzada e referências
 
-No fluxo auditado:
+Continuam necessários, mas deixam de bloquear o início dos testes.
 
-finalizarEvento()
-→ libera recursos
-→ remove evento do conjunto ativo
+Executar revisão final antes da publicação destinada ao novo turno.
 
-Não foi encontrado histórico permanente do evento após a finalização.
+O `CONTRATO-ENTRADA-CEMOB.md` passa a integrar a revisão.
 
-Decisão necessária
+---
 
-Escolher conscientemente entre:
+# ORDEM OPERACIONAL ATUAL
 
-A. finalizado = removido do estado operacional sem histórico permanente
+```text
+1. CONTRATO DE ENTRADA                     ✓
+2. TESTES DE ACEITAÇÃO                     TODO-020
+3. GUARDIÃO MÍNIMO                         TODO-021
+4. PRÉVIA                                  TODO-022
+5. RECONCILIAÇÃO                           TODO-023
+6. RECUPERAÇÃO MÍNIMA                      TODO-024
+7. REGISTRO DE INTEGRIDADE                 TODO-025
+8. BRUTO × NIT                             TODO-026
+9. PUBLICAÇÃO SEGURA / ROLLBACK             TODO-017
+10. MODO SOMBRA                            TODO-027
+11. TESTE NO TURNO ATUAL                   TODO-028
+12. REVISÃO DOCUMENTAL FINAL               TODO-014/015
+13. LIBERAÇÃO DO NOVO TURNO                TODO-029
+```
 
-ou
+Essa é a linha de entrega.
 
-B. finalizado = removido do ativo + persistido em histórico
+Qualquer nova necessidade encontrada durante esse percurso deve responder:
 
-Impacto
+> **Ela impede integridade, recuperabilidade, falha segura ou continuidade operacional?**
 
-Afeta:
+Se não impedir, registrar para depois e continuar a entrega.
 
-auditoria operacional;
+---
 
-relatórios históricos;
+# CRITÉRIO DE CONTROLE DE ESCOPO
 
-rastreabilidade;
+Durante esta fase:
 
-modelo de dados;
+```text
+NOVO PROBLEMA
+     ↓
+é bloqueante para a operação segura?
+     ├── SIM → tratar
+     └── NÃO → registrar e continuar
+```
 
-política de retenção;
+A meta não é produzir o NIT definitivo.
 
-possível exportação futura.
-
-Após decisão
-
-Se houver histórico permanente, definir estrutura de dados antes da implementação.
-
-TODO-003 — Definir persistência de Reboques entre plantões
-
-Estado: [VALIDAR]
-Domínio: Reboques
-
-Questão
-
-Ainda precisa ser definido quais dados devem sobreviver à troca de plantão.
-
-Verificar especialmente:
-
-reboquistas
-eventos ativos
-ordem
-vínculos
-configurações
-dados finalizados
-
-Dependência
-
-Relaciona-se diretamente ao TODO-002 e ao comportamento de Limpar Plantão.
-
-TODO-004 — Formalizar semântica e segurança de Limpar Plantão
-
-Estado: [DECIDIR]
-Domínio: Reboques
-
-Evidência atual
-
-A operação atua sobre:
-
-/reboques/plantao_ativo
-
-e possui efeito destrutivo sobre o estado operacional do plantão.
-
-Definir
-
-quando a ação é permitida;
-
-quem pode executá-la;
-
-se deve haver confirmação reforçada;
-
-se dados precisam ser arquivados antes;
-
-relação com troca de plantão;
-
-relação com histórico permanente.
-
-Regra temporária
-
-Não tratar Limpar Plantão como operação trivial de interface.
-
-3. Exportação e infraestrutura
-
-TODO-005 — Definir executor de cron_export.py
-
-Estado: [DECIDIR]
-Domínio: Backend / infraestrutura
-
-Evidência atual
-
-cron_export.py existe.
-
-Isso não comprova scheduler ativo.
-
-Referências históricas a Railway não representam infraestrutura atual confirmada.
-
-Definir
-
-QUEM executa?
-QUANDO executa?
-EM QUAL infraestrutura?
-COM QUAL frequência?
-COM QUAL logging?
-COM QUAL monitoramento?
-COMO falhas são detectadas?
-COMO retries são tratados?
-
-Requisito existente
-
-Preservar possibilidade de validação:
-
-DRY_RUN=true
-
-antes de escrita real no Google Sheets.
-
-Após decisão
-
-Registrar infraestrutura real em:
-
-ARCHITECTURE.md
-WORKFLOW.md
-novo ADR, se necessário
-
-TODO-006 — Verificar ambiente real de execução da exportação
-
-Estado: [INVESTIGAR]
-Domínio: Backend / infraestrutura
-
-Objetivo
-
-Antes de documentar deploy atual, verificar evidência concreta de:
-
-serviço atualmente hospedado;
-
-configuração de ambiente;
-
-secrets necessários;
-
-mecanismo de execução;
-
-logs disponíveis;
-
-processo de deploy.
-
-Regra
-
-Não reintroduzir Railway como infraestrutura atual apenas porque existem referências antigas no repositório.
-
-4. Rendição agendada
-
-TODO-007 — Decidir executor para rendições agendadas
-
-Estado: [DECIDIR]
-Domínio: Semáforo / Central
-
-Evidência atual
-
-A auditoria confirmou:
-
-agendamento
-→ persistido em /kanban/{eventoId}/agendamento
-
-e:
-
-execução manual
-→ histórico
-→ atualização do snapshot
-→ remoção do agendamento
-
-Não foi encontrado executor automático.
-
-Decisão necessária
-
-Determinar se o comportamento desejado é:
-
-A. execução sempre manual
-
-ou
-
-B. execução automática no horário programado
-
-ou
-
-C. lembrete automático + confirmação manual
-
-Atenção
-
-Não adicionar scheduler apenas porque existe campo de horário.
-
-5. Legado e compatibilidade
-
-TODO-008 — Confirmar consumidores de /api/v1/despacho
-
-Estado: [INVESTIGAR]
-Domínio: Backend
-
-Evidência atual
-
-O endpoint existe, mas o fluxo principal auditado utiliza NitCentral com persistência operacional no Firebase.
-
-Investigar
-
-chamadas no frontend atual;
-
-chamadas externas;
-
-scripts;
-
-integrações antigas;
-
-documentação;
-
-logs, se disponíveis.
-
-Resultado esperado
-
-Classificar definitivamente como:
-
-ATUAL
-COMPATIBILIDADE NECESSÁRIA
-REMOVÍVEL
-
-Não remover antes disso.
-
-TODO-009 — Confirmar consumidores de /api/v1/normalizar
-
-Estado: [INVESTIGAR]
-Domínio: Backend
-
-Aplicar o mesmo procedimento do TODO-008.
-
-TODO-010 — Definir destino de NitNormalizar
-
-Estado: [INVESTIGAR]
-Domínio: Semáforo
-
-Evidência atual
-
-NitCentral.confirmarNormalizar() representa o caminho principal identificado.
-
-NitNormalizar permanece como implementação alternativa/legada.
-
-Investigar
-
-referências;
-
-listeners;
-
-inicialização;
-
-caminhos ainda acessíveis pela interface;
-
-dependências indiretas.
-
-Só depois decidir
-
-manter
-isolar
-deprecar
-remover
-
-TODO-011 — Verificar modal antigo de despacho
-
-Estado: [INVESTIGAR]
-Domínio: Semáforo
-
-Confirmar se ainda existe consumidor operacional do fluxo antigo antes de qualquer remoção.
-
-TODO-012 — Verificar routes/config.py
-
-Estado: [INVESTIGAR]
-Domínio: Backend
-
-Evidência atual
-
-Foi identificado como aparentemente não registrado no fluxo principal auditado.
-
-Investigar
-
-importações;
-
-registro de router;
-
-consumidores externos;
-
-finalidade histórica;
-
-possibilidade real de remoção.
-
-6. Modelo de dados ainda não totalmente consolidado
-
-TODO-013 — Consolidar schema de Recursos/Equipes
-
-Estado: [PENDENTE]
-Domínio: Semáforo / recursos
-
-Evidência atual
-
-NitRecursos mantém/aprende combinações operacionais de equipe, VT e tipo.
-
-A auditoria não consolidou o schema completo a ponto de congelá-lo no DATA-MODEL.md.
-
-Trabalho necessário
-
-Mapear:
-
-paths Firebase
-campos
-IDs/chaves
-regras de atualização
-autofill
-consumidores
-retenção
-relação com despacho/apoio/rendição
-
-Depois atualizar DATA-MODEL.md.
-
-7. Validação documental
-
-TODO-014 — Fazer revisão cruzada final da documentação
-
-Estado: [PENDENTE]
-Domínio: documentação
-
-Agora que a sequência foi construída, executar uma revisão cruzada entre:
-
-CONTEXT.MD
-ARCHITECTURE.md
-DATA-MODEL.md
-BUSINESS-RULES.md
-WORKFLOW.md
-DECISIONS.md
-docs/adr/
-AI-INSTRUCTIONS.md
-TODO.md
-
-Objetivo
-
-Detectar:
-
-contradições;
-
-duplicações desnecessárias;
-
-regra descrita como contrato em um arquivo e VALIDAR em outro;
-
-nomes divergentes;
-
-referências quebradas;
-
-informação histórica tratada como atual.
-
-Restrição
-
-Essa revisão é documental. Não alterar comportamento do código para fazê-lo “combinar” com documentação incorreta.
-
-TODO-015 — Validar links e caminhos internos da documentação
-
-Estado: [PENDENTE]
-
-Após os arquivos serem colocados no repositório, verificar:
-
-links de DECISIONS.md → docs/adr/
-nomes exatos dos arquivos
-case-sensitive paths
-referências cruzadas
-
-8. Preparação para retomada segura do desenvolvimento
-
-TODO-016 — Estabelecer baseline de validação antes da próxima feature
-
-Estado: [PENDENTE]
-Domínio: engenharia
-
-Antes de iniciar novas funcionalidades, registrar quais verificações mínimas provam que o sistema atual continua funcionando.
-
-Cobrir, conforme possível:
-
-SEMÁFORO
-- processamento CEMOB
-- identidade/reprocessamento
-- despacho
-- apoio
-- rendição
-- normalização
-- continuidade/herança
-- exportação DRY_RUN
-
-REBOQUES
-- carga de plantão
-- criação de evento
-- alocação
-- transferência
-- finalização individual
-- finalização de evento
-- relatório
-
-Objetivo
-
-Criar uma referência de regressão para futuras mudanças assistidas por IA.
-
-TODO-017 — Implantar publicação segura e rollback operacional
-
-Estado: [PENDENTE]
-Domínio: engenharia / publicação
-Origem: incidente de sintaxe em nit.js que impediu a inicialização do NIT e o login.
-
-Decisão aprovada
-
-Publicação segura passa a ser padrão permanente de manutenção. Antes da próxima publicação, estabelecer proteção mínima que impeça uma atualização defeituosa de interromper a operação sem recuperação acessível.
-
-Trabalho necessário
-
-Mapear o processo real de publicação, carregamento de arquivos, cache e dependências do Firebase.
-
-Validar automaticamente a sintaxe dos arquivos JavaScript antes de publicar; falha bloqueia a publicação.
-
-Definir e executar teste mínimo em ambiente separado: carregamento, login, Kanban e geração de relatório, sem modificar dados operacionais reais.
-
-Identificar e preservar a última versão estável; ensaiar rollback e confirmar que o operador consegue voltar a trabalhar.
-
-Verificar compatibilidade de dados entre a versão nova e a versão de rollback.
-
-Avaliar, depois da proteção mínima, um acesso de contingência independente do nit.js defeituoso.
-
-Critério de conclusão
-
-Uma atualização com erro de sintaxe não chega à produção; um rollback ensaiado restaura as funções essenciais sem intervenção do operador no código ou no Firebase.
-
-Restrição: não alterar o motor semafórico para implementar o processo de publicação.
-
-TODO-018 — Detectar ocorrências excedentes no Kanban em relação ao bruto
-
-Estado: [INVESTIGAR]
-Domínio: Semáforo / integridade do processamento
-Origem: teste controlado com relatórios completos consecutivos em 23/09/2026.
-
-Evidência reproduzida
-
-A ocorrência 1430 foi retirada de um relatório bruto completo sem ser normalizada. Após o processamento, permaneceu no Kanban e no monitor:
-
-Bruto: 12 ocorrências
-Kanban: 13 ocorrências
-Monitor: 13 ocorrências
-
-Quando 1430 reapareceu com a mesma identidade, não houve duplicação. O Plano A atual confere ocorrências esperadas no bruto que não se materializaram, mas não identifica o excedente inverso.
-
-Investigar e decidir
-
-Definir a população correta da comparação para relatórios completos, incluindo herança, normalizados e data de referência.
-
-Distinguir ausência no bruto de normalização, omissão ou mudança legítima de turno.
-
-Propor detecção e aviso ao operador sem excluir automaticamente cards ou alterar o Firebase.
-
-Validar a regra Bruto = Kanban = Monitor em testes consecutivos, incluindo desaparecimento e reaparecimento.
-
-Restrição: investigação inicialmente somente leitura; não modificar _reprocessar, excluir cards ou executar autocorreção sem diagnóstico e aprovação.
-
-TODO-019 — Refinar a mensagem do alerta de integridade do Plano A
-
-Estado: [PENDENTE]
-Domínio: Semáforo / interface
-Origem: texto de alerta aprovado em discussão, ainda não aplicado no arquivo de referência.
-
-Ajuste previsto
-
-Apresentar “Processamento incompleto — X de Y ocorrências processadas”, identificar a ocorrência não processada com código e endereço e orientar a conferência de datas/horários de início e fim e de alterações/formato do texto.
-
-Critério de conclusão: mensagem conferida visualmente, sem mudança no cálculo, na identidade ou no processamento. Prioridade inferior aos TODO-017 e TODO-018.
-
-9. Itens explicitamente fora do TODO atual
-
-Não adicionar sem evidência/decisão:
-
-reescrever frontend em framework novo
-trocar Firebase
-trocar FastAPI
-substituir Google Sheets
-unificar Semáforo e Reboques
-criar microserviços
-refatorar tudoAqui/nit.js apenas por tamanho
-migrar infraestrutura apenas por preferência tecnológica
-remover todo código legado
-
-Esses itens podem futuramente virar propostas, mas não são pendências derivadas da auditoria atual.
-
-10. Ordem recomendada para atacar as pendências
-
-Precedência operacional aprovada em 23/09/2026: executar TODO-017 antes da próxima publicação; em seguida, retomar a investigação do TODO-018. O TODO-019 é ajuste de interface de menor prioridade. Esta precedência não reclassifica as demais pendências da auditoria.
-
-A ordem histórica abaixo é de dependência técnica, não de urgência operacional:
-
-1. TODO-014 — revisão cruzada documental
-2. TODO-015 — links/caminhos
-3. TODO-016 — baseline de validação
-4. TODO-001 — NORMALIZADO → PENDENTE
-5. TODO-002/003/004 — política de Reboques
-6. TODO-005/006 — exportação e infraestrutura
-7. TODO-007 — rendição agendada
-8. TODO-008..012 — legado/compatibilidade
-9. TODO-013 — schema Recursos/Equipes
-
-Questões de negócio (DECIDIR) não devem ser resolvidas apenas por análise técnica.
-
-11. Critério para adicionar novo TODO
-
-Antes de acrescentar item, responder:
-
-Existe evidência concreta?
-Existe pergunta objetiva?
-Existe impacto identificável?
-Existe ação de validação/investigação possível?
-
-Se a resposta for não, o item provavelmente ainda é apenas uma ideia.
-
-Formato recomendado:
-
-## TODO-XXX — Título
-
-Estado:
-Domínio:
-Origem:
-
-Evidência atual:
-...
-
-Pergunta/ação:
-...
-
-Impacto:
-...
-
-Critério de conclusão:
-...
-
-12. Critério de conclusão da fase documental
-
-A construção inicial da memória técnica está concluída quando os arquivos estiverem versionados no repositório e a revisão cruzada final tiver sido realizada.
-
-ARCHITECTURE.md      ✓
-DATA-MODEL.md        ✓
-BUSINESS-RULES.md    ✓
-WORKFLOW.md          ✓
-CONTEXT.MD           ✓
-DECISIONS.md         ✓
-docs/adr/            ✓
-AI-INSTRUCTIONS.md   ✓
-TODO.md              ✓
-
-REVISÃO CRUZADA      ← pendente
-BASELINE             ← pendente
-
-A partir daí, o NIT pode voltar ao ciclo normal de desenvolvimento usando:
-
-CONTEXT.MD
-      ↓
-AI-INSTRUCTIONS.md
-      ↓
-documento específico
-      ↓
-código
-      ↓
-plano
-      ↓
-aprovação
-      ↓
-implementação
-      ↓
-validação
-      ↓
-documentação
-
-Status: TODO inicial consolidado exclusivamente a partir das pendências e questões abertas identificadas na auditoria dos ciclos 1–8.
-
-Próximo marco: revisão cruzada final da documentação antes de retomar alterações funcionais no código.
+A meta é produzir uma versão suficientemente segura, observável, recuperável e intuitiva para operar no novo turno.
