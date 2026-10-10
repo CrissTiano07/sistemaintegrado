@@ -514,6 +514,60 @@ Nenhuma divergência estrutural conhecida passa silenciosamente.
 
 ---
 
+## TODO-030 — Data do cabeçalho CEMOB divergente da data atual
+
+**Estado:** [PENDENTE]  
+**Domínio:** Semáforo / processamento  
+**Origem:** incidente 09/10/2026  
+**Prioridade:** BLOQUEANTE (mitigação aplicada; incorporação ao Guardião pendente)
+
+### Evidência atual
+
+Em 09/10/2026, relatórios processados às 16:05 e 16:58 traziam no cabeçalho `PLANTÃO CEMOB 13/09/2026`. `extrairDataReferencia()` usa a primeira data `dd/mm/aaaa` do texto e o NIT aceitou sem aviso.
+
+Consequências observadas:
+
+```text
+26 normalizados e 4 pendentes gravados com dataReferencia 13/09/2026
+cards ocultos no painel (filtro por data de hoje)
+prévia do relatório com 5 de 31 ocorrências
+meta/dataReferencia e meta/ultimoProcessamento com 13/09/2026
+```
+
+Recuperação: reprocessamento do relatório correto corrigiu os pendentes (herança via mesmo eventoId); os 26 normalizados foram corrigidos por `update` pontual em `dataReferencia`, após consulta de conferência.
+
+### Mitigação aplicada (aprovada em 10/10/2026)
+
+`handleProcessarClick()` verifica a data do cabeçalho antes de qualquer gravação:
+
+```text
+data = hoje  → processamento normal
+data ≠ hoje  → aviso com as duas datas
+               Confirmar → processa como antes
+               Cancelar  → nada é gravado
+```
+
+Não altera parser, identidade, herança, persistência nem exportação.
+
+### Pendente
+
+- incorporar a verificação como invariante do Contrato de Entrada CEMOB;
+- criar caso de teste no TODO-020;
+- absorver o aviso no Guardião/prévia (TODO-021/TODO-022) sem duplicar interface.
+
+### Achados relacionados registrados na investigação
+
+- `_reprocessar()` não atualiza `dataReferencia` de card já normalizado: cards normalizados com data errada não se corrigem por reprocessamento;
+- `meta/dataReferencia` é gravado apenas em `_cargaInicial()` e não possui leitor no código;
+- cursores `meta/ultimaExportacao/cliente_b` parados em 10/07/2026, embora a planilha esteja atualizada — exportador real diverge do documentado (ver TODO-005/TODO-006);
+- duração na planilha ignora a troca de dia (ex.: 13/09 07:28 → 14/09 08:35 registrado como 01:07:00).
+
+### Critério de conclusão
+
+Data de cabeçalho divergente nunca resulta em gravação silenciosa, coberta por teste de aceitação.
+
+---
+
 # 4. Publicação segura e continuidade operacional
 
 ## TODO-017 — Implantar publicação segura e rollback operacional
