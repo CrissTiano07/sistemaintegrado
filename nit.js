@@ -739,6 +739,29 @@ const NitData = {
             const eventos = this._parsearRelatorio(texto);
             if (!eventos.length) { showToast('Nenhuma ocorrência encontrada.', 'warning'); return; }
 
+            // ── Guarda de data do plantão ──
+            // A data do cabeçalho vira dataReferencia de todo o lote; uma data errada
+            // (ex.: modelo CEMOB reaproveitado) esconde os cards do painel em silêncio.
+            // Aceita sem aviso somente a data de hoje: o relatório CEMOB conta por dia
+            // de calendário (00:01 → 00:00). Qualquer outra data exige confirmação.
+            const dataRef = eventos[0]?.dataReferencia || '';
+            if (!this._dataPlantaoPlausivel(dataRef)) {
+                nitConfirm(
+                    '⚠️ Data do plantão divergente',
+                    `O cabeçalho do relatório indica *${dataRef || '(sem data)'}*, mas hoje é *${NitData.hoje()}*.\n\nSe processar, as ocorrências ficam registradas com a data do cabeçalho e não aparecem no painel de hoje.\n\nConfira o relatório com o CEMOB. Processar mesmo assim?`,
+                    () => this._processarComValidacoes(texto, eventos),
+                    () => showToast('Processamento cancelado: data do plantão divergente.', 'warning', 5000)
+                );
+                return;
+            }
+            this._processarComValidacoes(texto, eventos);
+        },
+
+        _dataPlantaoPlausivel(dataRef) {
+            return dataRef === NitData.hoje();
+        },
+
+        _processarComValidacoes(texto, eventos) {
             // ── Validação: códigos de 1 dígito são incomuns e podem ser erro de formatação ──
             const suspeitos = eventos.filter(ev => /^[A-Z0-9]$/.test(ev.codigo));
             if (suspeitos.length) {
