@@ -568,6 +568,58 @@ Data de cabeçalho divergente nunca resulta em gravação silenciosa, coberta po
 
 ---
 
+## TODO-031 — Aviso de virada do dia depende do navegador local
+
+**Estado:** [INVESTIGAR]  
+**Domínio:** Semáforo / continuidade  
+**Origem:** leitura do código em 10/10/2026  
+**Prioridade:** NÃO BLOQUEANTE
+
+### Evidência atual
+
+`NitProcessamento.verificar()` lê o último processamento de `localStorage` (`nit-ultimo-processamento-v1`). O modal de virada (`modal-virada-dia`) só é exibido no navegador que realizou o processamento anterior.
+
+O mesmo metadado é espelhado em `meta/ultimoProcessamento` no Firebase, mas não é lido por `verificar()`.
+
+### Pergunta/ação
+
+Confirmar se o operador da manhã pode usar outro computador/navegador. Se puder, avaliar uso de `meta/ultimoProcessamento` como fonte da verificação.
+
+### Impacto
+
+Operador em outro dispositivo não recebe orientação de lacuna noturna/relatório pendente.
+
+### Critério de conclusão
+
+Comportamento esperado definido e, se aplicável, aviso exibido independentemente do dispositivo.
+
+---
+
+## TODO-032 — Sinal de herança é transitório
+
+**Estado:** [DECIDIR]  
+**Domínio:** Semáforo / interface  
+**Origem:** leitura do código em 10/10/2026  
+**Prioridade:** NÃO BLOQUEANTE
+
+### Evidência atual
+
+Após `_reprocessar()`, a única indicação de pendências herdadas é o toast `N pendência(s) herdada(s) do dia anterior.` (duração padrão de 3 s). Os cards herdados não possuem marcação persistente.
+
+### Pergunta/ação
+
+Decidir se a herança deve permanecer visível ao operador após o processamento (ex.: marcação no card ou no resumo), considerando o TODO-022 (prévia) para não duplicar interfaces.
+
+### Impacto
+
+Operador que não vê o toast não percebe que há ocorrências abertas vindas de plantão anterior.
+
+### Critério de conclusão
+
+Decisão registrada; se aprovada, sinal persistente implementado sem alterar herança, identidade ou persistência.
+
+---
+
 # 4. Publicação segura e continuidade operacional
 
 ## TODO-017 — Implantar publicação segura e rollback operacional
