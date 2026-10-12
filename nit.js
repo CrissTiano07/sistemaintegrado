@@ -803,35 +803,136 @@ const NitData = {
             DOM.relatorioBrutoInput.value = '';
         },
 
-        // ── Plano A: conferência de integridade do processamento ──────────────
-        // Observa o resultado já materializado no DOM sem alterar o motor,
-        // Firebase, eventoId ou qualquer ocorrência.
+        // ── Plano A v2: conferência de integridade do processamento ───────────
+        // Somente observa o resultado já materializado no DOM e informa o operador.
+        // NÃO altera motor, Firebase, eventoId, herança ou qualquer ocorrência.
+        // Compara relatório × NIT nos dois sentidos (faltas e sobras), estado
+        // (pendente × normalizado) e visibilidade no painel de hoje.
+        // Referências: CONTRATO-ENTRADA-CEMOB INV-01/06/07 · TODO-026 · TODO-030.
         _verificarIntegridadeProcessamento(eventos) {
             const esperados = Array.isArray(eventos) ? eventos.filter(ev => ev?.eventoId) : [];
             if (!esperados.length) return;
 
-            // As mutações de cards feitas por _cargaInicial/_reprocessar são síncronas no DOM.
-            // Portanto, esta conferência não depende do retorno assíncrono do Firebase.
-            const materializados = new Set(
-                Array.from(document.querySelectorAll('#tab-semaforo .kanban-card[data-eventoid]'))
-                    .map(el => el.dataset.eventoid)
-                    .filter(Boolean)
-            );
+            const hoje    = NitData.hoje();
+            const dataRel = esperados[0].dataReferencia || hoje;
+            const cards   = Array.from(document.querySelectorAll('#tab-semaforo .kanban-card[data-eventoid]'));
+            const porId   = new Map(cards.map(el => [el.dataset.eventoid, el]));
+            const idsEsperados = new Set(esperados.map(ev => ev.eventoId));
+            const ehNorm  = el => !!el.closest('#coluna-normalizados');
 
-            const ausentes = esperados.filter(ev => !materializados.has(ev.eventoId));
-            this._exibirIntegridadeProcessamento(esperados.length, ausentes);
+            const r = { faltas: [], mesclados: [], semInicio: [], sobras: [], estado: [], escondidos: [] };
+            const representantes = new Set(); // cards que representam alguma ocorrência do relatório
+
+            esperados.forEach(ev => {
+                const esperadoNorm = this.statusFromSecao(ev.secao, ev) === 'NORMALIZADO';
+                let card = porId.get(ev.eventoId);
+
+                if (!card) {
+                    // Card do mesmo SCN, no plantão deste relatório, que não é ele próprio
+                    // uma ocorrência do relatório → absorção por herança via código.
+                    const candidato = cards.find(el =>
+                        el.dataset.codigo === String(ev.codigo) &&
+                        el.dataset.datareferencia === ev.dataReferencia &&
+                        !idsEsperados.has(el.dataset.eventoid));
+                    if (candidato && (!ev.inicio || !candidato.dataset.inicio)) {
+                        r.semInicio.push({ ev, alvo: candidato });
+                        card = candidato;
+                    } else if (candidato) {
+                        r.mesclados.push({ ev, alvo: candidato });
+                        card = candidato;
+                    } else {
+                        r.faltas.push({ ev });
+                        return;
+                    }
+                }
+
+                representantes.add(card.dataset.eventoid);
+                if (card.dataset.datareferencia !== hoje) r.escondidos.push({ ev, card });
+                if (esperadoNorm !== ehNorm(card)) r.estado.push({ ev, card, esperadoNorm });
+            });
+
+            // Sobras: cards do mesmo plantão que nenhuma ocorrência do relatório representa
+            cards.forEach(el => {
+                if (el.dataset.datareferencia !== dataRel) return;
+                if (representantes.has(el.dataset.eventoid)) return;
+                r.sobras.push({ card: el });
+            });
+
+            // Totais: CEMOB (relatório) × NIT (painel de hoje)
+            const visiveis = cards.filter(el => el.dataset.datareferencia === hoje);
+            const cemobNorm = esperados.filter(ev => this.statusFromSecao(ev.secao, ev) === 'NORMALIZADO').length;
+            const nitNorm   = visiveis.filter(ehNorm).length;
+            r.totais = {
+                cemob: { total: esperados.length, pend: esperados.length - cemobNorm, norm: cemobNorm },
+                nit:   { total: visiveis.length,  pend: visiveis.length - nitNorm,     norm: nitNorm },
+            };
+
+            this._exibirIntegridadeProcessamento(r, dataRel);
         },
 
-        _exibirIntegridadeProcessamento(total, ausentes) {
+        _exibirIntegridadeProcessamento(r, dataRel) {
             const tab = document.querySelector('#tab-semaforo');
             if (!tab) return;
 
             // Cada novo processamento substitui o resultado de integridade anterior.
             document.getElementById('nit-integridade-processamento')?.remove();
 
-            if (!ausentes.length) {
-                showToast(`✓ Processamento conferido — ${total}/${total} ocorrências.`, 'success', 4000);
+            const { cemob, nit } = r.totais;
+            const totaisIguais = cemob.total === nit.total && cemob.pend === nit.pend && cemob.norm === nit.norm;
+            const qtdProblemas = r.faltas.length + r.mesclados.length + r.semInicio.length +
+                                 r.sobras.length + r.estado.length + r.escondidos.length;
+
+            if (!qtdProblemas && totaisIguais) {
+                showToast(`✓ Processamento conferido — ${cemob.total}/${cemob.total} ocorrências.`, 'success', 4000);
                 return;
+            }
+
+            const esc = v => String(v ?? '').replace(/[<>&"']/g, c =>
+                ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' })[c]);
+            const hora = v => esc((v || '').split(' ')[1] || v || 'sem início');
+            const scn  = c => `SCN ${esc(c)}`;
+
+            const blocos = [];
+            const bloco = (titulo, itens, acao) => {
+                if (!itens.length) return;
+                blocos.push(`
+                    <div style="margin-top:10px">
+                        <strong>${titulo}</strong>
+                        ${itens.map(t => `<div>• ${t}</div>`).join('')}
+                        ${acao ? `<div style="margin-top:3px;opacity:.85"><em>${acao}</em></div>` : ''}
+                    </div>`);
+            };
+
+            bloco(`⚠️ No relatório, mas fora do painel (${r.faltas.length})`,
+                r.faltas.map(({ ev }) => `${scn(ev.codigo)} — início ${hora(ev.inicio)}`),
+                'Confira se há outra ocorrência do mesmo SCN no painel: o NIT pode tê-las tratado como uma só.');
+
+            bloco(`⚠️ Juntadas a uma ocorrência anterior do mesmo SCN (${r.mesclados.length})`,
+                r.mesclados.map(({ ev, alvo }) =>
+                    `${scn(ev.codigo)} — relatório: início ${hora(ev.inicio)} · painel: início ${hora(alvo.dataset.inicio)}`),
+                'Se forem falhas diferentes, o painel está mostrando uma ocorrência a menos.');
+
+            bloco(`ℹ️ Ocorrência sem horário de início (${r.semInicio.length})`,
+                r.semInicio.map(({ ev, alvo }) => `${scn(ev.codigo)} — relatório: início ${hora(ev.inicio)} · painel: início ${hora(alvo.dataset.inicio)} (associada à ocorrência existente)`),
+                'Sem início, a identidade da ocorrência é provisória. Confira se é a mesma ocorrência.');
+
+            bloco(`⚠️ No painel, mas fora deste relatório (${r.sobras.length})`,
+                r.sobras.map(({ card }) => {
+                    const st = card.closest('#coluna-normalizados') ? 'normalizada' : 'pendente';
+                    return `${scn(card.dataset.codigo)} — início ${hora(card.dataset.inicio)} (${st})`;
+                }),
+                'O CEMOB deixou de listar. Confira se foi normalizada ou se o relatório está incompleto.');
+
+            bloco(`⚠️ Situação diferente do relatório (${r.estado.length})`,
+                r.estado.map(({ ev, esperadoNorm }) =>
+                    `${scn(ev.codigo)} — relatório: ${esperadoNorm ? 'normalizada' : 'pendente'} · painel: ${esperadoNorm ? 'pendente' : 'normalizada'}`),
+                'O NIT não alterou a situação. Confira com o CEMOB e ajuste pela Central, se necessário.');
+
+            if (r.escondidos.length) {
+                const datas = [...new Set(r.escondidos.map(({ card }) => card.dataset.datareferencia))].join(', ');
+                bloco(`⚠️ Registradas com outra data — não aparecem no painel de hoje (${r.escondidos.length})`,
+                    [`Data do plantão registrada: ${esc(datas)}`],
+                    'Confira a data no cabeçalho do relatório.');
             }
 
             const painel = document.createElement('div');
@@ -849,34 +950,30 @@ const NitData = {
                 'line-height:1.35'
             ].join(';');
 
-            const detalhes = ausentes.map(ev => {
-                const codigo = String(ev.codigo || 'N/I').replace(/[<>&\"']/g, c => ({
-                    '<':'&lt;', '>':'&gt;', '&':'&amp;', '\"':'&quot;', "'":'&#39;'
-                })[c]);
-                return `
-                    <div style="margin-top:8px">
-                        <strong>⚠️ SCN ${codigo} não processado</strong>
-                        <div style="margin-top:5px"><strong>Verifique:</strong></div>
-                        <div>• <strong>Início/Fim:</strong> datas e horários</div>
-                        <div>• <strong>Texto:</strong> alteração ou formato fora do padrão</div>
-                    </div>`;
-            }).join('');
-
+            const resumo = `Conferência: relatório × painel não conferem`;
             painel.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                    <strong>Processamento com divergência — ${total - ausentes.length}/${total}</strong>
+                    <strong>${resumo}</strong>
                     <button type="button" data-integridade-recolher
                         style="border:0;background:transparent;cursor:pointer;font-weight:700;color:inherit;padding:3px 6px"
                         aria-expanded="true">Recolher</button>
                 </div>
-                <div data-integridade-detalhes>${detalhes}</div>`;
+                <div data-integridade-detalhes>
+                    <table style="margin-top:8px;border-collapse:collapse;font-size:13px">
+                        <tr><th></th><th style="padding:0 10px">Ocorrências</th><th style="padding:0 10px">Pendentes</th><th style="padding:0 10px">Normalizados</th></tr>
+                        <tr><td><strong>Relatório</strong></td><td align="center">${cemob.total}</td><td align="center">${cemob.pend}</td><td align="center">${cemob.norm}</td></tr>
+                        <tr><td><strong>Painel</strong></td><td align="center">${nit.total}</td><td align="center">${nit.pend}</td><td align="center">${nit.norm}</td></tr>
+                    </table>
+                    ${blocos.join('')}
+                    <div style="margin-top:10px;opacity:.85">O NIT não alterou nada por causa desta conferência.</div>
+                </div>`;
 
             const btn = painel.querySelector('[data-integridade-recolher]');
             const corpo = painel.querySelector('[data-integridade-detalhes]');
             btn?.addEventListener('click', () => {
                 const recolhido = corpo.style.display === 'none';
                 corpo.style.display = recolhido ? '' : 'none';
-                btn.textContent = recolhido ? 'Recolher' : `⚠ ${total - ausentes.length}/${total}`;
+                btn.textContent = recolhido ? 'Recolher' : `⚠ Relatório ${cemob.total} × Painel ${nit.total}`;
                 btn.setAttribute('aria-expanded', recolhido ? 'true' : 'false');
             });
 
