@@ -889,50 +889,60 @@ const NitData = {
 
             const esc = v => String(v ?? '').replace(/[<>&"']/g, c =>
                 ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&#39;' })[c]);
-            const hora = v => esc((v || '').split(' ')[1] || v || 'sem início');
-            const scn  = c => `SCN ${esc(c)}`;
+            const hora = v => esc((v || '').split(' ')[1] || v || '—');
+            // Linha no formato do relatório CEMOB: 🚦 CÓDIGO 🚦 ENDEREÇO ● PROBLEMA ● Início/Fim
+            const linha = (o, extra = '') => {
+                const ini = o.inicio ? `Início: ${esc(o.inicio)}` : 'Início: <em>não informado</em>';
+                return `🚦 <strong>${esc(o.codigo)}</strong> 🚦 ${esc(o.endereco || '')} ● ${esc(o.problema || '')} ● ${ini}${extra}`;
+            };
+            const doCard = el => ({
+                codigo: el.dataset.codigo, endereco: el.dataset.endereco,
+                problema: el.dataset.problema, inicio: el.dataset.inicio,
+            });
 
             const blocos = [];
             const bloco = (titulo, itens, acao) => {
                 if (!itens.length) return;
                 blocos.push(`
-                    <div style="margin-top:10px">
+                    <div style="margin-top:12px">
                         <strong>${titulo}</strong>
-                        ${itens.map(t => `<div>• ${t}</div>`).join('')}
-                        ${acao ? `<div style="margin-top:3px;opacity:.85"><em>${acao}</em></div>` : ''}
+                        ${itens.map(t => `<div style="margin-top:4px">${t}</div>`).join('')}
+                        ${acao ? `<div style="margin-top:4px">👉 ${acao}</div>` : ''}
                     </div>`);
             };
 
-            bloco(`⚠️ No relatório, mas fora do painel (${r.faltas.length})`,
-                r.faltas.map(({ ev }) => `${scn(ev.codigo)} — início ${hora(ev.inicio)}`),
-                'Confira se há outra ocorrência do mesmo SCN no painel: o NIT pode tê-las tratado como uma só.');
+            bloco(`⚠️ Ocorrência do relatório não aparece no painel (${r.faltas.length})`,
+                r.faltas.map(({ ev }) => linha(ev)),
+                'Verifique a <strong>data e a hora de início</strong> deste semáforo no relatório.');
 
-            bloco(`⚠️ Juntadas a uma ocorrência anterior do mesmo SCN (${r.mesclados.length})`,
+            bloco(`⚠️ Início diferente do registrado no painel (${r.mesclados.length})`,
                 r.mesclados.map(({ ev, alvo }) =>
-                    `${scn(ev.codigo)} — relatório: início ${hora(ev.inicio)} · painel: início ${hora(alvo.dataset.inicio)}`),
-                'Se forem falhas diferentes, o painel está mostrando uma ocorrência a menos.');
+                    `${linha(ev)}<div style="opacity:.85">Painel registra início: ${esc(alvo.dataset.inicio || 'não informado')}</div>`),
+                'Verifique a <strong>data e a hora de início</strong> no relatório: o painel manteve o início já registrado.');
 
-            bloco(`ℹ️ Ocorrência sem horário de início (${r.semInicio.length})`,
-                r.semInicio.map(({ ev, alvo }) => `${scn(ev.codigo)} — relatório: início ${hora(ev.inicio)} · painel: início ${hora(alvo.dataset.inicio)} (associada à ocorrência existente)`),
-                'Sem início, a identidade da ocorrência é provisória. Confira se é a mesma ocorrência.');
+            bloco(`ℹ️ Ocorrência sem data e hora de início (${r.semInicio.length})`,
+                r.semInicio.map(({ ev, alvo }) => ev.inicio
+                    ? `${linha(ev)}<div style="opacity:.85">Painel registrou esta ocorrência sem início</div>`
+                    : linha(ev)),
+                'Verifique a <strong>data e a hora de início</strong> no relatório: sem elas, o NIT não consegue identificar a ocorrência com segurança.');
 
-            bloco(`⚠️ No painel, mas fora deste relatório (${r.sobras.length})`,
+            bloco(`⚠️ Ocorrência do painel não consta no relatório (${r.sobras.length})`,
                 r.sobras.map(({ card }) => {
-                    const st = card.closest('#coluna-normalizados') ? 'normalizada' : 'pendente';
-                    return `${scn(card.dataset.codigo)} — início ${hora(card.dataset.inicio)} (${st})`;
+                    const st = card.closest('#coluna-normalizados') ? 'normalizada no painel' : 'pendente no painel';
+                    return `${linha(doCard(card))} <span style="opacity:.85">(${st})</span>`;
                 }),
-                'O CEMOB deixou de listar. Confira se foi normalizada ou se o relatório está incompleto.');
+                'Verifique se o semáforo foi <strong>normalizado</strong> ou se ficou <strong>fora do relatório</strong>.');
 
             bloco(`⚠️ Situação diferente do relatório (${r.estado.length})`,
                 r.estado.map(({ ev, esperadoNorm }) =>
-                    `${scn(ev.codigo)} — relatório: ${esperadoNorm ? 'normalizada' : 'pendente'} · painel: ${esperadoNorm ? 'pendente' : 'normalizada'}`),
-                'O NIT não alterou a situação. Confira com o CEMOB e ajuste pela Central, se necessário.');
+                    `${linha(ev)}<div style="opacity:.85">Relatório: ${esperadoNorm ? 'normalizada' : 'pendente'} · Painel: ${esperadoNorm ? 'pendente' : 'normalizada'}</div>`),
+                'Verifique a <strong>data e a hora de fim</strong> no relatório.');
 
             if (r.escondidos.length) {
                 const datas = [...new Set(r.escondidos.map(({ card }) => card.dataset.datareferencia))].join(', ');
-                bloco(`⚠️ Registradas com outra data — não aparecem no painel de hoje (${r.escondidos.length})`,
-                    [`Data do plantão registrada: ${esc(datas)}`],
-                    'Confira a data no cabeçalho do relatório.');
+                bloco(`⚠️ Ocorrências registradas com outra data (${r.escondidos.length})`,
+                    [`Data registrada: <strong>${esc(datas)}</strong> — não aparecem no painel de hoje (${esc(NitData.hoje())}).`],
+                    'Verifique a <strong>data no cabeçalho</strong> do relatório.');
             }
 
             const painel = document.createElement('div');
