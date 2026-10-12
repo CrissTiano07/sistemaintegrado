@@ -841,7 +841,11 @@ const NitData = {
                         r.mesclados.push({ ev, alvo: candidato });
                         card = candidato;
                     } else {
-                        r.faltas.push({ ev });
+                        const outra = cards.find(el =>
+                            el.dataset.codigo === String(ev.codigo) &&
+                            el.dataset.datareferencia === ev.dataReferencia &&
+                            !el.closest('#coluna-normalizados'));
+                        r.faltas.push({ ev, outra });
                         return;
                     }
                 }
@@ -911,38 +915,59 @@ const NitData = {
                     </div>`);
             };
 
+            const nitIdentificou = t => `👉 <strong>O NIT identificou que</strong> ${t}`;
+            const fimDe = el => [el.dataset.data_fim, el.dataset.hora_fim].filter(Boolean).join(' ') || el.dataset.fim || '';
+
             bloco(`⚠️ Ocorrência do relatório não aparece no painel (${r.faltas.length})`,
-                r.faltas.map(({ ev }) => linha(ev)),
-                'Verifique a <strong>data e a hora de início</strong> deste semáforo no relatório.');
+                r.faltas.map(({ ev, outra }) => linha(ev) + `<div style="margin-top:2px">` + (outra
+                    ? nitIdentificou(`este semáforo já tem outra ocorrência pendente no painel, com início ${esc(outra.dataset.inicio || 'não informado')}. ` +
+                        `O NIT ainda não registra duas ocorrências pendentes do mesmo semáforo: o painel mostra uma a menos que o relatório. ` +
+                        `Verifique no relatório se são <strong>duas falhas diferentes</strong> ou se o <strong>início</strong> foi digitado errado.`)
+                    : nitIdentificou(`esta ocorrência não foi registrada, e não há outra do mesmo semáforo no painel. ` +
+                        `Verifique a <strong>linha deste semáforo</strong> no relatório (código, início e formato).`)) + `</div>`),
+                '');
 
             bloco(`⚠️ Início diferente do registrado no painel (${r.mesclados.length})`,
-                r.mesclados.map(({ ev, alvo }) =>
-                    `${linha(ev)}<div style="opacity:.85">Painel registra início: ${esc(alvo.dataset.inicio || 'não informado')}</div>`),
-                'Verifique a <strong>data e a hora de início</strong> no relatório: o painel manteve o início já registrado.');
+                r.mesclados.map(({ ev, alvo }) => linha(ev) + `<div style="margin-top:2px">` +
+                    nitIdentificou(`o relatório informa início <strong>${esc(ev.inicio)}</strong>, mas o painel registrou este semáforo com início ` +
+                        `<strong>${esc(alvo.dataset.inicio || 'não informado')}</strong>. O NIT manteve o início do painel. ` +
+                        `Verifique no relatório qual é o <strong>início correto</strong>.`) + `</div>`),
+                '');
 
             bloco(`ℹ️ Ocorrência sem data e hora de início (${r.semInicio.length})`,
-                r.semInicio.map(({ ev, alvo }) => ev.inicio
-                    ? `${linha(ev)}<div style="opacity:.85">Painel registrou esta ocorrência sem início</div>`
-                    : linha(ev)),
-                'Verifique a <strong>data e a hora de início</strong> no relatório: sem elas, o NIT não consegue identificar a ocorrência com segurança.');
+                r.semInicio.map(({ ev }) => linha(ev) + `<div style="margin-top:2px">` + (ev.inicio
+                    ? nitIdentificou(`o painel registrou esta ocorrência antes, quando o relatório não informava o início. ` +
+                        `Verifique se o início <strong>${esc(ev.inicio)}</strong> está correto no relatório.`)
+                    : nitIdentificou(`o relatório não informa o <strong>início</strong> deste semáforo; sem ele, a identificação da ocorrência é provisória. ` +
+                        `Verifique o campo <strong>Início</strong> no relatório.`)) + `</div>`),
+                '');
 
             bloco(`⚠️ Ocorrência do painel não consta no relatório (${r.sobras.length})`,
                 r.sobras.map(({ card }) => {
-                    const st = card.closest('#coluna-normalizados') ? 'normalizada no painel' : 'pendente no painel';
-                    return `${linha(doCard(card))} <span style="opacity:.85">(${st})</span>`;
+                    const norm = !!card.closest('#coluna-normalizados');
+                    return linha(doCard(card)) + `<div style="margin-top:2px">` +
+                        nitIdentificou(`esta ocorrência está ${norm ? 'normalizada' : 'pendente'} no painel, mas não aparece neste relatório. ` +
+                            (norm ? `Verifique se o semáforo foi <strong>omitido</strong> da lista de normalizados do relatório.`
+                                  : `Verifique se o semáforo foi <strong>normalizado</strong> (deveria constar em NORMALIZADOS com Fim) ou se foi <strong>omitido</strong> do relatório.`)) +
+                        `</div>`;
                 }),
-                'Verifique se o semáforo foi <strong>normalizado</strong> ou se ficou <strong>fora do relatório</strong>.');
+                '');
 
             bloco(`⚠️ Situação diferente do relatório (${r.estado.length})`,
-                r.estado.map(({ ev, esperadoNorm }) =>
-                    `${linha(ev)}<div style="opacity:.85">Relatório: ${esperadoNorm ? 'normalizada' : 'pendente'} · Painel: ${esperadoNorm ? 'pendente' : 'normalizada'}</div>`),
-                'Verifique a <strong>data e a hora de fim</strong> no relatório.');
+                r.estado.map(({ ev, card, esperadoNorm }) => linha(ev) + `<div style="margin-top:2px">` + (esperadoNorm
+                    ? nitIdentificou(`o relatório informa esta ocorrência como normalizada, mas o painel continua pendente. ` +
+                        `Verifique a <strong>data e a hora de fim</strong> no relatório.`)
+                    : nitIdentificou(`o painel registrou esta ocorrência como normalizada${fimDe(card) ? ` (fim ${esc(fimDe(card))})` : ''}, ` +
+                        `mas o relatório a lista como pendente, sem fim. O NIT manteve a normalização. ` +
+                        `Verifique no relatório se o <strong>fim</strong> foi removido por engano ou se a falha voltou.`)) + `</div>`),
+                '');
 
             if (r.escondidos.length) {
                 const datas = [...new Set(r.escondidos.map(({ card }) => card.dataset.datareferencia))].join(', ');
                 bloco(`⚠️ Ocorrências registradas com outra data (${r.escondidos.length})`,
-                    [`Data registrada: <strong>${esc(datas)}</strong> — não aparecem no painel de hoje (${esc(NitData.hoje())}).`],
-                    'Verifique a <strong>data no cabeçalho</strong> do relatório.');
+                    [nitIdentificou(`estas ocorrências foram registradas com a data <strong>${esc(datas)}</strong>, diferente de hoje (${esc(NitData.hoje())}), e por isso não aparecem no painel. ` +
+                        `Verifique a <strong>data no cabeçalho</strong> do relatório.`)],
+                    '');
             }
 
             const painel = document.createElement('div');
