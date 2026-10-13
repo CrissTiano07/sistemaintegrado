@@ -1,0 +1,7 @@
+{
+  "name": "nit-testes",
+  "private": true,
+  "description": "Bateria de testes do motor do NIT (T01–T21) em navegador simulado",
+  "scripts": { "test": "node bateria.js" },
+  "dependencies": { "jsdom": "24.1.3" }
+}
