@@ -454,10 +454,30 @@ Variações triviais absorvidas normalmente pelo parser não precisam gerar Caso
 
 ## TODO-026 — Validar processamento completo Bruto × NIT
 
-**Estado:** [PENDENTE]  
+**Estado:** [PENDENTE] — detecção pós-processamento implementada em 12/10/2026 (Plano A v2)  
 **Domínio:** Semáforo / integridade  
 **Origem:** evolução do TODO-018  
 **Prioridade:** BLOQUEANTE
+
+### Progresso — Plano A v2 (12/10/2026)
+
+`_verificarIntegridadeProcessamento()` passou a comparar, **após** o processamento e sem alterar nada:
+
+```text
+faltas      → no relatório, sem card no painel
+mesclados   → absorvidos por card anterior do mesmo SCN (cardHerdado)
+semInicio   → identidade provisória (eventoId com Date.now)
+sobras      → card do plantão fora do relatório (caso 1430)
+estado      → pendente × normalizado divergente do relatório
+escondidos  → registrados com data ≠ hoje (não aparecem no painel)
+totais      → Relatório × Painel (Ocorrências / Pendentes / Normalizados)
+```
+
+Validado na bateria T01–T21 (`bateria.js`): cenários corretos sem alerta; T06, T07, T08, T10b, T13, T14, T20 e T21 passam a gerar alerta específico em vez de silêncio ou "não processado" genérico.
+
+Pendente neste TODO: prévia **antes** da persistência (TODO-022) e correção das causas (`cardHerdado`, reconciliação FIM → ausente), que exigem plano próprio.
+
+Limitação conhecida: a conferência pressupõe relatório CEMOB completo do dia. Colar relatório parcial gera "sobras" legítimas do ponto de vista da comparação.
 
 ### Objetivo
 
@@ -554,6 +574,8 @@ Não altera parser, identidade, herança, persistência nem exportação.
 - incorporar a verificação como invariante do Contrato de Entrada CEMOB;
 - criar caso de teste no TODO-020;
 - absorver o aviso no Guardião/prévia (TODO-021/TODO-022) sem duplicar interface.
+
+Atualização 12/10/2026: a conferência pós-processamento (TODO-026, Plano A v2) passou a informar ocorrências registradas com data diferente de hoje, eliminando o falso "✓ conferido" quando o operador confirma uma data divergente.
 
 ### Achados relacionados registrados na investigação
 
