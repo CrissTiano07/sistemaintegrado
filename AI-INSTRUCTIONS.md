@@ -296,7 +296,7 @@ ocorrência NORMALIZADA
 → não participa da herança atual
 ```
 
-Não implemente `NORMALIZADO → PENDENTE` por inferência. Esse ponto permanece `VALIDAR`.
+Não implemente `NORMALIZADO → PENDENTE` por inferência. Decidido em 14/10/2026: só por decisão humana explícita (BR-NOR-007, botão "Retornar aos pendentes" na 13.2); até lá, alerta na conferência.
 
 ## 6.4 Estado operacional
 

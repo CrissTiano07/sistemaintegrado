@@ -418,6 +418,8 @@ Essa situação:
 
 Antes da decisão humana, a contradição deve ser diagnosticada e o estado conhecido deve permanecer protegido.
 
+> 14/10/2026: confirmado pelo responsável. Até a decisão, o card continua normalizado e a conferência mostra "Atividade incomum: normalizado voltou sem fim". A decisão humana será o botão "Retornar aos pendentes" (NIT 13.2), reversível.
+
 ## BR-NOR-008 — Reconciliação preserva identidade quando confirmada como retificação
 **Estado:** 🔵 CONTRATO
 
@@ -584,6 +586,69 @@ detectar
 ```
 
 Uma situação não compreendida é preferível a uma decisão automática capaz de corromper identidade, histórico ou contagem.
+
+
+## BR-CON-010 — Um semáforo tem no máximo uma ocorrência pendente
+**Estado:** 🔵 CONTRATO — decidido pelo responsável em 14/10/2026 (NIT 13.1)
+
+Uma nova ocorrência do mesmo semáforo só existe **depois do fim explícito** da anterior.
+
+```text
+anterior com fim  e  fim ≤ novo início  → nova ocorrência
+anterior sem fim                        → continua a mesma ocorrência
+```
+
+Problema adicional no mesmo evento atualiza a mesma ocorrência (observações, tipo, problema).
+
+## BR-CON-011 — Reincidência é marcada pela data do relatório
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+A marca ↺ REINC vale quando a ocorrência anterior do mesmo semáforo aparece no relatório do mesmo dia (`dataReferencia`) ou é encerrada nele — inclusive se começou no dia anterior. Anterior encerrada em dia que não aparece no relatório atual → nova ocorrência **sem** marca.
+
+A marca é visual. A criação da nova ocorrência depende da condição temporal (BR-CON-010), não da marca.
+
+## BR-CON-012 — Sobreposição ou dados insuficientes não criam reincidência
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+Se o fim da anterior é **posterior** ao novo início, ou falta data/hora para comparar, o NIT **não** cria reincidência automaticamente: preserva a pendência, guarda a linha no card e sinaliza na conferência. A comparação usa data e hora completas (a meia-noite não engana a regra).
+
+## BR-CON-013 — Identidade estável com horários anteriores
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+A chave do card no Firebase não muda. Quando a fonte corrige o início, o card passa a ter:
+
+```text
+inicio          → início atual (referência do encerramento)
+inicioAnterior  → início imediatamente anterior
+aliases/{id}    → todos os eventoId anteriores (reconhecimento)
+```
+
+Só o **início atual** encerra a ocorrência. Horários anteriores reconhecem o card, mas não o encerram e não impedem o encerramento. Correção de horário é registrada (toast "⟲ Horário corrigido") e não exige ação do operador. Cards antigos (sem `aliases`) são reconhecidos pela própria chave: nenhuma migração.
+
+## BR-CON-014 — Duas linhas abertas do mesmo semáforo são inconsistência da fonte
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+O NIT mantém **um** card pendente, guarda a outra linha no card (`aliases`) e alerta na conferência. Nenhuma linha é descartada em silêncio.
+
+## BR-CON-015 — Identidade sem início é fixa
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+Sem Início, `eventoId = codigo + "_SI" + data do plantão (+ "_n" se houver mais de uma)`. Não usa `Date.now()`. Cards antigos com ID de horário continuam reconhecidos.
+
+## BR-CON-016 — Pendências duplicadas legadas
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+Pares de pendentes do mesmo semáforo criados antes da BR-CON-010 são preservados (nada é apagado ou mesclado automaticamente) e sinalizados na conferência. O operador resolve com "Retirar do painel" (NIT 13.2), reversível e indicado na conferência.
+
+## BR-CON-017 — Card cujo início sumiu e o semáforo aparece com um único horário já encerrado
+**Estado:** 🔵 CONTRATO — decidido pelo responsável em 15/10/2026 (substitui a decisão provisória C16)
+
+O relatório é cumulativo no dia: uma linha só some se a fonte a editou. Se o início do card pendente não aparece mais e o semáforo vem com **uma única** outra linha, já encerrada, e nenhuma aberta, é **correção de horário com encerramento no mesmo card** (CONTRATO §13, caso real 468/790): mesma chave, equipe e histórico preservados, início anterior guardado, registro na conferência ("⟲ Horário corrigido"). Com várias linhas encerradas, ou uma encerrada e outra aberta, o card **não** é normalizado: a situação é sinalizada.
+
+## BR-CON-018 — Decisão única para carga inicial, reprocessamento e conferência
+**Estado:** 🔵 CONTRATO — 14/10/2026
+
+As três etapas usam a mesma classificação (`_classificarLinhas`), que olha o relatório **inteiro** e o estado dos cards, em ordem de horário — nunca pela ordem das linhas. A conferência reclassifica o estado gravado: se o motor aplicou tudo, toda linha volta como "manter" ou como inconsistência conhecida.
 
 ---
 
@@ -960,3 +1025,30 @@ Casos encontrados em produção não alteram esse protocolo. Um novo incidente a
 **Status:** regras e contratos consolidados a partir da auditoria disponível e das decisões validadas para integridade/reconciliação do processamento CEMOB.
 
 **Próxima etapa da entrega:** refletir os contratos consolidados no `WORKFLOW.md` e, em seguida, transformá-los em casos de teste de aceitação antes da implementação.
+
+## BR-CON-019 — Fim corrigido pela fonte (13.2, autorizado 18/10/2026)
+
+Ocorrência já normalizada cuja linha (mesmo início) volta com **outro fim**: o card recebe o fim novo, guarda o anterior em `fimAnterior` e mostra "⟲ fim corrigido {antes} → {depois}". Fim **antes do início** não é aplicado: o card fica como está e o NIT-13 pergunta à fonte.
+
+## BR-CON-020 — Linha sem início não apaga início conhecido (13.2, autorizado 19/10/2026)
+
+Se o relatório traz o semáforo **só** com linha sem início e o card pendente já tem início, o card fica como está (critério C1: proteger o processado contra o bruto). O NIT-14 pergunta à fonte. Quando há linha com início e linha sem início, a correção de horário vem da linha **com** início.
+
+## BR-CON-021 — Identidade de linha sem início não colide (13.2, autorizado 19/10/2026)
+
+O id de linha sem início é `{código}_SI{data}`. Se esse id já pertence a outra ocorrência (card que nasceu sem início e depois ganhou início ou foi normalizado), a nova pendência recebe `{código}_SI{data}_{n}` (próximo livre). Sem isso a pendência nova se perdia em silêncio.
+
+## BR-DEC-001 — Decisões do operador (13.2)
+
+- NIT-10 MANTER vale enquanto o semáforo estiver fora do relatório; voltou e sumiu de novo → pergunta outra vez.
+- NIT-11 MANTER NORMALIZADO vale enquanto a fonte insistir na linha sem fim; a fonte devolveu o fim → a decisão é esquecida.
+- NIT-11 REABRIR não é oferecido se o semáforo já tem outra pendência (BR-CON-010).
+- TIRAR nunca apaga: grava `retirado` no card; DESFAZER limpa. Card retirado que a fonte volta a listar volta ao painel (mesmo card).
+
+## BR-DEC-002 — Normalização manual é provisória (13.2, 20/10/2026)
+
+- Normalizar à mão (✓ do card ou NORMALIZOU do NIT-10) grava `normManual {ts, por, fim}` no card: o painel mostra normalizado na hora, com a etiqueta ✋.
+- Enquanto a fonte ainda listar a linha aberta, o card NÃO volta a pendente e não gera NIT-11 ("voltou atrás"); aparece o NIT-17 azul (não conta). Normalizado à mão que some do relatório não gera NIT-10.
+- Quando a fonte manda a linha com fim, vale o horário da fonte (BR-CON-019 se for diferente: ⟲ fim corrigido) e `normManual` é apagado.
+- REABRIR no NIT-17 devolve o card a pendente e apaga `normManual`; DESFAZER restaura.
+- O relatório de saída usa o estado atual do painel (não marca nada).

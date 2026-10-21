@@ -763,6 +763,8 @@ histórico operacional
 
 O desafio do Guardião é impedir que uma retificação seja confundida com reincidência e que uma reincidência seja confundida com continuidade.
 
+> **Atualização 14/10/2026 (BR-CON-010 a 012):** "novo início legítimo" significa novo início **depois do fim explícito** da ocorrência anterior do mesmo semáforo (fim ≤ novo início, com data e hora completas). Com a anterior ainda aberta, a nova linha não cria segunda pendência: é guardada no card e sinalizada como inconsistência da fonte. Sobreposição ou dados insuficientes não criam reincidência automaticamente.
+
 ---
 
 # 23. Ausência de campo crítico
@@ -1005,6 +1007,8 @@ Uma retificação não deve produzir segundo card da mesma ocorrência.
 ### INV-CEMOB-03 — Não colapsar reincidência real
 
 Uma nova ocorrência legítima não deve herdar silenciosamente identidade operacional anterior.
+
+> 14/10/2026: reincidência real exige o fim explícito da anterior (BR-CON-010). Duas linhas abertas do mesmo semáforo não são reincidência: são inconsistência da fonte (BR-CON-014), sem perda de nenhuma linha.
 
 ### INV-CEMOB-04 — Não reescrever histórico
 
