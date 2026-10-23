@@ -1,23 +1,109 @@
 # HANDOFF.md — NIT
 
 > Ponto de retomada do trabalho. Leia depois de `CONTEXT.MD` e `AI-INSTRUCTIONS.md`.
-> Atualizado em: **14/10/2026**.
-> Este arquivo registra **estado e próximos passos**. Regras ficam em `BUSINESS-RULES.md` / `CONTRATO-ENTRADA-CEMOB.md`; pendências detalhadas, em `TODO.md`.
+> Atualizado em: **22/10/2026**.
+> Este arquivo registra **estado e próximos passos** (seções 1–6). Regras ficam em `BUSINESS-RULES.md`, `CONTRATO-ENTRADA-CEMOB.md` e `MENSAGENS.md`; pendências detalhadas, em `TODO.md`.
+> Abaixo da seção 6 fica o **histórico cronológico** (não reescrever; só acrescentar).
 
 ---
 
-## 1. Estado da produção
+## 1. Estado da produção (22/10/2026)
 
 | Item | Situação |
 |---|---|
-| Versão em produção | **v13** — repositório `sistemaintegrado` (GitHub Pages), Firebase `nit-operacional` |
-| Contingência | **v10** — repositório `nit-nucleo-inteligencia-trafego`, outro link. **Sem Firebase e sem nenhuma integração com a v13** (só frontend, localStorage). Usada só em pane. Retomar o que foi feito nela é tarefa pós-entrega (prioridade após a 1ª entrega) |
-| `nit.js` | carregado por `index.html` como `nit.js?v=20261012` |
-| Exportação para planilha | funcionando; o exportador real **não é** o documentado (cursores `meta/ultimaExportacao/cliente_b` parados desde 10/07/2026) — TODO-005/006 |
+| Versão em produção | **v13 com 13.1 + 13.2** — publicada em 21/10/2026 de madrugada; repositório `sistemaintegrado` (GitHub Pages), Firebase `nit-operacional` |
+| Arquivos | `index.html` carrega `nit.js?v=20261020-132` e `nit.css?v=20261020-132` (idênticos ao 132homolog8) |
+| Versão anterior (rollback) | commit `33fbec4` (13/10/2026); cópia em `producao-13.2/volta/` do pacote de publicação |
+| Homologação | projeto Firebase `nit-homologacao` + repositório `nit-homologacao` (GitHub Pages, faixa vermelha) |
+| Contingência | **v10** — repositório `nit-nucleo-inteligencia-trafego`. Só frontend (localStorage), **sem Firebase**. Usada só em pane |
+| Regras do Firebase | sem mudança na publicação: `meta` e `auditoria` já liberados para login. `usuarios_autorizados` só grava pelo console |
+| Exportação para planilha | **exportador real** atualiza `cursor_exportacao/cliente_b` na raiz (não o `meta/ultimaExportacao` documentado, parado desde 10/07). Código do exportador (Apps Script) **não está no repositório** |
+| Usuários | cadastrados à mão no console (`usuarios_autorizados/{email com . e @ → \|}` = `{ nome, turno, ativo }`) |
+
+**Período de estabilização (decisão do Cristiano, 22/10 23:39):** novas implementações pausadas até o Sistema se mostrar estável em produção (usuários novos, turnos). Exceção: defeito que trave ou faça o Sistema errar — mesmo assim **laboratório → homologação → produção**.
 
 ---
 
-## 2. Entregue em 09–12/10/2026
+## 2. Regra de trabalho
+
+- **Toda mudança, qualquer uma, passa por laboratório → homologação → produção.** Sem exceção.
+- Publicação em produção só com "autorizo" explícito do Cristiano.
+- Textos ao operador: primeiro no `MENSAGENS.md`, validados, depois no código.
+
+---
+
+## 3. Defeitos e achados abertos
+
+| Onde | Problema | Desde | Situação |
+|---|---|---|---|
+| Planilha | Pendência que atravessa o dia vira **duas linhas**: a de ontem recebe o fim (NORMALIZADO); a de hoje fica presa em "EM ATENDIMENTO" sem fim. O NIT mantém o mesmo card (mesmo ID) e só muda `dataReferencia`; é o exportador que cria linha nova. Já existia antes da 13.2 (conferido no laboratório com a versão anterior). Visto no teste de 21/10 (linhas 2009–2013) | antigo | precisa do código do exportador |
+| Planilha | Causa congelada na primeira versão; duplicadas quando a fonte corrige a data do início; duração > 24 h exibida errado | 16/10 | pós-entrega |
+| Tela | Campo **Operador** nos detalhes do card não atualiza nas outras telas (`operador`/`turno` fora da lista do `child_changed`); só com Ctrl+F5. Já existia | antigo | fila |
+| Login | O nome do operador é lido **só no login**: cadastro corrigido não vale até sair/recarregar (caso Fabiano, 22/10) | antigo | fila: ouvir o próprio cadastro ao vivo |
+| Cadastro | Turnos gravados de formas diferentes (`manha`, `manhã`, `"manhã "`) | — | padronizar na tela Usuários |
+| Texto | Depois de USAR relatório de outro dia, a ⚠ DECIDIR não explica que os cards não aparecem hoje (a versão antiga explicava) | 21/10 | 13.2.1, texto a validar |
+| PERGUNTAR | Não avisa que copiou (só fica ⏳ PERGUNTADO) | 21/10 | 13.2.1: "✓ COPIADO. Cole no grupo." |
+| Regras | Nó `recursos/` sem regra: gravação de `recursos/equipes` recusada em silêncio | 16/10 | 13.3 |
+
+---
+
+## 4. Fila de requisições (depois da estabilização)
+
+Ordem decidida: **1º tela Usuários · 2º sidebar de Semáforos**; depois GOS/endereço e 13.2.1.
+
+1. **Tela "Usuários" (13.3)** — proposta conservadora **aguardando aprovação**:
+   - `nit_admins/{chave}: true` só pelo console (dono = Cristiano) — **aprovado**.
+   - ADM cadastra, muda nome/turno, desativa/reativa usuário comum. Ninguém apaga (`ativo: false`).
+   - ADM **não** grava cadastro de outro ADM (regra recusa se `nit_admins/$chave` existe).
+   - `usuarios_log` só acrescenta (quem, quando, o quê, usuário afetado).
+   - Turnos aceitos: `manha`, `tarde`, `noite`, `madrugada` — **aprovado**.
+   - Começar com o Cristiano como único ADM (~1 semana); depois supervisor do setor + supervisora da noite.
+   - Regras testadas no emulador oficial do Firebase antes da homologação.
+2. **Sidebar de Semáforos** — especificação acordada (22/10):
+   - ENTRADA (círculo + PROCESSAR) sempre visível.
+   - SAÍDA: "último: data · hora" (último processamento de qualquer operador); totais Ocorrências · Pendentes · Normalizados; **Ver Relatório** + Incluir normalizados logo abaixo dos totais (nunca empurrado).
+   - Bloco **CAUSAS DO DIA** (fundo neutro, todas as do dia, maior → menor, só as ocorridas) + **ATENDIDOS** VIA LIVRE (laranja) · AMC (azul) — confirmar no laboratório que o card guarda a passagem.
+   - Pré-visualização **retirada**. Botão de recolher a sidebar de Semáforos **retirado** (forçar aberta e apagar `nit-sidebar-collapsed`). Reboques: sidebar fixa, não muda.
+   - Relatório de saída (WhatsApp): cabeçalho com Furtos · Outros motivos · Investigando, como o CEMOB.
+3. **Novo nome:** "Sistema de Gestão de Ocorrências Semafóricas (GOS)".
+4. **Novo endereço no GitHub**, com o nome do Cristiano no final (organização no GitHub ou domínio próprio). Domínio novo precisa entrar nos domínios autorizados do Firebase Authentication; endereço antigo deve redirecionar.
+5. **13.2.1:** hierarquia visual e ícone (padrão Font Awesome) do 📜 O QUE MUDOU; entrada de relatório de outro dia com a data certa; listar os códigos em "pendências de ontem"; não gravar "Nada mudou."; retenção do `auditoria/` (sugestão 7 dias, a decidir); "✓ COPIADO" no PERGUNTAR; texto do NIT-02 depois de USAR.
+6. **Segurança de sessão (sem urgência):** PIN de sessão de 6 dígitos (conferido pelas regras), sessão de 6 h; filtro "minhas ações" no 📜. Decidir depois da estabilização.
+
+---
+
+## 5. Decisões e fatos confirmados com o responsável
+
+- Relatório CEMOB conta por dia de calendário (00:01 → 00:00). Plantão da manhã começa 05:30; último turno encerra 21:30; **turno de madrugada pode existir** (aceito no cadastro).
+- Turno dura 6 h (unidade); dobra = 12 h.
+- "Sem necessidade" **não** é encerrado: continua em monitoramento e participa da herança.
+- Normalizado de dia anterior não tem mais valor operacional para identidade.
+- Planilha é **saída**; OPERANDO_CRUZAMENTO é preenchida ao arrastar o card (despacho).
+- Prioridade: o motor funcionar sem bloquear a operação; erros não podem ser silenciosos.
+- Um semáforo tem no máximo uma pendência; reincidência exige fim da anterior; normalizado que volta sem fim só por decisão humana; legado preservado e sinalizado.
+- Normalização à mão é **provisória** até a fonte mandar o fim (vale o horário da fonte).
+- Relatório de saída não leva marcações de "a confirmar" ("polui").
+- Recolher colunas só à mão; quando a ⚠ DECIDIR aparece, as outras deslizam.
+- Critérios universais: C1 proteger o já processado · C2 não criar erro novo · C3 operador desfaz a própria ação · C4 o NIT nunca para · C5 alerta proporcional ao impacto.
+- Firebase no plano gratuito (100 conexões simultâneas — cada aba/aparelho conta; 1 GB; 10 GB/mês). Não alimentar o banco à toa.
+
+---
+
+## 6. Como retomar com uma IA (qualquer plano / fornecedor)
+
+1. Envie: `CONTEXT.MD`, `AI-INSTRUCTIONS.md`, este `HANDOFF.md`, `MENSAGENS.md` e os arquivos do problema (normalmente `nit.js` e o relatório CEMOB envolvido).
+2. Exija o protocolo do `AI-INSTRUCTIONS.md`: ler → localizar → plano (objetivo, arquivos, riscos, validação) → **aprovação explícita** → mudança mínima → validação → documentação.
+3. Antes de homologar: rodar as baterias em `testes/` (`LEIA-ME.md`): 13.2, 13.1, classificação, causa, bateria, gravação e estresse. Resultado pior que o anterior = não seguir.
+4. Publique com mensagem de commit descritiva e guarde os arquivos anteriores para rollback.
+
+Documentos citados em conversas anteriores **que não existem no repositório**: `TESTES-ACEITACAO-CEMOB.md`, `AUDITOR-INTEGRIDADE-NIT-v1.0.md`, `ADR-008`, `ADR-009`, pasta `docs/adr/`. Não presuma o conteúdo deles.
+
+---
+---
+
+# HISTÓRICO (registro cronológico — só acrescentar)
+
+## 09–12/10/2026 — entregue (antes da 13.1)
 
 **Aviso de data do plantão (TODO-030).** Antes de gravar, se a data do cabeçalho do relatório ≠ hoje, o NIT avisa. Confirmar processa como antes; Cancelar não grava nada. Origem: incidente de 09/10, cabeçalho `13/09/2026` escondeu 26 cards.
 
@@ -38,7 +124,7 @@ Mensagens no formato do CEMOB: `🚦 código 🚦 endereço ● problema ● In�
 
 ---
 
-## 2b. NIT 13.1 — em laboratório (14/10/2026), NÃO publicado
+## 14–16/10/2026 — NIT 13.1 em laboratório (publicada em 21/10/2026)
 
 Regra aprovada: **um semáforo, uma pendência** (BUSINESS-RULES BR-CON-010 a 018). Implementação em laboratório:
 
@@ -57,7 +143,7 @@ Regra aprovada: **um semáforo, uma pendência** (BUSINESS-RULES BR-CON-010 a 01
 - Registrado a pedido do responsável (tratar em momento oportuno): **relatório de saída** — normalizados aparecem com "Desde" (início) e sem o horário de fim; toast curto demais e aviso de horário corrigido duplicado.
 - Achado (16/10/2026): as regras do Firebase não têm o nó `recursos/` — a gravação de `recursos/equipes` (aprendizado automático de equipes) é recusada em produção, em silêncio. Avaliar na 13.3 junto com as regras de `usuarios_autorizados`.
 
-## 3. Defeitos conhecidos do motor (detectados, não corrigidos)
+## 14/10/2026 — defeitos do motor antes da 13.1 (corrigidos/sinalizados na 13.1 e 13.2)
 
 | Teste | Defeito | Efeito para o operador | Causa no código |
 |---|---|---|---|
@@ -71,7 +157,7 @@ Hoje a conferência v2 **mostra** todos esses casos ao operador. Na 13.1 (labora
 
 ---
 
-## 4. Próximos passos (ordem sugerida)
+## 14/10/2026 — próximos passos da época (superados)
 
 1. **Corrigir `cardHerdado` (T10b).** Diagnóstico de 21/09 + T10b provam a causa. Auditoria de impacto operacional (equipe/VT/histórico) já feita no diagnóstico. Rodar a bateria antes/depois.
 2. **Decidir o conflito documental `NORMALIZADO → PENDENTE`:** `BUSINESS-RULES` BR-NOR-007 diz CONTRATO; `AI-INSTRUCTIONS` §6.3/§9 diz VALIDAR. Sem essa decisão, T08/T09 não podem ser corrigidos.
@@ -83,7 +169,7 @@ Fora do motor, registrados para depois: duração na planilha ignora troca de di
 
 ---
 
-## 5. Decisões e fatos confirmados com o responsável
+## 14/10/2026 — decisões da época (versão atual na seção 5 acima)
 
 - Relatório CEMOB conta por dia de calendário (00:01 → 00:00); hoje não há turno de madrugada.
 - Último turno encerra 21:30; plantão da manhã começa 05:30.
@@ -97,7 +183,7 @@ Fora do motor, registrados para depois: duração na planilha ignora troca de di
 
 ---
 
-## 6. Como retomar com uma IA (qualquer plano / fornecedor)
+## 14/10/2026 — como retomar (versão atual na seção 6 acima)
 
 1. Envie: `CONTEXT.MD`, `AI-INSTRUCTIONS.md`, este `HANDOFF.md` e os arquivos do problema (normalmente `nit.js` e o relatório CEMOB envolvido).
 2. Exija o protocolo do `AI-INSTRUCTIONS.md`: ler → localizar → plano (objetivo, arquivos, riscos, validação) → **aprovação explícita** → mudança mínima → validação → documentação.
@@ -107,7 +193,7 @@ Fora do motor, registrados para depois: duração na planilha ignora troca de di
 Documentos citados em conversas anteriores **que não existem no repositório**: `TESTES-ACEITACAO-CEMOB.md`, `AUDITOR-INTEGRIDADE-NIT-v1.0.md`, `ADR-008`, `ADR-009`, pasta `docs/adr/`. Não presuma o conteúdo deles.
 
 
-## 13.2 — Mensagens do NIT (laboratório, 17/10/2026)
+## 17/10/2026 — 13.2 Mensagens do NIT (laboratório)
 
 - Catálogo validado: `MENSAGENS.md` (NIT-01..34; acréscimos da implementação na seção 4b, a validar).
 - `NitDecisoes`: cards âmbar no topo (MANTER / TIRAR / REABRIR / 📋 PERGUNTAR), confirmação com totais e DESFAZER.
@@ -202,3 +288,32 @@ Critérios: auditoria de UI 17/10 (item 3 acima) + medição axe/WCAG 2.2 AA (Cr
 - 20/10 13:46: Cristiano testou o 132homolog8 na homologação — passou. Vai testar com relatórios reais na empresa; decide a produção à noite.
 - 20/10 22:52: teste real (dia tranquilo) — contagens bateram. Regras do Firebase de produção conferidas (meta e auditoria liberados). Pacote producao-13.2 pronto (= 132homolog8 + index de produção com ?v=20261020-132; volta/ = commit 33fbec4). Aguardando "autorizo".
 - Depois da produção (13.2.1): hierarquia visual do 📜 O QUE MUDOU; não gravar "Nada mudou."; retenção do auditoria/ (dias a definir pelo Cristiano, sugestão 7).
+- 21/10 00:01: Cristiano vai subir a produção. Teste essencial em produção: `gerar-producao.js` (semáforos 9901–9907, endereço "TESTE NIT — APAGAR"; aceita o último relatório real para levar as pendências reais). Limpeza no console depois. Ícone do 📜 O QUE MUDOU fora do padrão de ícones do NIT → ajustar depois (13.2.1).
+- 21/10 00:10: teste de virada (dia + turno) em produção com o kanban zerado: `gerar-virada.js` (relatório atrasado de ontem → USAR; turno A; Sair; turno B em janela nova).
+- Achado (13.2.1, texto a validar): depois de USAR um relatório de outro dia, a ⚠ DECIDIR diz só "⚠ ESTE RELATÓRIO É DE 20/10. Hoje é 21/10." — a versão anterior explicava que os cards "não aparecem no painel de hoje". Proposta: linha 2 "Hoje é 21/10. Guardei {n} semáforos com a data de 20/10: eles não aparecem no painel de hoje." Comportamento (cards de outro dia ocultos) é o mesmo da produção anterior.
+
+### 21/10/2026 — publicação e achados no teste em produção (registro que faltava)
+- 13.1 + 13.2 publicadas na madrugada de 21/10 (pacote producao-13.2; nit.js/nit.css = 132homolog8; ?v=20261020-132).
+- Testes em produção: `gerar-producao.js` (00:09) e `gerar-virada.js` (00:17–00:21) — contagens e relatório de saída corretos, inclusive na virada do dia.
+- **O teste chegou à planilha**: o exportador real (atualiza `cursor_exportacao/cliente_b`, visto às 00:20:30) leu os cards 990x. Linhas 2001–2016 (e 2000, relatório de homologação colado e despachado) apagadas à mão. Teste em produção também chega à planilha, não só pelo despacho.
+- **Duplicação na planilha**: pendência que atravessa o dia gera 2 linhas (ver seção 3).
+- Kanban de produção apagado pelo Cristiano para o teste (pendências reais 452/871 voltaram pelo relatório da manhã, sem equipe/histórico); `historico` e `auditoria` apagados.
+
+### 21/10/2026 — 🏁 marco: chegam as primeiras requisições dos usuários
+Primeiro dia da 13.1 + 13.2 em produção; os usuários começaram a pedir melhorias. Todas seguem laboratório → homologação → produção (regra sem exceção, reafirmada pelo Cristiano).
+Fila de requisições:
+1. **Sidebar — pré-visualização do relatório maior** (em espera): botão Ver Relatório acima da pré-visualização (nunca fora da tela); a caixa ocupa o espaço até o fim da sidebar; no alto, a contagem como no cabeçalho do CEMOB (Pendentes · Furtos · Outros motivos · Investigando · Normalizados). Dúvidas abertas: o texto do relatório continua abaixo? o relatório de saída (WhatsApp) fica igual?
+2. **Novo nome:** "Sistema de Gestão de Ocorrências Semafóricas (GOS)".
+3. **Novo endereço no GitHub** (hoje https://crisstiano07.github.io/sistemaintegrado/): pedido "se quiser manter teu nome, sem problemas, mas deixa tipo no final". Atenção: o domínio novo precisa entrar nos domínios autorizados do Firebase Authentication, senão o login Google falha.
+4. **Tela "Usuários" (13.3):** proposta de regras enviada (nit_admins só pelo console; ADM grava usuarios_autorizados; ninguém apaga; validação nome/turno/ativo). Aguardando: aprovar nit_admins; turnos (manha/tarde/noite confirmados — tarde visto em T. Oliveira; madrugada?); quem mais é ADM.
+- Cadastros manuais pelo console em 21/10: T. Oliveira (tarde), Junior (chave com ponto corrigida para junior|abl1974|gmail|com).
+
+### 22/10/2026 00:16 — pausa (decisões em aberto)
+- Ordem decidida: 1º tela Usuários (13.3), 2º sidebar de Semáforos.
+- Usuários — proposta conservadora AGUARDANDO aprovação: nit_admins só pelo console (dono = Cristiano); ADM não grava cadastro de outro ADM; ninguém apaga; usuarios_log só acrescenta; ADM cadastra/edita nome-turno/desativa/reativa comuns; começar com Cristiano como único ADM por ~1 semana, depois supervisor do setor + supervisora da noite. Turnos: manha, tarde, noite, madrugada. nit_admins aprovado.
+- Sidebar (especificação acordada): ENTRADA sempre visível; SAÍDA com "último: data · hora" (último processamento de qualquer operador), totais, Ver Relatório + Incluir normalizados logo abaixo dos totais; bloco CAUSAS DO DIA (fundo neutro, todas as do dia, maior→menor, só as ocorridas) + ATENDIDOS VIA LIVRE (laranja) · AMC (azul) — confirmar no lab que o card guarda a passagem; pré-visualização RETIRADA; botão de recolher a sidebar de Semáforos RETIRADO (forçar aberta e apagar nit-sidebar-collapsed). Reboques: sidebar fixa, não muda. Relatório de saída: cabeçalho com Furtos · Outros motivos · Investigando (como o CEMOB).
+
+### 22/10/2026 — caso "Cristiano" nas ações do Fabiano: resolvido + período de estabilização
+- Causa: meta/sessao tinha email fabianolv33 + operador "Cristiano" na mesma gravação → no login do Fabiano o cadastro dele dava nome "Cristiano" (ou sem nome, caindo no nome da conta Google). O nome é lido só no login: a sessão aberta seguiu assinando "Cristiano" mesmo depois de corrigido. Ninguém usou a conta do Cristiano. Cadastro corrigido; Fabiano precisa sair/entrar.
+- Fila (depois da estabilização): nome do operador atualizado ao vivo (ouvir o próprio cadastro); campos operador/turno no child_changed; turnos com grafias diferentes (manha/manhã/"manhã ") → padronizar; PIN/sessão por turno como opção futura (sem urgência).
+- DECISÃO (Cristiano, 22/10 23:39): pausar novas implementações até o Sistema se mostrar estável em produção (usuários novos, turnos). Exceção: defeito que trave ou erre a operação — mesmo assim lab → homologação → produção.
