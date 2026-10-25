@@ -44,6 +44,8 @@
 | Texto | Depois de USAR relatório de outro dia, a ⚠ DECIDIR não explica que os cards não aparecem hoje (a versão antiga explicava) | 21/10 | 13.2.1, texto a validar |
 | PERGUNTAR | Não avisa que copiou (só fica ⏳ PERGUNTADO) | 21/10 | 13.2.1: "✓ COPIADO. Cole no grupo." |
 | Regras | Nó `recursos/` sem regra: gravação de `recursos/equipes` recusada em silêncio | 16/10 | 13.3 |
+| 📜 | "ℹ Hora lida com correção: 446…" se repetia em **todo** processamento (11× em 23/10) | 23/10 (lab) | **corrigido na 13.2.1**: só na 1ª vez do dia (por computador) |
+| 📜 | 199/350/1106 voltando a apagar aparecem em "Novos pendentes" **e** em "Apagaram de novo" na mesma linha | antigo | fila |
 
 ---
 
@@ -102,6 +104,36 @@ Documentos citados em conversas anteriores **que não existem no repositório**:
 ---
 
 # HISTÓRICO (registro cronológico — só acrescentar)
+
+## 24/10/2026 (madrugada) — homologação relatório a relatório + ajustes autorizados
+
+- Homologação 132homolog12, relatórios 1–8 gerados na conversa (hora errada, código sem zero, sem início, linha repetida, normalizado sem início, arrastos, normalizado à mão + fonte fecha, caso real 933/446 com o 902): **tudo conforme**. Falta: Parte 4 (duas janelas).
+- "Autorizo" (01:41) para: NIT-36 linha repetida (azul, informativo); "Início:" vazio deixa de virar observação (ia ao banco/planilha; existia na produção); card que nasce normalizado não mostra ⏳ (existia na produção); **LINHA DO TEMPO** (novo visual do 📜, mesmo `auditoria/`). Bateria `testes/bateria-24-10.js` (4).
+- Pedido novo: botão de excluir o nó do kanban (ADM) → 13.2.2, depende de nit_admins + regra + cópia de segurança.
+- 09:00: NIT-10 reescrito ("⚠ X SAIU DO RELATÓRIO" + linha 3 "Continua pendente no painel até você decidir." + botão CONTINUA PENDENTE); "Correções de digitação (n)". Pacote 132homolog15; produção 13.2.1 montada em `entrega/producao-13.2.1` (aguarda autorizo).
+- **24/10 16:22 — AUTORIZO para a produção (13.2.1 + 13.2.2 juntas, pacote `entrega/producao-13.2.2`, código = 132homolog21; regras de produção = regras da homologação aprovadas, porque as regras atuais das duas eram iguais). ADM: `nit_admins/cristianovlivre|gmail|com`. Homologação do botão ADM com relatórios reais: ok.**
+- **13.2.2 (lab, 24/10 tarde):** botão ADM 🧹 LIMPAR PAINEL + ↩ RESTAURAR (BR-ADM-001), `testes/bateria-admin.js` (6). Falta: regras do Firebase (produção e homologação) — pedidas ao Cristiano; emulador oficial bloqueado aqui (download do Google recusado pela rede) → validar no *Rules Playground* do console. Base: `../nit.js.13.2.1-final`.
+- **Glossário aprovado para a 13.3 (24/10, Cristiano):** CTA = setor que manda os relatórios (não "fonte"; CEMOB = a central integrada, 3 setores) · **relatório** = o que o CTA manda e o operador cola · **status** = o que o NIT gera para o grupo (STATUS SEMAFÓRICO; botão "Ver status") · **painel** = o quadro. "Erros da fonte" → "Erros no relatório". Base: Linguagem Ubíqua (DDD) e ISO 24495-1. A 13.2.1 sobe ainda com "fonte".
+- **Painel (13.3, proposta):** sem coluna ⚠ DECIDIR — a decisão vai no próprio card (tarja com a placa + 2 botões); semáforo do status na lateral. Motivo: medido em Chromium, com a DECIDIR aberta NORMALIZADOS some da tela abaixo de ~1650 px (1366, 1440, 1600; e 1920 com zoom 125%) — defeito que já existe na produção 13.2.
+- **Desafio lançado (13.3): avisos pelo impacto no relatório.** Proposta visual (canvas): 3 níveis MUDA O RELATÓRIO / MUDA UM DETALHE / SÓ PARA SABER; placar "RELATÓRIO CONFERE COM A CEMOB" × "DIFERENTE DA CEMOB · painel 7 · CEMOB 6 · 1 decisão"; cada aviso = título curto · efeito no relatório · ação; "Ver Relatório" com decisão pendente pergunta antes (DECIDIR / GERAR ASSIM MESMO). Aguardando aprovação.
+- Backups: `../nit.js.antes-3pequenas`, `../nit.js.antes-linha-do-tempo`, `../nit.css.antes-linha-do-tempo`.
+
+## 23/10/2026 (noite) — forçando duplicação (pedido: "tudo que afeta a contagem devemos corrigir")
+
+- Nova bateria `testes/bateria-duplicacao.js` (sementes; erros reais da fonte + operador normalizando à mão pelos 3 caminhos, arrastando de volta, processando durante o "desfazer", 2 janelas). Confere depois de cada relatório correto: um card por ocorrência, números do painel = fonte, saída = fonte.
+- 8 defeitos achados (todos existem na produção 13.2) e corrigidos — BR-DEC-005: código sem o zero; linha sem início de normalizado; card sem início nascido normalizado (_SI, _SI_2…); linha repetida; início corrigido de normalizado (fechado ou voltando aberto); normalizado à mão com início corrigido; linha encerrada sem início (apagava o início do pendente / abria card).
+- Casos fixos: `testes/bateria-duplicacao-casos.js` (14; na produção 11 falham). Homologação: `testes/gerar-duplicacao-homolog.js` (Parte 4, códigos 081–806).
+- 📜: "Hora lida com correção" só na 1ª vez; nova linha "ℹ Código lido com correção".
+- Backup antes: `../nit.js.antes-duplicacao`.
+- Rodadas: 150 sequências de duplicação (≈2.300 relatórios, ≈1.400 ações do operador) sem duplicação; estresse 80 sementes ok; todas as baterias ok. Única diferença que sobra: quando o NIT **pergunta** ("não veio") e o operador manda MANTER — decisão dele.
+- Pacote **132homolog12** (relatórios de 24/10): Partes 1–3 regeneradas + Parte 4 (duplicação).
+
+## 23/10/2026 — dia real reprocessado no laboratório
+
+- 23 relatórios reais (00:20–17:45) em `testes/dados/dia-23-10/`, teste `testes/bateria-dia-23-10.js` (com 933 à mão 08:33 e 446 à mão 11:43, como no dia).
+- **Produção (13.2):** reproduz o problema do dia — 446 e 933 ficam duplicados; painel 23 normalizados contra 21 da CEMOB; relatório de saída com 24 linhas (446 e 933 duas vezes). Avisos "sem hora" do 446/933 em 11 relatórios.
+- **Laboratório (13.2.1):** tudo confere — painel igual à CEMOB nos 23 relatórios, sem duplicados, saída com 22 linhas, 933 06:50–08:15 e 446 06:50–11:41.
+- Diferenças esperadas: r08 017 voltou atrás (NIT-11, painel segura até a fonte mandar o fim); 821 PGV em Sem necessidade; 199/350/1106 com dois eventos reais (03:15 e 10:00).
 
 ## 09–12/10/2026 — entregue (antes da 13.1)
 
@@ -317,3 +349,34 @@ Fila de requisições:
 - Causa: meta/sessao tinha email fabianolv33 + operador "Cristiano" na mesma gravação → no login do Fabiano o cadastro dele dava nome "Cristiano" (ou sem nome, caindo no nome da conta Google). O nome é lido só no login: a sessão aberta seguiu assinando "Cristiano" mesmo depois de corrigido. Ninguém usou a conta do Cristiano. Cadastro corrigido; Fabiano precisa sair/entrar.
 - Fila (depois da estabilização): nome do operador atualizado ao vivo (ouvir o próprio cadastro); campos operador/turno no child_changed; turnos com grafias diferentes (manha/manhã/"manhã ") → padronizar; PIN/sessão por turno como opção futura (sem urgência).
 - DECISÃO (Cristiano, 22/10 23:39): pausar novas implementações até o Sistema se mostrar estável em produção (usuários novos, turnos). Exceção: defeito que trave ou erre a operação — mesmo assim lab → homologação → produção.
+
+### 23/10/2026 — v10: endereço antigo leva ao NIT; v10 vira contingência
+- Risco: a v10 grava só no navegador; quem usa ela produz um painel paralelo invisível ao NIT.
+- Achado: o redirecionamento feito antes nunca foi gravado no GitHub (nem no histórico dos dois repositórios); `versao-antiga-v10` = cópia idêntica da main (commit c86f953, 18/05/2026) — fica como backup congelado.
+- Pacote `v10-aviso`: raiz (index/supervisor/404) → NIT atual em 3 s; `contingencia/` = v10 intacta + faixa "MODO CONTINGÊNCIA", noindex. Testado no Chromium (4 caminhos antigos redirecionam; v10 e supervisor abrem sem erro de JS). Chaves de localStorage da v10 (`gerador-premium-v10.0-*`) e do NIT (`nit-v12-*`) não colidem; só `historicoDeAcoes_v1` é comum.
+- Aprimorar a contingência (procedimento de volta, reprocessar no NIT) fica para depois — entre as primeiras prioridades.
+- 23/10 09:18: homologação no repositório `teste-aviso-v10` passou (contingência processou o relatório de teste: 3 pendentes, 2 normalizados, faixa no topo). Próximo: aplicar na main do `nit-nucleo-inteligencia-trafego`, apagar o repositório de teste, trocar favoritos no setor. Futuro (momento oportuno): contingência com a cara do NIT atual.
+- 23/10 09:35: PRODUÇÃO — main do `nit-nucleo-inteligencia-trafego` com os 6 arquivos (commits 9f5561a + d9ed2f2), conferidos byte a byte com o pacote. Endereço antigo leva ao NIT; contingência em https://crisstiano07.github.io/nit-nucleo-inteligencia-trafego/contingencia/ (só para Cristiano e supervisores).
+- Contingência — para depois (registrado pelo Cristiano, 23/10):
+  1. Risco: usuário favorita o link da contingência e usa sem autorização (o link sozinho não impede).
+  2. Levar o que foi processado na contingência para o NIT principal quando ele voltar (ex.: exportar os relatórios colados na v10 e reprocessar no NIT), facilitando a volta.
+  3. Contingência com a cara do NIT atual.
+- 23/10 10:00 — ACHADO supervisor: são dois apps diferentes. v10 `supervisor.html` (06–08/05) = protótipo mobile estilo WhatsApp, dados de exemplo, sem Firebase. NIT `sistemaintegrado/supervisor.html` (16–20/05) lê `ocorrencias` (sem regra no Firebase → leitura negada) e grava pelo Railway (backend migrado para Apps Script) → provavelmente não funciona. O redirecionamento do supervisor antigo leva hoje a essa página. Aguardando decisão: levar ao protótipo (endereço próprio, sem faixa) ou página "em construção".
+- Cartão de contingência (PDF com QR): `entrega/cartao-contingencia/` — guardar no celular e dar cópia aos supervisores.
+- 23/10 10:05: decisão — o endereço do supervisor da v10 volta a abrir o PROTÓTIPO (para mostrar ao supervisor). Pacote `v10-supervisor`: supervisor.html original + supervisor/index.html (barra no final) + README. Testado: /supervisor, /supervisor/, /supervisor.html → protótipo; raiz e links quebrados seguem levando ao NIT; contingência intacta.
+- 23/10 10:26: PRODUÇÃO — supervisor de volta (commit 084f3b9). Os 7 arquivos da main conferidos byte a byte com os pacotes. Protótipo em …/nit-nucleo-inteligencia-trafego/supervisor (dados de exemplo).
+
+### 23/10/2026 — 13.2.1: hora com erro de digitação (autorizado: "sim. autorizo")
+- Caso real: 446 "Início: 23/10/2026 06.:50" → o NIT lia como SEM HORA DE INÍCIO (NIT-14 incomodando o operador; card mostrava "06."; relatório de saída sem "Desde"). Contagens já batiam; quando a fonte corrige, o mesmo card recebe o início (não duplica).
+- Feito no laboratório: leitura tolerante (`Semaforo._lerDataHora`, BR-CON-022), NIT-14 "HORA DE INÍCIO ILEGÍVEL · Veio "…"" quando não dá para ler, linha "ℹ Hora lida com correção" no 📜.
+- Testes: `testes/bateria-hora.js` (5/5, inclui o relatório real em `testes/dados/`); 13.2 31 · 13.1 32 · classificação 33 · causa 3 · bateria 18 (+4 N/I) · gravação 6 · roteiros mudanças/virada/produção/situações conferidos · estresse 210 sementes + dia simulado (5290 passos, 2916 relatórios, 765 cliques) sem quebra. Pacote 132homolog9 (roteiro `relatorios-hora-23-10/ROTEIRO-HORA.md`).
+- Pedido do supervisor (ADM): botão de limpar o painel — motivo: solução rápida para evitar que relatório errado seja compartilhado; o operador avisa o supervisor e ele decide. A tratar depois desta correção.
+- 23/10 13:30 — caso relatado pelo supervisor: 446 e 933 saíam 2 vezes no relatório de saída ("Normalizado 23/10 - 08:33" + "06:50 às 08:15"). 📜 do João Paulo: 07:01 933 sem hora → 08:12 "não veio" → 08:13 PENDENTE → 08:33 normalizado à mão → fonte 06:50–08:15. Causa: card SEM início normalizado à mão saía da lista de casáveis do motor. Reproduzido na versão de produção; corrigido no laboratório (BR-DEC-003). Também corrigido: com a fonte ainda mandando sem hora depois da normalização à mão, o NIT criava um pendente a mais.
+- `testes/bateria-hora.js` agora 17 cenários (H1–H5 hora; P1–P12 provisório, inclui as sequências reais do 933 e do 446, dois operadores, REABRIR, fonte fechando depois do horário à mão, reincidência). Contra a versão de produção: 14 falham (os corrigidos), 3 passam (os que já funcionavam).
+- Observação (a avaliar depois): às 07:01 e 08:12 o NIT perguntou "não veio" para 7 normalizados da madrugada (792, 084, 248, 017, 1105, 766, 462) que a fonte só listou mais tarde — ruído para o operador.
+- Estresse com as duas correções: 210 sementes + dia simulado (5290 passos, 2916 relatórios, 765 cliques) sem quebra. Pacote 132homolog10 pronto (hora + provisório sem início); aguardando "autorizo" do Cristiano para a correção do motor (BR-DEC-003).
+- 23/10 13:56: Cristiano autorizou a homologação ("vamos a homologação") — 132homolog10 entregue.
+- 23/10 14:xx: roteiro amplo de homologação 13.2.1 (`testes/gerar-hora-homolog.js`, 8 passos, semáforos 601–609, duas janelas): horas tortas no início e no fim, sem hora, ilegível, normalização à mão com/sem início, fonte fechando antes/depois, REABRIR, não veio→PENDENTE, reincidência, dois operadores. Conferido no NIT do laboratório.
+- 23/10 14:07 — pergunta do Cristiano: "normalização ocorre pelo botão, pelo arrastar e pelo relatório — está tudo previsto?" Achado: só o botão ✓ seguia a regra. **Central** não marcava normManual (VOLTOU ATRÁS; sem início → duplicava). **Arrastar para NORMALIZADOS** só trocava a coluna (banco PENDENTE sem fim; sem início → duplicava). **Arrastar de volta** deixava o banco NORMALIZADO. Antigos (antes da 13.2), expostos pela regra do provisório. Corrigido no laboratório (BR-DEC-004); arrastar normaliza na hora atual (decisão do Cristiano). Origem do arraste passa a ser a coluna real do card.
+- `bateria-hora.js` 25 cenários (N1–N8: os 3 caminhos × com/sem início, arrastar de volta). Roteiro de homologação Parte 3 (`testes/gerar-caminhos-homolog.js`).
+- Estresse com as três correções (hora, provisório sem início, caminhos de normalizar): 210 sementes + dia simulado sem quebra. Pacote 132homolog11 (substitui o 10): roteiros relatorios-hora-23-10 (partes 1–2), relatorios-13-2-1 (amplo, 8 passos) e relatorios-13-2-1-parte3 (arrastar/Central).

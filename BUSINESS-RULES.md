@@ -1052,3 +1052,48 @@ O id de linha sem início é `{código}_SI{data}`. Se esse id já pertence a out
 - Quando a fonte manda a linha com fim, vale o horário da fonte (BR-CON-019 se for diferente: ⟲ fim corrigido) e `normManual` é apagado.
 - REABRIR no NIT-17 devolve o card a pendente e apaga `normManual`; DESFAZER restaura.
 - O relatório de saída usa o estado atual do painel (não marca nada).
+
+## BR-CON-022 — Hora com erro de digitação (13.2.1, autorizado 23/10/2026)
+
+- Em "Início:" e "Fim:", entre a hora e os minutos o NIT aceita de 1 a 3 sinais entre `. : ; , h` (com ou sem espaço): `06.:50`, `06.50`, `06;;50`, `06h50`, `6:50` → `06:50`. Vale só se a hora for 0–23 e os minutos 0–59.
+- A leitura não incomoda o operador; fica registrada no 📜 O QUE MUDOU ("Hora lida com correção").
+- Sem separador (`0650`), minuto incompleto (`06.:5`) ou hora impossível (`65:30`): não é adivinhado. O card fica sem início e o NIT-14 mostra o que veio.
+- Card já existente sem início (BR-CON-021) recebe a hora quando ela passa a ser lida: mesmo card, sem duplicar.
+- Origem: relatório real de 23/10/2026, semáforo 446 "Início: 23/10/2026 06.:50".
+
+## BR-DEC-003 — Card SEM início normalizado à mão continua sendo o card do semáforo (13.2.1, 23/10/2026)
+
+- Caso real (446 e 933, 23/10): card nascido sem início, normalizado à mão; quando a fonte mandou a linha com início e fim, o NIT criava outro card e o relatório de saída mostrava o semáforo 2 vezes.
+- Regra: enquanto for provisório (BR-DEC-002), o card sem início normalizado à mão:
+  1. continua recebendo a linha SEM início do mesmo semáforo (a fonte ainda diz pendente → aviso azul NIT-17, sem card novo);
+  2. recebe a primeira linha COM início anterior ou igual ao fim que o operador informou (mesma ocorrência): encerrada → vale início e fim da fonte (⟲ fim corrigido, deixa de ser provisório); aberta → recebe o início e segue provisório.
+- Linha que começa depois do fim informado é outra ocorrência (reincidência): não é absorvida.
+
+## BR-DEC-004 — Todo caminho de normalizar à mão segue a mesma regra (13.2.1, 23/10/2026)
+
+- Botão ✓, NORMALIZOU do "não veio", **Central (aba Normalizar)** e **arrastar para NORMALIZADOS** gravam: coluna NORMALIZADOS, status NORMALIZADO, data/hora do fim e a marca `normManual` (provisório, BR-DEC-002/003).
+- Arrastar para NORMALIZADOS normaliza na **hora atual**, sem janela (decisão do Cristiano, 23/10). Antes só trocava a coluna: o banco ficava PENDENTE sem fim, aparecia "VOLTOU ATRÁS" e, sem início, o card duplicava.
+- A Central antes não marcava `normManual`: aparecia "VOLTOU ATRÁS" e, sem início, o card duplicava.
+- **Arrastar para fora de NORMALIZADOS = reabrir:** status PENDENTE, sem fim, sem `normManual`; registrado no 📜. Se a fonte disser normalizado, o próximo relatório normaliza de novo. Antes o banco continuava NORMALIZADO com o card em outra coluna.
+
+## BR-DEC-005 — Um semáforo não vira dois cards por erro da fonte (13.2.1, pedido do Cristiano em 23/10/2026)
+
+"Tudo que afeta a contagem devemos corrigir." Achados forçando duplicação (`testes/bateria-duplicacao.js`, casos fixos em `testes/bateria-duplicacao-casos.js`):
+
+- **Código sem o zero:** os códigos da CEMOB têm 3 dígitos ou mais (017, 084, 1106; conferido nos 23 relatórios de 23/10). "17" é lido como **017**. No 📜: "ℹ Código lido com correção: "17" → 017".
+- **Linha sem início de semáforo já normalizado:** o relatório é cumulativo. Se a linha de um normalizado some e o semáforo aparece numa linha SEM início, é a linha dele que perdeu a hora. Ordem: o normalizado de mesmo fim; o pendente sem início; o normalizado sem início; o único normalizado que ficou sem linha. Linha aberta nesse caso segue a regra do normalizado que volta sem fim (pergunta, BR-NOR-007). Falha nova sem início, com a linha do normalizado presente, continua abrindo card novo.
+- **Linha encerrada sem início fechando pendente com início:** fecha o card e **mantém o início** que ele tinha (antes o início era apagado).
+- **Card sem início que nasceu normalizado pela fonte** também é provisório (como BR-DEC-003): recebe a linha com início quando ela chegar. Antes cada relatório abria outro (_SI, _SI_2, _SI_3…).
+- **A mesma linha repetida** no relatório (mesmo início, mesma seção, mesmo fim) é uma ocorrência só.
+- **Fonte corrige o início de ocorrência já normalizada:** a linha do card some e aparece uma só, encerrada, de mesmo fim ou sobreposta → mesmo card com o início corrigido (⟲ Início corrigido pela fonte). Voltar ao início anterior também é reconhecido. Reincidência real (linha do card presente + outra linha) continua virando dois cards.
+- **Normalizado volta ABERTO com outro início** que começa antes do fim dele: é a mesma ocorrência (um semáforo não tem duas falhas ao mesmo tempo). Normalizado pela fonte → pergunta "VOLTOU ATRÁS" (BR-NOR-007), sem card novo; normalizado à mão → recebe o início corrigido e segue provisório.
+- **Pendente com início cuja linha some e aparece uma linha ENCERRADA sem início** (com fim depois do início dele): é o fim desse pendente; mantém o início.
+
+## BR-ADM-001 — ADM limpa o painel, com cópia (13.2.2, pedido do supervisor; decisões do Cristiano em 24/10/2026)
+
+- Motivo: relatório errado entrou e o status não pode ser compartilhado. O operador avisa o ADM; o ADM decide.
+- Só quem tem `nit_admins/{chave}: true` (gravado pelo console) vê **🧹 LIMPAR PAINEL**. A segurança é a **regra do banco**, não o botão escondido.
+- Limpa **cards (`kanban`) + avisos (`meta/decisoes_ativas`)**. A LINHA DO TEMPO fica e registra "🧹 Painel limpo (N cards). Cópia guardada.".
+- Antes de apagar, guarda a cópia em `lixeira/c{ts}` (quem, quando, cards, avisos) — na MESMA gravação (tudo ou nada). Guarda só as **5 últimas**.
+- **↩ RESTAURAR** (só ADM) devolve o último painel limpo; cards que entraram depois continuam (não sobrescreve). Registra "↩ Painel restaurado (N cards).".
+

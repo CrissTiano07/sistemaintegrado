@@ -121,7 +121,7 @@ Aparência: cores, translucidez, estilo console (missão ativa acesa / em andame
 | NIT-12 | ⚠ âmbar, conta | **ℹ azul, não conta** · Pendente às {h1} e às {h2}. Nada a fazer: o NIT ficou com {h1}. Some quando a fonte corrigir. · 📋 *O {cod} aparece 2 vezes como pendente ({h1} e {h2}). O início certo é {h1} ou {h2}?* |
 | NIT-16 | TIRAR O DE / MANTER | **EXCLUIR O DE {h}** / **MANTER OS 2** |
 | Ver Relatório | — | lembrete na tela (relatório intacto): **⚠ {cods} AINDA ESPERA(M) A RESPOSTA DA FONTE.** O relatório pode sair diferente do da fonte. [GERAR ASSIM MESMO] [ESPERAR] |
-| 📜 O QUE MUDOU | — | botão no topo; diário do dia: processamentos (novos, normalizaram, apagaram de novo, início/fim corrigido pela fonte, voltaram ao painel, erros da fonte, resolvidos) e decisões do operador |
+| 📜 LINHA DO TEMPO | — | botão no topo; diário do dia: processamentos (novos, normalizaram, apagaram de novo, início/fim corrigido pela fonte, voltaram ao painel, erros da fonte, resolvidos) e decisões do operador |
 
 ## 4d. Mudanças de 20/10/2026 (132homolog7)
 
@@ -130,3 +130,28 @@ Aparência: cores, translucidez, estilo console (missão ativa acesa / em andame
 | NIT-17 ℹ | Operador normalizou à mão e a fonte ainda diz pendente | **ℹ {cod} NORMALIZADO À MÃO** · Você normalizou às {fim}. A fonte ainda diz pendente. Nada a fazer: quando a fonte mandar o fim, vale o horário dela. [REABRIR] — azul, não conta |
 | Etiqueta | Card normalizado à mão, até a fonte mandar o fim | **✋ normalizado à mão · aguardando a fonte** |
 | Colunas | — | Nada recolhe sozinho. Clique no título recolhe/expande (AGUARDANDO, VIA LIVRE, AMC, SEM NECESSIDADE, ⚠ DECIDIR); recolhida mostra ▸, o número e o nome no alto. Quando a ⚠ DECIDIR aparece, as outras deslizam (largura mínima 230px, rolagem lateral). A escolha vale na tela de cada operador, até recarregar. Exceção: a ⚠ DECIDIR abre sozinha quando chega decisão nova. |
+
+## 4e. 13.2.1 — hora com erro de digitação (23/10/2026)
+
+| ID | Quando | Texto |
+|---|---|---|
+| (sem aviso) | Hora com erro claro ("06.:50", "06.50", "06h50", "6:50", "06;;50") | Nada na tela. O card e o relatório de saída mostram 06:50. No 📜 LINHA DO TEMPO: **ℹ Hora lida com correção: 446 (início "06.:50" → 06:50)** |
+| (sem aviso) | Código sem o zero ("17") | O card é o 017. No 📜: **ℹ Código lido com correção: "17" → 017** |
+| (regra do 📜) | A fonte repete o mesmo erro em todo relatório | "Hora/Código lido com correção" aparece **só na 1ª vez** do dia (em cada computador) |
+| NIT-14 (variante) | Tem data mas a hora não dá para ler com segurança ("06.:5", "65:30", "0650") | **⚠ {cod} HORA DE INÍCIO ILEGÍVEL** · Veio "{o que veio}". · 📋 *O {cod} veio com a hora de início "{o que veio}". Que horas começou?* |
+| Toast (arrastar) | Card arrastado para NORMALIZADOS | **✓ {cod} normalizado às {hh:mm}.** (📜: "{cod} normalizado à mão às {hh:mm}") |
+| 📜 (arrastar de volta) | Card arrastado para fora de NORMALIZADOS | **{cod} reaberto (arrastado de NORMALIZADOS)** |
+
+## 4f. 13.2.1 — ajustes de 24/10/2026 (autorizados na homologação)
+
+| Código | Quando | Texto |
+|---|---|---|
+| NIT-36 (aviso passageiro, sem card) | A mesma linha veio repetida no relatório | Some sozinho: **ℹ 017 VEIO 2 VEZES NO RELATÓRIO. Contado uma vez só.** Na LINHA DO TEMPO, em Erros da fonte: "017 veio 2 vezes (contado 1)". Não vira card no painel (pedido do Cristiano, 24/10: nada a fazer não polui o painel). |
+| (botão do topo) | Diário do dia | **📜 LINHA DO TEMPO** (antes "O QUE MUDOU"; "Histórico" já é usado no NIT). Resumo (agora · último relatório · erros da fonte), filtros (Tudo · Erros da fonte · Correções · Ações do operador), um bloco por relatório com totais e diferença para o anterior, códigos em etiquetas por cor; leituras corrigidas recolhidas. |
+
+## 4g. 13.2.1 — textos sem culpa (24/10/2026, homologação)
+
+- LINHA DO TEMPO: "＋ Novos pendentes" → **"＋ Entraram"**; "＋ Novos já normalizados" → **"＋ Entraram normalizados"**; "⟲ Início/Fim corrigido pela fonte" → **"⟲ Início/Fim corrigido no relatório"**; "⚠ Erros da fonte" → **"⚠ Informações incompletas"**; "Erro resolvido" → **"Resolvido"**. As entradas antigas do dia continuam sendo lidas.
+- Título da coluna ⚠ DECIDIR ("RELATÓRIO ALTERADO!", "⚠ 1 SEMÁFORO ESPERA SUA RESPOSTA") em **branco**: o âmbar se confundia com os avisos.
+- Avisos passageiros no **canto de baixo à direita**, sem segurar o clique.
+
