@@ -578,7 +578,13 @@
             const id = card.dataset.eventoid;
             const marca = { ...this._porQuem(), fim: `${dataFim} ${horaFim}` };
             card.dataset.normManual = JSON.stringify(marca);
-            this._gravar(id, { normManual: marca });
+            // 14.2 (BR-PLA-002): normalizou com data de um dia anterior → a ocorrência é daquele dia (não conta hoje)
+            const k = d => { const m = String(d || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}${m[2]}${m[1]}` : ''; };
+            const hoje = NitData.hoje();
+            const doDia = k(dataFim) && k(dataFim) < k(hoje) && card.dataset.datareferencia === hoje;
+            if (doDia) card.dataset.datareferencia = dataFim;
+            this._gravar(id, doDia ? { normManual: marca, dataReferencia: dataFim } : { normManual: marca });
+            if (doDia) { try { Semaforo.atualizarPainel(); } catch (e) {} }
             const body = card.querySelector('.card-body'); if (body) body.innerHTML = Semaforo._buildBodyHTML(card.dataset);
             this._registrarAcao(`${card.dataset.codigo} normalizado à mão às ${horaFim}`);
             if (this._normalizandoNit10 === id) {
@@ -652,7 +658,13 @@
             const e = { ts: Date.now(), por: NitLogin.operador || 'anon', ...entrada };
             NitFirebase.exec((db, ref, update, push) => push(ref(db, `auditoria/${this._dia()}`), e));
         },
-        acao(texto) { this._gravar({ tipo: 'acao', linhas: [texto] }); },
+        acao(texto) {
+            // a mesma ação repetida em menos de 1 minuto (clique duplo, evento duplicado) entra uma vez só
+            const agora = Date.now();
+            if (this._ultAcao && this._ultAcao.t === texto && agora - this._ultAcao.ts < 60000) return;
+            this._ultAcao = { t: texto, ts: agora };
+            this._gravar({ tipo: 'acao', linhas: [texto] });
+        },
         processamento({ totais, aplic, itensNovos, resolvidos, horasLidas, codigosLidos }) {
             const L = [];
             const j = xs => [...new Set(xs || [])].join(', ');
@@ -941,6 +953,261 @@
     };
     window.NitAdmin = NitAdmin;
 
+    // ── 14.0: RELATÓRIO DA PLANILHA DO CTA ───────────────────────────────────
+    // Um script no espelho da planilha do CTA monta, a cada minuto, o mesmo texto do relatório
+    // e grava em fonte_planilha/. O NIT processa esse texto sozinho, pelo caminho de sempre
+    // (o mesmo de colar). Só UMA janela processa cada versão (meta/planilha_processada).
+    // Se a automação parar, uma faixa vermelha manda colar o relatório do WhatsApp.
+    // Sem o nó fonte_planilha, nada aparece.
+    const NitPlanilha = {
+        AUTO: true,             // 14.0: processa sozinho
+        PARADA_MIN: 3,          // sem verificação há mais que isso = automação parada
+        _c: null, _verif: 0, _offset: 0, _proc: null, _parada: null, _tentando: false, _erro: null, _fora: 0, _titulo: '',
+        _janela: Math.random().toString(36).slice(2, 10),
+        iniciar() {
+            const db = NitFirebase.db; if (!db || this._ligado) return; this._ligado = true;
+            db.ref('.info/serverTimeOffset').on('value', s => { this._offset = s.val() || 0; }, () => {});
+            db.ref('fonte_planilha/conteudo').on('value', s => { const ant = this._c; this._c = s.val(); this._avisarMudanca(ant, this._c); this._render(); this._talvezProcessar(); }, () => {});
+            db.ref('fonte_planilha/erro').on('value', s => { this._erro = s.val(); this._render(); }, () => {});
+            // sem conexão com o banco (internet caiu, aba congelada pelo navegador): não é a planilha que parou
+            db.ref('.info/connected').on('value', s => { const off = s.val() === false; if (!off && this._offline) this._acordou(); this._offline = off; this._render(); }, () => {});
+            this._titulo = document.title;
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) { this._acordou(); this._fora = 0; this._tituloAtualizar(); } });
+            window.addEventListener('focus', () => { this._fora = 0; this._tituloAtualizar(); });
+            this._acordou();
+            document.addEventListener('click', () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} }, { once: true });
+            db.ref('fonte_planilha/verificadoEm').on('value', s => { this._verif = s.val() || 0; this._render(); this._talvezProcessar(); }, () => {});
+            db.ref('meta/planilha_processada').on('value', s => { this._proc = s.val(); this._render(); }, () => {});
+            setInterval(() => { this._render(); this._talvezProcessar(); }, 20000);
+        },
+        _agora() { return Date.now() + (this._offset || 0); },
+        _ultimo() { return Math.max(this._verif || 0, (this._c && this._c.geradoEm) || 0); },
+        _min() { return Math.floor((this._agora() - this._ultimo()) / 60000); },
+        // 14.2 (31/10): sem "pisca-pisca" de parou/voltou. Ao abrir, ao voltar à aba ou ao reconectar, espera 45 s pelos
+        // dados novos antes de julgar (a aba congelada acorda com dados velhos). E um estado só vale se durar 30 s.
+        GRACA_MS: 45000, CONFIRMA_MS: 30000,
+        _acordou() { this._graca = Date.now() + this.GRACA_MS; this._cand = {}; },
+        _firme(nome, agora) {
+            this._cand = this._cand || {};
+            if (!agora) { this._cand[nome] = 0; return false; }
+            if (Date.now() < (this._graca || 0)) return false;
+            this._cand = this._cand || {};
+            if (!this._cand[nome]) { this._cand[nome] = Date.now(); setTimeout(() => this._render(), this.CONFIRMA_MS + 500); return false; }
+            return Date.now() - this._cand[nome] >= this.CONFIRMA_MS;
+        },
+        _paradaBruta() { return !!(this._c && this._c.texto) && !this._offline && (!!this._erro || this._min() >= this.PARADA_MIN); },
+        estaParada() { return this._erro ? !!(this._c && this._c.texto) && !this._offline : this._firme('parada', this._paradaBruta()); },
+        semConexao() { return this._firme('semNet', !!(this._c && this._c.texto) && this._offline); },
+        _jaProcessada() { return !!(this._c && this._proc && this._proc.assinatura === this._c.assinatura); },
+        _faixa(mostrar, texto) {
+            let f = document.getElementById('nit-planilha-faixa');
+            if (!mostrar) { if (f) f.remove(); document.body.classList.remove('nit-planilha-parada'); return; }
+            if (!f) {
+                const tab = document.getElementById('tab-semaforo'); if (!tab) return;
+                f = document.createElement('div'); f.id = 'nit-planilha-faixa'; f.setAttribute('role', 'alert');
+                tab.insertAdjacentElement('afterbegin', f);
+            }
+            if (f.textContent !== texto) f.textContent = texto;
+            document.body.classList.add('nit-planilha-parada');
+        },
+        // o que a planilha diz e o painel ainda não mostra
+        novidades() {
+            const it = (this._c && this._c.itens) || [];
+            const cards = [...document.querySelectorAll('#tab-semaforo .kanban-card')];
+            return it.filter(x => {
+                const c = cards.find(el => el.dataset.codigo === x.c && (el.dataset.inicio || '').trim() === x.i);
+                if (!c) return true;
+                return !!x.f !== !!c.closest('#coluna-normalizados');
+            }).length;
+        },
+        // por que não dá para processar sozinho (null = pode)
+        _impedimento() {
+            const c = this._c;
+            if (!c || !c.texto) return 'sem relatório';
+            if (c.dataReferencia && c.dataReferencia !== NitData.hoje()) return 'data diferente de hoje';
+            if ((c.itens || []).some(x => /^[A-Z0-9]$/.test(x.c))) return 'código de 1 dígito';
+            const m = document.getElementById('modal-confirmar-generico');
+            if (m && m.classList.contains('visible')) return 'pergunta aberta na tela';
+            const ta = document.getElementById('relatorio-bruto-input');
+            if (ta && ta.value.trim()) return 'relatório colado esperando';
+            return null;
+        },
+        _render() {
+            const c = this._c, tem = !!(c && c.texto);
+            if (!tem) { this._estado = null; this._faixa(false); try { NitSidebar.renderEstado(); } catch (e) {} return; }
+            const parada = this.estaParada(), min = this._min();
+            // faixa: fato + ação, sem esperar o operador olhar a linha de estado
+            if (this.semConexao()) {
+                this._faixa(true, '📵 SEM INTERNET · A PLANILHA NÃO CHEGA AQUI ATÉ A CONEXÃO VOLTAR');
+                if (this._semNet !== true) { this._semNet = true; try { NitDiario.acao(`📵 Sem conexão às ${NitDiario._hhmm(Date.now())}: a planilha não chega até a conexão voltar.`); } catch (e) {} }
+            } else if (parada) {
+                const desde = NitDiario._hhmm(this._ultimo());
+                this._faixa(true, this._erro ? '⚠ PLANILHA MUDOU DE FORMATO · COLE O RELATÓRIO DO WHATSAPP' : `⚠ PLANILHA PAROU ÀS ${desde} · COLE O RELATÓRIO DO WHATSAPP`);
+                if (this._parada !== true) { this._parada = true; try { NitDiario.acao(this._erro ? `⚠ Planilha mudou de formato (${this._erro}). Relatório pelo WhatsApp.` : `⚠ Planilha parou às ${desde}. Relatório pelo WhatsApp.`); } catch (e) {}
+                    this._notificar('⚠ PLANILHA PAROU', 'Cole o relatório do WhatsApp no NIT.', 'parada'); this._tituloAtualizar(); }
+            } else {
+                this._faixa(false);
+                if (this._semNet === true) { this._semNet = false; try { NitDiario.acao('✓ Conexão voltou.'); } catch (e) {} }
+                const voltou = this._parada === true;
+                if (voltou) { try { NitDiario.acao('✓ Planilha voltou.'); } catch (e) {} }
+                this._parada = false; if (voltou) this._tituloAtualizar();
+            }
+            const n = this.novidades(), imp = this._impedimento();
+            const precisa = !parada && n > 0 && (!this.AUTO || (imp && imp !== 'sem relatório'));
+            this._estado = { semConexao: this.semConexao(), parada, min, n, imp, precisa, processando: !parada && !precisa && n > 0,
+                desde: NitDiario._hhmm(this._ultimo()), erro: this._erro };
+            try { NitSidebar.renderEstado(); } catch (e) { /* não bloqueia */ }
+        },
+        async _talvezProcessar() {
+            if (!this.AUTO || this._tentando || this._paradaBruta() || this._offline) return;
+            const c = this._c; if (!c || !c.texto) return;
+            // janela que pegou a vez e travou: depois de 2 min, outra assume (uma vez por versão)
+            const p = this._proc, travada = this._jaProcessada() && p.janela !== this._janela && !p.retomado
+                && (this._agora() - (p.ts || 0)) > 120000 && this.novidades() > 0;
+            if (this._jaProcessada() && !travada) return;
+            if (this._impedimento()) { this._render(); return; }
+            this._tentando = true;
+            try {
+                const db = NitFirebase.db, ass = c.assinatura;
+                // só uma janela leva: quem gravar primeiro a assinatura nova processa
+                await db.ref('meta/planilha_processada').transaction(v => (v && v.assinatura === ass && !(travada && v.janela === p.janela && !v.retomado)) ? v
+                    : { assinatura: ass, janela: this._janela, por: NitLogin.operador || 'anon', ts: Date.now(), ...(travada ? { retomado: true } : {}) });
+                const s = await db.ref('meta/planilha_processada').once('value'), v = s.val() || {};
+                if (v.assinatura === ass && v.janela === this._janela && this._c && this._c.assinatura === ass) this.processar('auto');
+            } catch (e) { console.warn('[NIT] planilha auto', e); }
+            finally { this._tentando = false; setTimeout(() => this._render(), 1500); }
+        },
+        // ── avisos de mudança: na tela (aviso passageiro + brilho no card), fora da tela (título + notificação)
+        _diff(ant, novo) {
+            const A = (ant && ant.itens) || [], N = (novo && novo.itens) || [], k = x => `${x.c}|${x.i}`;
+            const mA = new Map(A.map(x => [k(x), x])), mN = new Map(N.map(x => [k(x), x]));
+            const out = [], cods = new Set(), usados = new Set();
+            for (const x of N) {
+                const a = mA.get(k(x));
+                if (!a) {
+                    const velho = A.find(y => y.c === x.c && !mN.has(k(y)) && !usados.has(k(y)));
+                    if (velho) { usados.add(k(velho)); out.push(`início corrigido ${x.c}`); } else out.push(`${x.f ? 'entrou normalizado' : 'entrou'} ${x.c}`);
+                    cods.add(x.c);
+                } else if (!a.f && x.f) { out.push(`normalizou ${x.c}`); cods.add(x.c); }
+                else if (a.f && !x.f) { out.push(`reabriu ${x.c}`); cods.add(x.c); }
+                else if (a.f !== x.f) { out.push(`fim corrigido ${x.c}`); cods.add(x.c); }
+            }
+            for (const a of A) if (!mN.has(k(a)) && !usados.has(k(a))) { out.push(`saiu ${a.c}`); cods.add(a.c); }
+            return { textos: out, cods: [...cods] };
+        },
+        _avisarMudanca(ant, novo) {
+            if (!ant || !novo || !novo.assinatura || ant.assinatura === novo.assinatura) return;   // 1ª leitura não avisa
+            const d = this._diff(ant, novo), hh = NitDiario._hhmm(novo.geradoEm);
+            const corpo = d.textos.length ? d.textos.slice(0, 6).join(' · ') + (d.textos.length > 6 ? ` · +${d.textos.length - 6}` : '') : 'observação ou causa atualizada';
+            try { showToast(`📋 ${hh} · ${corpo}`, 'info', 15000); const t = document.querySelector('#toast-container .toast:last-child'); if (t) t.classList.add('nit-toast-pisca'); } catch (e) {}
+            // a borda do card que mudou pisca 8 vezes e apaga (decisão do Cristiano, 30/10/2026)
+            this._acenderCards(d.cods);
+            if (document.hidden || !document.hasFocus()) { this._fora += Math.max(1, d.textos.length); this._tituloAtualizar(); }
+            this._notificar(`📋 RELATÓRIO ATUALIZADO ${hh}`, `${corpo}\nAtualize o grupo.`, novo.assinatura);
+        },
+        PISCA_MS: 8200,         // 8 piscadas de 1 s; depois a borda some
+        // acende cada card assim que ele aparece na tela (na outra janela ele chega pela sincronização)
+        _acenderCards(cods) {
+            document.querySelectorAll('#tab-semaforo .kanban-card.nit-planilha-mudou').forEach(el => el.classList.remove('nit-planilha-mudou'));
+            (this._luzTimers || []).forEach(clearTimeout);
+            const falta = new Set(cods || []); this._luzTimers = [];
+            const tentar = () => {
+                for (const c of [...falta]) {
+                    const els = document.querySelectorAll(`#tab-semaforo .kanban-card[data-codigo="${c}"]`);
+                    if (!els.length) continue;
+                    falta.delete(c);
+                    els.forEach(el => { el.classList.add('nit-planilha-mudou'); this._luzTimers.push(setTimeout(() => el.classList.remove('nit-planilha-mudou'), this.PISCA_MS)); });
+                }
+            };
+            [1500, 3000, 5000, 8000, 12000].forEach(ms => this._luzTimers.push(setTimeout(tentar, ms)));
+        },
+        _base() { return this._titulo || document.title.replace(/^(🔴 )?(\(\d+\) |⚠ PAROU · )/, ''); },
+        _tituloAtualizar() {
+            const base = this._base();
+            document.title = this._parada ? `⚠ PAROU · ${base}` : this._fora ? `(${this._fora}) ${base}` : base;
+            // fora da tela com novidade (ou parada): título e ícone da aba piscam em vermelho
+            const piscar = !!(this._parada || this._fora);
+            if (piscar && !this._pisca) {
+                let on = false;
+                this._pisca = setInterval(() => {
+                    on = !on; const b = this._base();
+                    const t = this._parada ? `⚠ PAROU · ${b}` : `(${this._fora}) ${b}`;
+                    document.title = on ? `🔴 ${t}` : t;
+                    this._icone(on || this._parada ? 'vermelho' : 'normal');
+                }, 800);
+                this._icone('vermelho');
+            } else if (!piscar && this._pisca) { clearInterval(this._pisca); this._pisca = null; this._icone('normal'); document.title = base; }
+        },
+        _icone(cor) {
+            let l = document.querySelector('link[rel="icon"]');
+            if (!l) { l = document.createElement('link'); l.rel = 'icon'; document.head.appendChild(l); }
+            if (this._iconeOriginal == null) this._iconeOriginal = l.getAttribute('href') || 'data:,';
+            const vermelho = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#ef4444"/></svg>');
+            const novo = cor === 'vermelho' ? vermelho : this._iconeOriginal;
+            if (l.getAttribute('href') !== novo) l.setAttribute('href', novo);
+        },
+        _notificar(titulo, corpo, tag) {
+            try {
+                if (!(document.hidden || !document.hasFocus())) return;                // na tela, o aviso passageiro basta
+                if (!window.Notification || Notification.permission !== 'granted') return;
+                const n = new Notification(titulo, { body: corpo, tag: `nit-planilha-${tag}`, requireInteraction: true });   // mesma tag = um aviso só, mesmo com 2 abas
+                n.onclick = () => { try { window.focus(); n.close(); this.mostrarSaida(); } catch (e) {} };
+            } catch (e) { /* não bloqueia */ }
+        },
+        mostrarSaida() {
+            const s = document.getElementById('sb-sec-saida'); if (!s) return;
+            s.scrollIntoView({ block: 'center' }); s.classList.add('nit-planilha-mudou'); setTimeout(() => s.classList.remove('nit-planilha-mudou'), 6000);
+        },
+        // 14.2 (BR-PLA-002): card que estava pendente à meia-noite (virou herança de hoje) e que o CTA encerrou
+        // DEPOIS da meia-noite com hora de ontem (ex.: 23:59). A planilha diz quando: o NIT fecha no dia certo,
+        // sem perguntar e sem contar hoje. Só com tudo batendo: mesmo código, mesmo início, fim antes de hoje.
+        _fecharOntem(c) {
+            const lista = (c && c.ontem) || []; if (!lista.length) return;
+            const hoje = NitData.hoje(), chave = d => { const m = String(d || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? `${m[3]}${m[2]}${m[1]}` : ''; };
+            const deHoje = new Set((c.itens || []).map(x => `${x.c}|${x.i}`));
+            for (const x of lista) {
+                if (deHoje.has(`${x.c}|${x.i}`)) continue;
+                const [df, hf] = String(x.f).split(' ');
+                if (!df || !hf || !(chave(df) < chave(hoje))) continue;
+                const card = [...document.querySelectorAll(`#tab-semaforo .kanban-card[data-codigo="${x.c}"]`)]
+                    .find(el => (el.dataset.inicio || '').trim() === x.i);
+                if (!card) continue;
+                const norm = !!card.closest('#coluna-normalizados');
+                let manual = {}; try { manual = JSON.parse(card.dataset.normManual || '{}') || {}; } catch (e) {}
+                // já está certo (normalizado pela fonte e no dia do fim)? nada a fazer
+                if (norm && !manual.ts && card.dataset.datareferencia === df && card.dataset.data_fim === df && card.dataset.hora_fim === hf) continue;
+                if (norm && !manual.ts && card.dataset.datareferencia !== hoje) continue;   // normalizado de outro dia: não mexe
+                const id = card.dataset.eventoid;
+                let dec = {}; try { dec = JSON.parse(card.dataset.decisoes || '{}') || {}; } catch (e) {}
+                delete dec['NIT-10'];
+                NitFirebase.exec((db, ref, update) => update(ref(db, `kanban/${id}`), {
+                    coluna: 'coluna-normalizados', status: 'NORMALIZADO', data_fim: df, hora_fim: hf, fim: null, pl: 'norm',
+                    ts_norm: Date.now(), dataReferencia: df, normManual: null, 'decisoes/NIT-10': null }));
+                Object.assign(card.dataset, { coluna: 'coluna-normalizados', status: 'NORMALIZADO', data_fim: df, hora_fim: hf, fim: `${df} ${hf}`,
+                    pl: 'norm', datareferencia: df, normManual: '{}', decisoes: JSON.stringify(dec) });
+                document.querySelector('#coluna-normalizados .kanban-cards-container')?.prepend(card);
+                const b = card.querySelector('.card-body'); if (b) b.innerHTML = Semaforo._buildBodyHTML(card.dataset);
+                NitDiario.acao(`✓ ${x.c} normalizou ontem (${df.slice(0, 5)}) às ${hf}: atualizado na planilha depois da meia-noite. Não conta hoje.`);
+            }
+            try { Semaforo.atualizarPainel(); } catch (e) {}
+        },
+        processar(como) {
+            const c = this._c; if (!c || !c.texto) return;
+            const ta = document.getElementById('relatorio-bruto-input'), go = document.getElementById('btn-processar');
+            if (!ta || !go) return;
+            if (como === 'mão') {
+                try { NitFirebase.db.ref('meta/planilha_processada').set({ assinatura: c.assinatura || '', janela: this._janela, por: NitLogin.operador || 'anon', ts: Date.now() }); } catch (e) {}
+            }
+            try { this._fecharOntem(c); } catch (e) { console.warn('[NIT] fechar ontem', e); }
+            ta.value = c.texto;
+            NitDiario.acao(`📋 Relatório da planilha (${NitDiario._hhmm(c.geradoEm)}) processado${como === 'auto' ? ' sozinho' : ''}.`);
+            this._processandoAuto = como === 'auto'; this._processandoPlanilha = true;
+            go.click(); setTimeout(() => { this._processandoAuto = false; this._processandoPlanilha = false; }, 5000);
+            setTimeout(() => this._render(), 1500);
+        },
+    };
+    window.NitPlanilha = NitPlanilha;
+
     // ── LOGIN ─────────────────────────────────────────────────────────────────
     const NitLogin = {
         operador: null,
@@ -1097,6 +1364,9 @@
             registrarAcao(`Login: ${this.operador} (${this.email}) — ${this.turno}.`);
             setTimeout(() => NitProcessamento.verificar(), 800);
             try { NitAdmin.verificar(); } catch (e) { /* não bloqueia */ }
+            try { NitPlanilha.iniciar(); } catch (e) { /* não bloqueia */ }
+            try { NitFirebase.db.ref('meta/ultimo_processamento').on('value', sn => NitSidebar.ultimo(sn.val(), 'proc'), () => {});
+                  NitFirebase.db.ref('meta/planilha_processada').on('value', sn => NitSidebar.ultimo(sn.val(), 'planilha'), () => {}); } catch (e) { /* não bloqueia */ }
         },
 
         // ── Logout ────────────────────────────────────────────────────────
@@ -1629,7 +1899,7 @@ const NitData = {
                     const campos = ['equipe','viatura','pl','sub','status','observacoes',
                                     'inicio','endereco','tsDespacho','tsFirstDispatch','tsChegada',
                                     'equipeApoio','viaturaApoio',
-                                    'data_fim','hora_fim','fim','coluna'];
+                                    'data_fim','hora_fim','fim','coluna','colunaN'];
                     campos.forEach(k => {
                         el.dataset[k] = (dados[k] != null) ? dados[k] : '';
                     });
@@ -1965,6 +2235,7 @@ const NitData = {
                 const novosItens = itens.filter(i => nomes[i.msg]).map(i => `${i.codigo} ${/ILEGÍVEL/.test(i.titulo || '') ? 'hora de início ilegível' : nomes[i.msg]}`);
                 for (const [cod, n] of Object.entries(nRep)) novosItens.push(`${cod} veio ${n} vezes (contado 1)`);
                 NitDiario.processamento({ totais: D.textoTotais(), aplic, itensNovos: novosItens, resolvidos: D._ultimosResolvidos || [], horasLidas: Semaforo._horasLidas || [], codigosLidos: Semaforo._codigosLidos || [] });
+                try { NitFirebase.exec((db, ref, update) => update(ref(db, 'meta'), { ultimo_processamento: { ts: Date.now(), por: NitLogin.operador || 'anon', auto: !!(window.NitPlanilha && NitPlanilha._processandoAuto), planilha: !!(window.NitPlanilha && NitPlanilha._processandoPlanilha) } })); } catch (e) { /* não bloqueia */ }
             } catch (e) { /* não bloqueia */ }
 
             // NIT-01: nada esperando o operador e nada fora do normal
@@ -3006,6 +3277,7 @@ const NitData = {
             });
 
             this.gerarPreviewRelatorio();
+            try { NitSidebar.renderResumo(); } catch (e) { /* não bloqueia */ }
             // 20/10: recolher é só manual (pedido do Cristiano); a coluna nova empurra as outras e a tela rola para o lado
         },
 
@@ -4003,32 +4275,100 @@ window.NitNormalizar = NitNormalizar;
     const NitSidebar = {
         _KEY: 'nit-sidebar-collapsed',
 
+        // 14.1 (especificação de 22/10/2026): barra lateral sempre aberta, sem botão de recolher;
+        // SAÍDA = último processamento + totais + Ver Relatório/Incluir normalizados + CAUSAS DO DIA + ATENDIDOS.
         inicializar() {
-            const btn = document.getElementById('btn-sb-toggle');
-            if (!btn) return;
-            if (localStorage.getItem(this._KEY) === '1') this._setSidebar(true);
-            btn.addEventListener('click', () => this.toggle());
-            document.addEventListener('keydown', e => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-                if (e.key === '[') this.toggle();
-            });
+            try { localStorage.removeItem(this._KEY); } catch (e) { /* não bloqueia */ }
+            const sb = document.getElementById('sidebar'); if (sb) sb.classList.remove('collapsed');
+            document.getElementById('btn-sb-toggle')?.remove();
+            this._montarSaida();
         },
-
-        toggle()   { const sb = document.getElementById('sidebar'); if (sb) this._setSidebar(!sb.classList.contains('collapsed')); },
-        expandir() { this._setSidebar(false); },
-
-        _setSidebar(collapsed) {
-            const sb = document.getElementById('sidebar');
-            if (!sb) return;
-            sb.classList.toggle('collapsed', collapsed);
-            localStorage.setItem(this._KEY, collapsed ? '1' : '0');
-            const btn = document.getElementById('btn-sb-toggle');
-            if (btn) btn.setAttribute('aria-expanded', String(!collapsed));
+        _montarSaida() {
+            const sec = document.getElementById('sb-sec-saida'); if (!sec || document.getElementById('sb-estado')) return;
+            const inner = sec.querySelector('.sb-inner'), bal = inner && inner.querySelector('.balanco-compacto');
+            if (!bal) return;
+            // 14.1 (30/10): o título "SAÍDA" sai; no lugar, UMA linha diz de quando e de onde são os totais
+            sec.querySelector('.sb-section-header')?.remove(); sec.classList.remove('sec-collapsed');
+            const ult = document.createElement('div'); ult.id = 'sb-estado'; ult.className = 'sb-estado'; ult.setAttribute('role', 'status');
+            ult.addEventListener('click', () => { if (window.NitPlanilha && NitPlanilha._c && NitPlanilha._c.texto) NitPlanilha.processar('mão'); });
+            bal.insertAdjacentElement('beforebegin', ult); this.renderEstado();
+            const ver = document.getElementById('btn-visualizar-relatorio'), chk = inner.querySelector('.form-check');
+            if (ver) bal.insertAdjacentElement('afterend', ver);
+            if (chk && ver) ver.insertAdjacentElement('afterend', chk);
+            const prev = document.getElementById('relatorio-final-preview'); if (prev) prev.hidden = true;   // continua existindo: o Ver Relatório usa o mesmo texto
+            const bl = document.createElement('div'); bl.id = 'sb-resumo'; bl.className = 'sb-resumo';
+            // 14.2 (decisão de 31/10): ATENDIDOS fica escondido até a 14.3 (conta só equipe que CHEGOU, hora digitada).
+            // A contagem continua calculada (e testada), só não aparece.
+            bl.innerHTML = '<div class="sb-resumo-tit">CAUSAS DO DIA</div><div id="sb-causas"></div>'
+                + '<div class="sb-resumo-tit" hidden>ATENDIDOS</div><div class="sb-atendidos" hidden>'
+                + '<span class="sb-at-vl">VIA LIVRE <b id="sb-at-vl">0</b></span><span class="sb-at-amc">AMC <b id="sb-at-amc">0</b></span></div>';
+            (chk || ver || bal).insertAdjacentElement('afterend', bl);
+            let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => this.renderResumo(), 200); });
         },
-
-        toggleSec(id) {
-            const sec = document.getElementById(id);
-            if (sec) sec.classList.toggle('sec-collapsed');
+        // os mesmos cards do total de Ocorrências (data de referência de hoje, em qualquer coluna)
+        renderResumo() {
+            const box = document.getElementById('sb-causas'); if (!box) return;
+            const hoje = NitData.hoje();
+            const cards = [...document.querySelectorAll('#coluna-espera .kanban-card, #coluna-sem-necessidade .kanban-card, #coluna-vl .kanban-card, #coluna-amc .kanban-card, #coluna-normalizados .kanban-card')]
+                .filter(c => c.dataset.datareferencia === hoje);
+            const cont = {};
+            cards.forEach(c => { const k = (c.dataset.tipo || '').trim().toUpperCase() || 'SEM CAUSA'; cont[k] = (cont[k] || 0) + 1; });
+            const lista = Object.entries(cont).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+            const max = lista.length ? lista[0][1] : 1;
+            // todas as causas do dia (especificação de 22/10/2026); nada é agrupado
+            const mostrar = lista;
+            box.replaceChildren(...mostrar.map(([c, n, dica]) => {
+                const d = document.createElement('div'); d.className = 'sb-causa';
+                const barra = document.createElement('i'); barra.style.width = dica ? '0' : `${Math.min(100, Math.round(n / max * 100))}%`;   // "+N outras" sem barra (não é uma causa)
+                const a = document.createElement('span'); a.textContent = c;
+                const b = document.createElement('b'); b.textContent = n;
+                if (dica) { d.title = dica; d.classList.add('sb-causa-outras'); }
+                d.append(barra, a, b); return d;
+            }));
+            if (!lista.length) { const d = document.createElement('div'); d.className = 'sb-causa sb-causa-vazio'; d.textContent = 'nenhuma ocorrência hoje'; box.append(d); }
+            // não coube na tela (muitas causas ou tela baixa)? as mesmas causas viram etiquetas lado a lado — nenhuma some
+            box.classList.remove('sb-causas-etiquetas');
+            const corpo = document.querySelector('#sb-sec-saida .sb-body');
+            if (corpo && corpo.clientHeight && corpo.scrollHeight > corpo.clientHeight + 1) box.classList.add('sb-causas-etiquetas');
+            const passou = (c, rot, col) => !!c.closest(col) || (c.dataset.colunaN || '').includes(rot);
+            const vl = cards.filter(c => passou(c, 'VIA LIVRE', '#coluna-vl')).length;
+            const amc = cards.filter(c => passou(c, 'AMC', '#coluna-amc')).length;
+            document.getElementById('sb-at-vl').textContent = vl;
+            document.getElementById('sb-at-amc').textContent = amc;
+        },
+        // último processamento: o registrado no fim do processamento ou, antes dele existir, o da planilha
+        _ult: {},
+        ultimo(v, origem = 'proc') { this._ult[origem] = v || null; this.renderEstado(); },
+        _fmt(ts) {
+            const d = new Date(ts), hoje = new Date();
+            const mesmoDia = d.toDateString() === hoje.toDateString();
+            return (mesmoDia ? '' : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} `) + NitDiario._hhmm(ts);
+        },
+        // a linha de estado: de quando e de onde são os totais (verde), ou o que o operador precisa fazer (amarelo/vermelho)
+        renderEstado() {
+            const el = document.getElementById('sb-estado'); if (!el) return;
+            const pr = this._ult.proc, pl = this._ult.planilha;
+            const u = (pr && pl) ? ((pr.ts || 0) >= (pl.ts || 0) ? pr : { ...pl, auto: true }) : (pr || (pl && { ...pl, auto: true }));
+            const e = (window.NitPlanilha && NitPlanilha._estado) || null;
+            let txt, cls = 'ok', dica = '';
+            if (e && e.semConexao) {
+                cls = 'parada'; txt = '📵 SEM INTERNET'; dica = 'Sem conexão com o banco. A planilha volta a chegar quando a conexão voltar.';
+            } else if (e && e.parada) {
+                cls = 'parada';
+                txt = e.erro ? '⚠ PLANILHA MUDOU DE FORMATO · COLE O RELATÓRIO' : `⚠ PLANILHA PAROU ${e.desde} · COLE O RELATÓRIO`;
+                dica = e.erro ? `A planilha do CTA mudou de formato (${e.erro}).` : `A planilha não responde há ${e.min} min.`;
+            } else if (e && e.precisa) {
+                cls = 'precisa'; txt = `📋 ${e.n} NOVIDADE${e.n > 1 ? 'S' : ''} · PROCESSAR`;
+                dica = `Não processou sozinho (${e.imp || 'modo manual'}). Clique para processar.`;
+            } else if (e && e.processando) {
+                cls = 'processando'; txt = '⏳ ATUALIZANDO…';
+            } else if (u && u.ts) {
+                const daPlanilha = u.planilha || u.auto;
+                txt = `✓ ATUALIZADO ${this._fmt(u.ts)} · ${daPlanilha ? 'PLANILHA' : 'COLADO'}`;
+                dica = `${daPlanilha ? `Relatório da planilha do CTA${u.auto ? ', automático' : ''}` : 'Relatório colado'}${u.por ? ` (${u.por})` : ''}.` + (e ? ' Clique para processar a planilha agora.' : '');
+            } else { cls = 'vazio'; txt = 'SEM ATUALIZAÇÃO HOJE'; }
+            el.className = `sb-estado ${cls}`; el.textContent = txt; el.title = dica;
+            el.style.cursor = (window.NitPlanilha && NitPlanilha._c && NitPlanilha._c.texto) ? 'pointer' : 'default';
         },
     };
     window.NitSidebar = NitSidebar;
@@ -5324,6 +5664,7 @@ const NitCentral = {
             ?.addEventListener('click', e => { if (e.target === e.currentTarget) this.fechar(); });
     },
 };
+window.NitCentral = NitCentral;   // 14.1: exposto para a bateria (trajetória VIA LIVRE/AMC)
 
     // ══════════════════════════════════════════════════════════════════
 // NitViradaDia — versão compatível com NitProcessamento

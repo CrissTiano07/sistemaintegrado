@@ -85,6 +85,17 @@ Regras de exibição:
 - Card retirado (TIRAR) que a fonte volta a listar volta ao painel: o mesmo card, com equipe e histórico.
 - Retirar nunca apaga: o card fica no banco com a marca `retirado`; DESFAZER devolve.
 
+## 4h. 14.0 — relatório da planilha (29/10/2026)
+| Onde | Texto |
+|---|---|
+| Linha de estado (barra lateral, no lugar do título SAÍDA — 14.1) | `✓ ATUALIZADO hh:mm · PLANILHA` / `✓ ATUALIZADO hh:mm · COLADO` (verde) / `⏳ ATUALIZANDO…` (amarelo) / `📋 N NOVIDADES · PROCESSAR` (amarelo, pisca 8×) / `⚠ PLANILHA PAROU hh:mm · COLE O RELATÓRIO` / `⚠ PLANILHA MUDOU DE FORMATO · COLE O RELATÓRIO` (vermelho, pisca) / `📵 SEM INTERNET` (vermelho) / `SEM ATUALIZAÇÃO HOJE` (cinza) |
+| Faixa vermelha | `📵 SEM INTERNET · A PLANILHA NÃO CHEGA AQUI ATÉ A CONEXÃO VOLTAR` (14.2) / `⚠ PLANILHA PAROU ÀS hh:mm · COLE O RELATÓRIO DO WHATSAPP` / `⚠ PLANILHA MUDOU DE FORMATO · COLE O RELATÓRIO DO WHATSAPP` |
+| Barra lateral (14.1) | `CAUSAS DO DIA` (todas, maior → menor; etiquetas quando não cabe) · `ATENDIDOS` `VIA LIVRE n` `AMC n` |
+| Aviso passageiro | `📋 hh:mm · entrou 965 · normalizou 611` (entrou, entrou normalizado, normalizou, reabriu, início corrigido, fim corrigido, saiu; `observação ou causa atualizada`) |
+| Título da aba | `(N) NIT…` (fora da tela) / `⚠ PAROU · NIT…` |
+| Notificação | `📋 RELATÓRIO ATUALIZADO hh:mm` + mudanças + `Atualize o grupo.` / `⚠ PLANILHA PAROU` + `Cole o relatório do WhatsApp no NIT.` |
+| LINHA DO TEMPO | `✓ 183 normalizou ontem (30/10) às 23:59: atualizado na planilha depois da meia-noite. Não conta hoje.` (14.2) / `📋 Relatório da planilha (hh:mm) processado sozinho.` / `⚠ Planilha parou às hh:mm. Relatório pelo WhatsApp.` / `⚠ Planilha mudou de formato (…). Relatório pelo WhatsApp.` / `✓ Planilha voltou.` |
+
 ## 5. Salvamento (canto da tela, sempre visível)
 
 | ID | Situação | Texto |

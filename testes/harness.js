@@ -57,8 +57,21 @@ function criarFirebaseFalso(estadoInicial, relogio) {
     };
   }
 
+  // Simulação de rede (13.1, gravação): atraso, sem conexão e recusa do servidor.
+  // Padrão: sem atraso, online, nada recusado — comportamento idêntico ao anterior.
+  const controle = { atrasoMs: 0, online: true, recusar: null, codigoRecusa: null, fila: [] };
+  function emitirConexao() {
+    for (const l of listeners) if (l.path === '.info/connected' && l.evento === 'value') { try { l.cb(snapshot(l.path, controle.online)); } catch (e) { /* janela já fechada */ } }
+  }
+  controle.definirOnline = v => {
+    controle.online = !!v; emitirConexao();
+    if (controle.online) { const f = controle.fila.splice(0); f.forEach(it => controle.atrasoMs ? setTimeout(it.finalizar, controle.atrasoMs) : it.finalizar()); }
+  };
+
   function emitir(antes) {
-    for (const l of listeners) {
+    for (const l0 of listeners) {
+      if (l0.path.startsWith('.info')) continue;
+      const l = { ...l0, cb: snap => { try { l0.cb(snap); } catch (e) { if (!/getElementById|querySelector|document/.test(String(e))) throw e; } } };
       const a = ler(antes, l.path), d = ler(root, l.path);
       if (l.evento === 'value') {
         if (JSON.stringify(a) !== JSON.stringify(d)) l.cb(snapshot(l.path, d));
@@ -74,8 +87,21 @@ function criarFirebaseFalso(estadoInicial, relogio) {
     const antes = clone(root);
     fn(); podar(root);
     escritas.push(desc);
-    emitir(antes);
-    return Promise.resolve();
+    emitir(antes); // aplica na hora, como o SDK real (escrita otimista)
+    return new Promise((resolve, reject) => {
+      const it = { finalizar: null };
+      it.finalizar = () => {
+        if (controle.recusar && controle.recusar(desc.p, desc)) {
+          // servidor recusou: o SDK desfaz a escrita local e rejeita a promessa
+          const a2 = clone(root);
+          gravarEm(desc.p, ler(antes, desc.p)); podar(root); emitir(a2);
+          const cod = controle.codigoRecusa || 'PERMISSION_DENIED'; const e = new Error(cod + ': recusado'); e.code = cod;
+          reject(e);
+        } else resolve();
+      };
+      if (!controle.online) { controle.fila.push(it); return; }
+      if (controle.atrasoMs) setTimeout(it.finalizar, controle.atrasoMs); else it.finalizar();
+    });
   }
 
   let pushSeq = 0;
@@ -87,6 +113,7 @@ function criarFirebaseFalso(estadoInicial, relogio) {
       child: c => ref(p + '/' + c),
       on(evento, cb) {
         listeners.push({ path: p, evento, cb });
+        if (p === '.info/connected') { if (evento === 'value') cb(snapshot(p, controle.online)); return cb; }
         const v = ler(root, p);
         if (evento === 'value') cb(snapshot(p, v));
         if (evento === 'child_added' && v && typeof v === 'object') for (const k of Object.keys(v)) cb(snapshot(p + '/' + k, v[k]));
@@ -103,8 +130,10 @@ function criarFirebaseFalso(estadoInicial, relogio) {
       push(v) {
         const k = 'push' + String(++pushSeq).padStart(6, '0');
         const filho = ref(p + '/' + k);
-        if (v !== undefined) filho.set(v);
-        return Object.assign(filho, { then: f => Promise.resolve(filho).then(f) });
+        const prom = v !== undefined ? filho.set(v) : Promise.resolve();
+        // como o SDK: referência "thenable" que resolve quando a gravação termina
+        // (não resolve com a própria referência, senão a promessa nunca termina)
+        return Object.assign(filho, { then: (f, g) => prom.then(f, g), catch: g => prom.catch(g) });
       },
       orderByChild: () => r, limitToLast: () => r, equalTo: () => r, startAt: () => r, endAt: () => r,
       transaction: fn => escrever({ op: 'transaction', p }, () => gravarEm(p, fn(clone(ler(root, p))))),
@@ -129,6 +158,7 @@ function criarFirebaseFalso(estadoInicial, relogio) {
     firebase: { apps: [], initializeApp() { this.apps.push({}); }, database, auth },
     estado: () => clone(root),
     escritas,
+    controle,
   };
 }
 
@@ -144,9 +174,10 @@ function criarRelogio(isoLocal) {
 }
 
 // ── Sobe o NIT ──────────────────────────────────────────────────────────────
-async function subirNIT({ estado, relogioIso }) {
+async function subirNIT({ estado, relogioIso, fb: fbCompartilhado }) {
   const relogio = criarRelogio(relogioIso);
-  const fb = criarFirebaseFalso(estado, relogio);
+  // fb compartilhado = dois operadores no mesmo banco (opcional, retrocompatível)
+  const fb = fbCompartilhado || criarFirebaseFalso(estado, relogio);
   const erros = [];
   const vc = new VirtualConsole();
   vc.on('error', (...a) => erros.push(a.map(String).join(' ')));
@@ -252,4 +283,4 @@ function resumoKanban(nit) {
   return { nos: Object.keys(k).length, porData, porColuna };
 }
 
-module.exports = { subirNIT, processar, modalAberto, responderModal, toasts, painel, resumoKanban, dormir };
+module.exports = { criarFirebaseFalso, criarRelogio, subirNIT, processar, modalAberto, responderModal, toasts, painel, resumoKanban, dormir };

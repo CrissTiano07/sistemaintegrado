@@ -27,6 +27,8 @@ const alertaIntegridade = nit => {
   return el ? el.textContent.replace(/\s+/g, ' ').trim().slice(0, 1000) : null;
 };
 const ultimoToast = nit => h.toasts(nit).slice(-2).join(' | ');
+// 13.2: horário corrigido aparece como etiqueta no card (NIT-05), não mais em toast
+const retificadoNoCard = nit => !!nit.w.document.querySelector('#tab-semaforo .kanban-card .card-retificado');
 
 let ATUAL = null;
 async function cenario(estado, relatorios, opts = {}) {
@@ -41,7 +43,10 @@ async function cenario(estado, relatorios, opts = {}) {
 const R = [];
 function reg(id, nome, status, observado, contrato) {
   let conf = 'n/a (sem execução)';
-  if (ATUAL) { const a = alertaIntegridade(ATUAL); const ok = h.toasts(ATUAL).slice(-1).some(t => /conferido/.test(t)); conf = a ? a.match(/(⚠️|ℹ️)[^•]+/g).map(x => x.trim()).join(' / ') : (ok ? '✓ conferido' : 'sem alerta'); }
+  if (ATUAL) { // 13.2: mensagens do MENSAGENS.md (cards de decisão ou ✓ PRONTO)
+    const tits = [...ATUAL.w.document.querySelectorAll('#nit-integridade-processamento .nd-t')].map(e => e.textContent.trim());
+    const ok = h.toasts(ATUAL).some(t => /PRONTO/.test(t));
+    conf = tits.length ? tits.join(' / ') : (ok ? '✓ PRONTO' : 'sem alerta'); }
   R.push({ id, nome, status, observado, contrato, conf });
   console.log(`${status.padEnd(17)} ${id} ${nome}\n   observado: ${observado}\n   contrato:  ${contrato}\n`);
 }
@@ -89,10 +94,11 @@ function reg(id, nome, status, observado, contrato) {
   // T06 Contradição de início (A → B) com A pendente
   nit = await cenario({}, [rel(HOJE, [{ cod: '123', ini: '11/10/2026 06:30' }]), rel(HOJE, [{ cod: '123', ini: '11/10/2026 08:15' }])]);
   n = nosDo(nit, '123');
+  // 13.1: regra aprovada em 14/10/2026 — início muda e o anterior some = correção de horário no MESMO card
   reg('T06', 'Contradição de início A → B',
-    'FALHOU',
-    `${n.length} nó(s): ${n.map(([x]) => x).join(', ')} — B mesclado em A sem decisão; alerta: ${alertaIntegridade(nit) || 'nenhum'}`,
-    '§11–12 contradição → Guardião: preservar, diagnosticar, decidir; não decidir silenciosamente');
+    n.length === 1 && n[0][1].inicio === '11/10/2026 08:15' && retificadoNoCard(nit) ? 'PASSOU' : 'FALHOU',
+    `${n.length} nó(s): ${n.map(([x, v]) => x + ' início ' + v.inicio).join(', ')}; toast: ${ultimoToast(nit)}`,
+    '§13 + regra 13.1: retificação preserva o card e registra (toast)');
   nit.dom.window.close(); ATUAL = null;
 
   // T07 Retificação tardia 468/790: 08:20 ×3 → 06:10 + Fim 08:17
@@ -102,8 +108,9 @@ function reg(id, nome, status, observado, contrato) {
     rel(HOJE, [], [{ cod: '790', ini: '11/10/2026 06:10', fim: '11/10/2026 08:17' }]),
   ], { relogio: '2026-10-11T09:00:00' });
   n = nosDo(nit, '790');
+  // 13.1 (decisão C16/T07 de 15/10/2026): retificação com fim no MESMO card (CONTRATO §13)
   reg('T07', 'Retificação tardia (790/468)',
-    n.length === 1 ? 'PARCIAL' : 'FALHOU',
+    n.length === 1 && n[0][1].coluna === 'coluna-normalizados' && n[0][1].inicio === '11/10/2026 06:10' && retificadoNoCard(nit) ? 'PASSOU' : n.length === 1 ? 'PARCIAL' : 'FALHOU',
     `${n.length} nó(s): ${n.map(([x, v]) => `${x} [${v.coluna}, início ${v.inicio}]`).join('; ')}; alerta: ${alertaIntegridade(nit) || 'nenhum'}`,
     '§13 preservar eventoId estável e tratar como retificação após reconciliação (não silenciosa)');
   nit.dom.window.close(); ATUAL = null;
@@ -112,14 +119,16 @@ function reg(id, nome, status, observado, contrato) {
   nit = await cenario({}, [rel(HOJE, [], [{ cod: '555', ini: '11/10/2026 06:00', fim: '11/10/2026 06:40' }]), rel(HOJE, [{ cod: '555', ini: '11/10/2026 06:00' }])]);
   n = nosDo(nit, '555');
   let p = h.painel(nit);
-  reg('T08', 'Fim → ausente', 'FALHOU',
+  // 13.2: o NIT pergunta ao operador (NIT-11: REABRIR / MANTER NORMALIZADO) — não ignora em silêncio
+  const t08 = /555 VOLTOU ATRÁS/.test(alertaIntegridade(nit) || '');
+  reg('T08', 'Fim → ausente', t08 ? 'PASSOU' : 'FALHOU',
     `${n.length} nó(s), coluna ${n[0]?.[1].coluna}; painel ${p.total}/${p.pendentes}/${p.normalizados} vs CEMOB 1/1/0; alerta: ${alertaIntegridade(nit) || 'nenhum'}; toast: ${ultimoToast(nit)}`,
     '§14 possível retificação → reconciliação; não ignorar silenciosamente');
   nit.dom.window.close(); ATUAL = null;
 
   // T09 Normalizado → Pendente (mesmo caso visto pela contagem)
-  reg('T09', 'Normalizado → Pendente', 'FALHOU',
-    `mesmo mecanismo do T08: card permanece normalizado e a contagem diverge do CEMOB sem aviso`,
+  reg('T09', 'Normalizado → Pendente', t08 ? 'PASSOU' : 'FALHOU',
+    t08 ? 'mesmo caso do T08: card fica normalizado até o operador decidir (NIT-11, com DESFAZER)' : 'card permanece normalizado e a contagem diverge do CEMOB sem aviso',
     '§15 / BR-NOR-007 reconciliação explícita com decisão humana [CONFLITO documental: VALIDAR × CONTRATO]');
 
   // T10 Reincidência real (A normalizado, B novo)
@@ -134,9 +143,11 @@ function reg(id, nome, status, observado, contrato) {
   nit = await cenario({}, [rel(HOJE, [{ cod: '378', ini: '11/10/2026 05:40' }]), rel(HOJE, [{ cod: '378', ini: '11/10/2026 05:40' }, { cod: '378', ini: '11/10/2026 07:50' }])]);
   n = nosDo(nit, '378');
   p = h.painel(nit);
-  reg('T10b', 'Reincidência com anterior ainda pendente', n.length === 2 ? 'PASSOU' : 'FALHOU',
+  // 13.1: duas linhas abertas do mesmo semáforo = inconsistência da fonte → 1 pendente + alerta (antes: esperava 2 cards)
+  reg('T10b', 'Duas abertas do mesmo semáforo (antes: reincidência com anterior pendente)',
+    n.length === 1 && /378 VEIO 2 VEZES/.test(alertaIntegridade(nit) || '') ? 'PASSOU' : 'FALHOU',
     `CEMOB 2 ocorrências; NIT ${n.length} nó(s): ${n.map(([x]) => x).join(', ')}; painel ${p.total}; alerta: ${alertaIntegridade(nit) || 'nenhum'}`,
-    'INV-CEMOB-01/03: não perder nem colapsar reincidência');
+    'regra 13.1: um semáforo, uma pendência; a 2ª linha é guardada no card e alertada');
   nit.dom.window.close(); ATUAL = null;
 
   // T11 Idempotência
@@ -150,13 +161,15 @@ function reg(id, nome, status, observado, contrato) {
   nit.dom.window.close(); ATUAL = null;
 
   // T12 NIT N−1 (colisão por código: bruto traz 2 do mesmo SCN, um anterior pendente com outro início)
-  reg('T12', 'Divergência NIT N−1', 'PARCIAL',
-    'coberto por T06/T10b: o evento novo some (herdado pelo código); o Plano A ' + 'exibe a ausência', 'INV-CEMOB-01 não perder ocorrência silenciosamente');
+  { const t06 = R.find(x => x.id === 'T06'), t10b = R.find(x => x.id === 'T10b');
+    reg('T12', 'Divergência NIT N−1', t06.status === 'PASSOU' && t10b.status === 'PASSOU' ? 'PASSOU' : 'PARCIAL',
+      'coberto por T06/T10b: nenhuma linha é descartada em silêncio (retificação registrada ou 2ª linha guardada + alerta)', 'INV-CEMOB-01 não perder ocorrência silenciosamente'); }
 
   // T13 NIT N+1 (caso 1430: some do bruto sem normalizar)
   nit = await cenario({}, [rel(HOJE, [{ cod: '1430', ini: '11/10/2026 06:00' }, { cod: '200', ini: '11/10/2026 06:10' }]), rel(HOJE, [{ cod: '200', ini: '11/10/2026 06:10' }])]);
   p = h.painel(nit);
-  reg('T13', 'Divergência NIT N+1 (caso 1430)', 'FALHOU',
+  // 13.2: NIT-10 "1430 NÃO VEIO NO RELATÓRIO" com MANTER / TIRAR
+  reg('T13', 'Divergência NIT N+1 (caso 1430)', /1430 SAIU DO RELATÓRIO/.test(alertaIntegridade(nit) || '') ? 'PASSOU' : 'FALHOU',
     `bruto 1, painel ${p.total} (${p.pendentes} pend.); alerta: ${alertaIntegridade(nit) || 'nenhum'}; toast: ${ultimoToast(nit)}`,
     'INV-CEMOB-07 / TODO-026: detectar "unexpected", não só ausentes');
   nit.dom.window.close(); ATUAL = null;
@@ -164,7 +177,7 @@ function reg(id, nome, status, observado, contrato) {
   // T14 Totais iguais, membros diferentes
   nit = await cenario({}, [rel(HOJE, [{ cod: '1430', ini: '11/10/2026 06:00' }, { cod: '300', ini: '11/10/2026 06:10' }]), rel(HOJE, [{ cod: '300', ini: '11/10/2026 06:10' }, { cod: '301', ini: '11/10/2026 06:20' }])]);
   p = h.painel(nit);
-  reg('T14', 'Totais iguais, membros diferentes', 'FALHOU',
+  reg('T14', 'Totais iguais, membros diferentes', /1430 SAIU DO RELATÓRIO/.test(alertaIntegridade(nit) || '') ? 'PASSOU' : 'FALHOU',
     `bruto 2 (300, 301), painel ${p.total} (inclui 1430 que saiu do bruto); alerta: ${alertaIntegridade(nit) || 'nenhum'}`,
     'INV-CEMOB-07 comparar conjuntos, não totais');
   nit.dom.window.close(); ATUAL = null;
@@ -188,16 +201,17 @@ function reg(id, nome, status, observado, contrato) {
   await h.dormir(20);
   await h.processar(nit, r20);
   const ids2 = nosDo(nit, '584').map(([x]) => x);
-  reg('T20', 'Início ausente reprocessado', ids2.length === 1 && !alertaIntegridade(nit) ? 'PASSOU' : 'FALHOU',
+  // 13.1: identidade fixa sem início; o aviso informativo "sem início" continua (por projeto)
+  reg('T20', 'Início ausente reprocessado', ids2.length === 1 && ids1[0] === ids2[0] && !/_\d{13}$/.test(ids2[0]) ? 'PASSOU' : 'FALHOU',
     `nós 584: ${ids2.join(', ')}; alerta: ${alertaIntegridade(nit) || 'nenhum'}`, 'identidade estável (SCNs 584/1118)');
   nit.dom.window.close(); ATUAL = null;
 
   // T21 "Conferido" com cards invisíveis
   nit = await cenario({}, [rel('13/09/2026', [{ cod: '500', ini: '11/10/2026 06:00' }, { cod: '501', ini: '11/10/2026 06:05' }])], { confirmar: true });
   p = h.painel(nit);
-  const conferido = h.toasts(nit).some(t => /conferido/.test(t));
+  const conferido = h.toasts(nit).some(t => /PRONTO/.test(t));
   reg('T21', '"Conferido" com cards invisíveis', conferido && p.total === '0' ? 'FALHOU' : 'PASSOU',
-    `toast "conferido": ${conferido}; painel mostra ${p.total} de 2`, 'conferência deve refletir o que o operador vê');
+    `toast "✓ PRONTO": ${conferido}; painel mostra ${p.total} de 2`, 'conferência deve refletir o que o operador vê');
   nit.dom.window.close(); ATUAL = null;
 
   const resumo = R.reduce((a, r) => (a[r.status] = (a[r.status] || 0) + 1, a), {});
