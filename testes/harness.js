@@ -174,7 +174,7 @@ function criarRelogio(isoLocal) {
 }
 
 // ── Sobe o NIT ──────────────────────────────────────────────────────────────
-async function subirNIT({ estado, relogioIso, fb: fbCompartilhado }) {
+async function subirNIT({ estado, relogioIso, fb: fbCompartilhado, celular = false, url = 'https://nit.teste/index.html' }) {
   const relogio = criarRelogio(relogioIso);
   // fb compartilhado = dois operadores no mesmo banco (opcional, retrocompatível)
   const fb = fbCompartilhado || criarFirebaseFalso(estado, relogio);
@@ -197,7 +197,7 @@ async function subirNIT({ estado, relogioIso, fb: fbCompartilhado }) {
 
   const html = fs.readFileSync(path.join(REPO, 'index.html'), 'utf8');
   const dom = new JSDOM(html, {
-    url: 'https://nit.teste/index.html',
+    url,
     runScripts: 'dangerously',
     resources: new Loader(),
     pretendToBeVisual: true,
@@ -213,7 +213,9 @@ async function subirNIT({ estado, relogioIso, fb: fbCompartilhado }) {
       window.firebase = fb.firebase;
       window.fetch = () => Promise.reject(new Error('rede bloqueada no teste'));
       window.HTMLCanvasElement.prototype.getContext = () => null;
-      window.matchMedia = window.matchMedia || (() => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }));
+      // celular: tela de toque estreita (NIT Móvel). Fora disso, nenhuma consulta de mídia casa.
+      window.matchMedia = celular ? (q => ({ matches: /pointer:\s*coarse/.test(q), media: q, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }))
+        : window.matchMedia || (() => ({ matches: false, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} }));
       window.scrollTo = () => {};
       window.alert = m => erros.push('ALERT: ' + m);
       window.confirm = () => true;

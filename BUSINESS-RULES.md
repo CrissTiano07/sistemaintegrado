@@ -1095,6 +1095,8 @@ O id de linha sem início é `{código}_SI{data}`. Se esse id já pertence a out
 - Só quem tem `nit_admins/{chave}: true` (gravado pelo console) vê **🧹 LIMPAR PAINEL**. A segurança é a **regra do banco**, não o botão escondido.
 - Limpa **cards (`kanban`) + avisos (`meta/decisoes_ativas`)**. A LINHA DO TEMPO fica e registra "🧹 Painel limpo (N cards). Cópia guardada.".
 - Antes de apagar, guarda a cópia em `lixeira/c{ts}` (quem, quando, cards, avisos) — na MESMA gravação (tudo ou nada). Guarda só as **5 últimas**.
+- **Confirmação digitada (31/10, pedido do Cristiano: evitar limpar por acidente):** a pergunta traz um campo "Para confirmar, digite LIMPAR". O botão LIMPAR fica travado até a palavra estar certa (maiúsculas, minúsculas ou espaço não importam); clique ou Enter sem a palavra não fazem nada. O destaque continua em CANCELAR. Cancelar no meio não deixa a próxima pergunta travada.
+- **↩ RESTAURAR também pede palavra (31/10, decisão do Cristiano):** digitar RESTAURAR. Devolver por engano os cards de um relatório errado também prejudica o painel.
 - **↩ RESTAURAR** (só ADM) devolve o último painel limpo; cards que entraram depois continuam (não sobrescreve). Registra "↩ Painel restaurado (N cards).".
 
 
@@ -1161,3 +1163,39 @@ O id de linha sem início é `{código}_SI{data}`. Se esse id já pertence a out
 - **A mesma ação repetida na LINHA DO TEMPO em menos de 1 minuto** (clique duplo) entra uma vez só.
 - **Sem conexão com o banco não é "planilha parou":** com `.info/connected` falso (internet caída, aba congelada pelo navegador), a faixa diz "📵 SEM INTERNET". "Planilha parou" fica só para quando a conexão existe e o script não dá sinal. O clique na linha de estado registra a origem como PLANILHA.
 - **Sem pisca-pisca (31/10):** ao abrir, ao voltar à aba ou ao reconectar, o NIT espera 45 s pelos dados novos antes de julgar; "parou" e "sem internet" só valem se durarem 30 s. "Voltou" só é registrado se "parou" tiver sido registrado. "Mudou de formato" continua imediato.
+
+## BR-MOV-001 — NIT Móvel, fase 1: só visualização, só ADM (decisões do Cristiano em 31/10/2026)
+
+- **Quem:** só ADM (`nit_admins/{chave}: true`). Operador comum continua no NIT de sempre, também no celular.
+- **Como chega (01/11, pedido do Cristiano: "o link é esse …/nit-homologacao/"):** no celular (toque, até 900 px), o endereço normal do NIT abre o `movel.html` **antes do login**, porque o login do `index.html` não funciona no iPhone. Lá a pessoa entra; quem não é ADM volta para `index.html?versao=computador` já logado (mesma sessão do site). Antes de 01/11: ADM em tela de toque com até 900 px de largura vai para `movel.html`. No computador nada muda. "Abrir versão computador" leva a `index.html?versao=computador`, que não desvia.
+- **No `movel.html`:** confere `usuarios_autorizados` e `nit_admins` de novo. Quem não é ADM volta para o NIT de computador; não autorizado é desconectado.
+- **O que mostra:** os cards do dia (`dataReferencia` = hoje, sem retirados), pela coluna, igual aos totais do computador.
+  - Aguardando: a mais antiga primeiro, com "há Xh". 2 h ou mais fica vermelho.
+  - Via Livre e AMC: equipe, viatura, apoio e "desp. há X".
+  - Normalizados: o mais recente primeiro, "às HH:MM".
+  - Busca por código, cruzamento, causa e equipe; filtros com contagem; cabeçalho do grupo preso no topo.
+  - "novo": card que entrou ou mudou de coluna desde a última visita naquele aparelho. Na primeira visita, nada é novo.
+  - Linha de estado: hora do último processamento e origem; "SEM INTERNET" só se durar 5 s.
+- **Login (01/11/2026):** o mesmo login do Google do NIT, **só pela janela** (igual ao computador). Sem "ir e voltar" (redirect): no github.io o iPhone e o Chrome novo bloqueiam o armazenamento do `firebaseapp.com`, e o login voltava sem sessão (visto no navegador do WhatsApp, iPhone, 31/10 23:26).
+  - Falhou: a tela diz o motivo e o código (nenhum erro mudo) e mostra a saída: iPhone "⬆︎ → Abrir no Safari"; Android botão "Abrir no Chrome" (`intent://`); os dois com "Copiar link". Sem internet: só diz isso.
+  - Janela que não responde em 20 s: mostra a saída sem cancelar a tentativa.
+  - Orientação aos ADMs: abrir uma vez no Safari/Chrome e salvar na tela de início.
+  - **01/11: a janela também falhou no Safari do iPhone** (movelhomolog4, versão conferida no repositório). Adotado o "ir e voltar" pela própria página: o Google devolve o comprovante (`id_token`, fluxo implícito do OpenID Connect) ao próprio `movel.html`; o NIT confere `state` e `nonce` (validade 10 min), tira o comprovante do endereço e abre a sessão no Firebase com `signInWithCredential`. Mesmo login do Google, mesma lista, mesmas regras. Não passa pelo `firebaseapp.com`.
+  - Precisa de: "ID do cliente da Web" de cada projeto em `NIT_GOOGLE_CLIENT` (movel.html) e, no Google Cloud, a origem `https://crisstiano07.github.io` e o endereço de volta do `movel.html` autorizados. Vazio = janela do Google (como antes).
+  - Rastro do login na tela de entrar (versão + último passo, guardado no aparelho) para diagnóstico por print.
+- **Telas (01/11, "UX mobile first", pedido do Cristiano):** abas fixas embaixo, ao alcance do polegar: **Ocorrências · Resumo · ADM**.
+  - **Ocorrências:** uma lista por situação (Aguardando, Via Livre, AMC, Sem nec., Normalizados, Todos), **lado a lado**. Arrastar o dedo para o lado troca a lista, e o filtro de cima acompanha; tocar no filtro leva à lista. Cada lista rola para baixo sozinha. A aba mostra o número de aguardando.
+  - **Resumo:** totais do dia, quantos em cada situação e CAUSAS DO DIA (mesmo critério da barra lateral do computador).
+  - **ADM:** 🧹 Limpar painel, ↩ Restaurar painel (só quando há cópia não restaurada), Abrir versão computador, Sair e a versão. As ações perigosas ficam longe da lista, para ninguém tocar sem querer ao rolar.
+  - **Confirmação por baixo da tela (acima do teclado):** é preciso digitar LIMPAR ou RESTAURAR. O destaque fica em Cancelar; sem a palavra, nem o botão nem o Enter fazem nada.
+- **Texto inteiro e copiar (01/11, pedido do Cristiano antes da produção):** o cruzamento aparece inteiro, quebrando linha (nada cortado com "…"). Rolagem lateral por linha foi descartada porque brigaria com o arrastar para o lado que troca de lista.
+  - **Tocar na linha:** abre os detalhes por baixo (situação, problema, causa, início, equipe, apoio, tempo, fim) e o botão **📋 Copiar para compartilhar**.
+  - **Normalizado (01/11, pedido do Cristiano):** os detalhes mostram só **Início, Fim, Tempo aberto** (duração) e **Atuou** (VIA LIVRE/AMC pela trajetória do card + equipe e viatura, com apoio). Sem problema e causa. Pendentes continuam com todos os campos.
+  - **Segurar e soltar:** copia direto e mostra "📋 389 copiado". O iPhone só deixa copiar no soltar; se o aparelho recusar, abre os detalhes.
+  - **Rolar com o dedo não copia nem abre nada.**
+  - **Formato (M1, decisão do Cristiano em 01/11):** o mesmo do botão "Copiar Localização" do card no computador: `*389 ENDEREÇO - PROBLEMA*`, com os asteriscos (negrito no WhatsApp) e sem "Desde". Testado contra o botão do card do NIT de verdade (`bateria-movel-paridade.js` PA4; sem os asteriscos, o teste falha).
+- **Limpar/Restaurar pelo celular (01/11):** mesmo efeito do computador (BR-ADM-001): cards e avisos, cópia na lixeira (as 5 últimas), "🧹 Painel limpo (N cards). Cópia guardada." na LINHA DO TEMPO, os computadores abertos esvaziam na hora. No celular, a LINHA DO TEMPO entra na mesma gravação (tudo ou nada). Paridade testada contra o NIT de computador (`testes/bateria-movel-paridade.js`). Falha: "Nada foi apagado", com o código.
+- **Grava no banco só o LIMPAR e o RESTAURAR do ADM.** Fora isso, lê só `kanban` do dia (consulta por `dataReferencia`, poupa dados móveis), `meta/ultimo_processamento` e `.info/connected`.
+- **Banco:** o endereço decide. `/nit-homologacao/` usa o banco de teste e mostra a marca HOMOLOG.
+- **Fica para depois:** copiar status para o grupo (restrito); despacho de equipe pelo supervisor (fase 2); perfil por usuário.
+

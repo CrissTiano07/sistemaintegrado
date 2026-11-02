@@ -147,6 +147,17 @@ Para qualquer mudança funcional:
 12. atualize a documentação
 ```
 
+## 5.0 Lição de 01/11/2026 — o teste só vale se o simulado for tão exigente quanto o real
+
+No NIT Móvel, do pacote 1 ao 6, o botão "Entrar com Google" estava morto: o Firebase era usado antes de ser ligado. Os testes passavam porque o Firebase falso aceitava o que o real recusa. Seis pacotes trocaram o *caminho do login* (janela, redirecionamento, Cloud) quando o defeito era o *botão*.
+
+Regras daqui em diante:
+
+- **O falso imita as recusas do real.** Firebase falso: sem `initializeApp`, `auth()`/`database()` dão erro (`testes/movel-tela/fakefb.js`). Ao criar um simulado, liste o que o real **recusa** e faça o falso recusar também.
+- **Prove que o teste pega o defeito:** rode a bateria contra a versão defeituosa e confira que ela **falha**.
+- **Antes de culpar o ambiente** (navegador, rede, iPhone), confirme no aparelho real que o básico funciona: a página carregou a versão certa e o botão reage.
+- **Versão visível na tela** e erro de partida na tela (nunca botão mudo). Confira no repositório publicado que o pacote está no ar antes de diagnosticar.
+
 ## 5.1 Encontre o domínio
 
 Determine primeiro:

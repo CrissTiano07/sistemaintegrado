@@ -11,6 +11,10 @@ async function proc(n, p, q) { await h.processar(n, montar(D, p, q)); while (h.m
 const cards = n => doc(n).querySelectorAll('#tab-semaforo .kanban-card').length;
 const kb = n => Object.keys(n.fb.estado().kanban || {});
 const lix = n => Object.values(n.fb.estado().lixeira || {});
+const campo = n => doc(n).getElementById('nit-confirmar-digitar-campo');
+const okBtn = n => doc(n).getElementById('btn-confirmar-generico-ok');
+function digitar(n, txt) { const c = campo(n); c.value = txt; c.dispatchEvent(new n.w.Event('input')); }
+function enter(n) { campo(n).dispatchEvent(new n.w.KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); }
 const ADM = { nit_admins: { 'teste|nit|local': true } };
 const REL = [[{ cod: '601', ini: t('06:50') }, { cod: '602', ini: '' }], [{ cod: '608', ini: t('06:00'), fim: t('06:40') }]];
 (async () => {
@@ -39,7 +43,21 @@ const REL = [[{ cod: '601', ini: t('06:50') }, { cod: '602', ini: '' }], [{ cod:
   const m = h.modalAberto(A);
   await h.responderModal(A, false); await h.dormir(300);
   const cancelou = kb(A).length === 3;
-  btn.click(); await h.dormir(200); await h.responderModal(A, true); await h.dormir(900);
+  // 14.3: sem digitar a palavra, nem clique nem Enter limpam
+  btn.click(); await h.dormir(200);
+  const trava = { campo: !!campo(A), bloqueado: okBtn(A).disabled };
+  await h.responderModal(A, true); enter(A); await h.dormir(300);
+  const naoLimpouSemDigitar = kb(A).length === 3 && !!h.modalAberto(A);
+  digitar(A, 'LIMPA'); const meio = okBtn(A).disabled; enter(A); await h.dormir(300);
+  const naoLimpouErrado = kb(A).length === 3;
+  digitar(A, 'limpar '); const liberou = !okBtn(A).disabled;
+  reg('AD6', 'LIMPAR só depois de digitar a palavra (pedido do Cristiano em 31/10)', [
+    ck(trava.campo && trava.bloqueado, `campo para digitar e botão LIMPAR travado (${JSON.stringify(trava)})`),
+    ck(naoLimpouSemDigitar, 'clique em LIMPAR e Enter sem digitar: nada apagado, pergunta continua aberta'),
+    ck(meio && naoLimpouErrado, '"LIMPA" (incompleto): continua travado, Enter não apaga'),
+    ck(liberou, '"limpar " (minúsculas e espaço): libera'),
+  ]);
+  enter(A); await h.dormir(900);
   const aud = JSON.stringify(A.fb.estado().auditoria || {});
   const l = lix(A);
   reg('AD3', 'Limpar: pergunta, CANCELAR não apaga, LIMPAR apaga para todos e guarda cópia', [
@@ -52,9 +70,22 @@ const REL = [[{ cod: '601', ini: t('06:50') }, { cod: '602', ini: '' }], [{ cod:
     ck(/Painel limpo \(3 cards\)\. Cópia guardada\./.test(aud), 'LINHA DO TEMPO registra "🧹 Painel limpo (3 cards). Cópia guardada."'),
     ck(doc(A).getElementById('nit-admin-restaurar')?.style.display === '', 'botão ↩ RESTAURAR aparece'),
   ]);
+  reg('AD7', 'Depois de limpar, outras perguntas voltam ao normal (sem campo, botão liberado)', [
+    ck(!campo(A) && !okBtn(A).disabled, `campo: ${!!campo(A)} · botão travado: ${okBtn(A).disabled}`),
+  ]);
   // entra um card novo depois da limpeza; restaurar junta os dois
   await proc(A, [{ cod: '700', ini: t('13:50') }], []);
-  doc(A).getElementById('nit-admin-restaurar').click(); await h.dormir(200); await h.responderModal(A, true); await h.dormir(900);
+  doc(A).getElementById('nit-admin-restaurar').click(); await h.dormir(200);
+  const tr = { campo: !!campo(A), bloqueado: okBtn(A).disabled, rotulo: doc(A).querySelector('#nit-confirmar-digitar strong')?.textContent };
+  await h.responderModal(A, true); enter(A); await h.dormir(300);
+  const naoRestaurou = kb(A).length === 1 && !!h.modalAberto(A);
+  digitar(A, 'LIMPAR'); const outraPalavra = okBtn(A).disabled;
+  reg('AD9', 'RESTAURAR só depois de digitar RESTAURAR (pedido do Cristiano em 31/10)', [
+    ck(tr.campo && tr.bloqueado && tr.rotulo === 'RESTAURAR', `campo pede RESTAURAR e o botão está travado (${JSON.stringify(tr)})`),
+    ck(naoRestaurou, 'clique e Enter sem digitar: nada volta, pergunta continua aberta'),
+    ck(outraPalavra, '"LIMPAR" não serve para restaurar'),
+  ]);
+  digitar(A, 'restaurar'); enter(A); await h.dormir(900);
   const ids = kb(A).sort();
   reg('AD4', 'Restaurar devolve os cards e mantém os que entraram depois', [
     ck(ids.length === 4 && ids.some(i => i.startsWith('700_')), `banco: ${ids.join(', ')}`),
@@ -64,6 +95,14 @@ const REL = [[{ cod: '601', ini: t('06:50') }, { cod: '602', ini: '' }], [{ cod:
   ]);
   // AD5 — guarda só as últimas 5 cópias
   for (let i = 0; i < 6; i++) { await A.w.NitAdmin._limpar(); await h.dormir(150); await proc(A, [{ cod: String(800 + i), ini: t('13:55') }], []); }
+  // AD8 — cancelar com a palavra pela metade não deixa a próxima pergunta travada
+  doc(A).getElementById('nit-admin-limpar').click(); await h.dormir(200); digitar(A, 'LIM'); await h.responderModal(A, false);
+  doc(A).getElementById('nit-admin-restaurar').style.display = ''; A.w.NitAdmin.restaurar(); await h.dormir(200);
+  reg('AD8', 'CANCELAR no meio da digitação: a pergunta seguinte (RESTAURAR) começa limpa, com a palavra dela', [
+    ck(campo(A)?.value === '' && okBtn(A).disabled && doc(A).querySelector('#nit-confirmar-digitar strong')?.textContent === 'RESTAURAR' && /RESTAURAR/.test(h.modalAberto(A)?.titulo || ''),
+      `campo vazio: ${campo(A)?.value === ''} · travado: ${okBtn(A).disabled} · palavra: ${doc(A).querySelector('#nit-confirmar-digitar strong')?.textContent}`),
+  ]);
+  await h.responderModal(A, false);
   reg('AD5', 'Lixeira guarda só as últimas 5 cópias (plano gratuito)', [ck(lix(A).length === 5, `${lix(A).length} cópias`)]);
   const f = R.filter(x => x !== 'PASSOU').length;
   console.log('RESUMO admin', f ? { FALHOU: f, PASSOU: R.length - f } : { PASSOU: R.length });
